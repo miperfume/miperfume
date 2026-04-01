@@ -7,20 +7,23 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <style> .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } </style>
+    <style> 
+        .text-gold { color: #a38d58; } 
+        .bg-gold { background-color: #a38d58; } 
+        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-20">
 
     <header class="bg-white p-3 shadow-sm sticky top-0 z-20 flex items-center gap-3 border-b">
         <img src="logo.jpeg" alt="Logo MI Perfume" class="h-12 w-12 object-contain rounded-md">
-        
         <div class="flex flex-col">
             <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
             <h2 class="text-[11px] text-gray-500 font-medium tracking-wide uppercase">Pemesanan Online</h2>
         </div>
     </header>
 
-    <div class="flex bg-white shadow-sm mb-4 sticky top-[68px] z-10">
+    <div class="flex bg-white shadow-sm mb-4 sticky top-[73px] z-10">
         <button id="tab-pesan" class="flex-1 py-3 text-center tab-active text-sm" onclick="switchTab('pesan')">Pesan Baru</button>
         <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm" onclick="switchTab('riwayat')">Riwayat</button>
     </div>
@@ -35,20 +38,20 @@
             <h2 class="font-bold mb-3 border-b pb-2">➕ Tambah Parfum</h2>
             <form id="form-item" onsubmit="tambahKeKeranjang(event)">
                 <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1">Aroma Parfum (Sesuai Stok)</label>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Aroma Parfum</label>
                     <select id="aroma" required onchange="updateKelasOptions()" class="w-full border p-2 rounded outline-none text-sm bg-gray-50">
                         <option value="" disabled selected>Memuat ketersediaan aroma...</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1">Kelas Parfum Tersedia</label>
+                    <label class="block text-xs font-medium mb-1 text-gray-600">Kelas Parfum</label>
                     <select id="kelas" required onchange="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm">
                         <option value="" disabled selected>Pilih aroma terlebih dahulu...</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div>
-                        <label class="block text-xs font-medium mb-1">Ukuran Botol</label>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Ukuran Botol</label>
                         <select id="ukuran" required onchange="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm">
                             <option value="" disabled selected>Pilih...</option>
                             <option value="35">35 ml</option>
@@ -57,26 +60,40 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-medium mb-1">Jumlah (Qty)</label>
+                        <label class="block text-xs font-medium mb-1 text-gray-600">Jumlah (Qty)</label>
                         <input type="number" id="qty" required min="1" value="1" oninput="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm text-center">
                     </div>
                 </div>
                 <div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-3 border">
                     <span class="text-xs">Subtotal:</span><span id="subtotal-item" class="font-bold text-gold">Rp 0</span>
                 </div>
-                <button type="submit" class="w-full bg-gray-800 text-white text-sm font-bold py-2 rounded shadow active:scale-95">Masukkan Keranjang</button>
+                <button type="submit" class="w-full bg-gray-800 text-white text-sm font-bold py-2 rounded shadow active:scale-95 transition">
+                    Masukkan Keranjang
+                </button>
             </form>
         </div>
 
         <div class="bg-[#fbf9f2] p-4 rounded-xl shadow border border-[#e8dfc8]">
-            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between"><span>🛒 Keranjang</span><span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span></h2>
-            <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto"><p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p></div>
-            <div class="flex justify-between items-end border-t border-[#e8dfc8] pt-3 mb-4"><span class="text-sm font-bold">Total Pembayaran:</span><span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span></div>
-            <button id="btn-submit" onclick="kirimPesananAkhir()" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>Kirim Pesanan Sekarang</button>
+            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between">
+                <span>🛒 Keranjang</span>
+                <span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span>
+            </h2>
+            <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
+                <p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>
+            </div>
+            <div class="flex justify-between items-end border-t border-[#e8dfc8] pt-3 mb-4">
+                <span class="text-sm font-bold text-gray-700">Total Pembayaran:</span>
+                <span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span>
+            </div>
+            <button id="btn-submit" onclick="kirimPesananAkhir()" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50 transition" disabled>
+                Kirim Pesanan Sekarang
+            </button>
         </div>
     </div>
 
-    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
+    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden">
+        <div id="daftar-riwayat" class="space-y-3"></div>
+    </div>
 
     <script>
         let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
@@ -96,87 +113,86 @@
         const db = firebase.firestore();
 
         let keranjang = []; 
-        let dataStok = {}; // Format baru: { "BACCARAT": { sisa_ml: 100, kelas: ["Premium", "Diamond"] } }
+        let dataStok = {};
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
 
         function switchTab(t) { 
-            ['pesan','riwayat'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); });
-            document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
+            ['pesan','riwayat'].forEach(id => { 
+                document.getElementById('page-'+id).classList.add('hidden'); 
+                document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); 
+            });
+            document.getElementById('page-'+t).classList.remove('hidden'); 
+            document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
         }
 
-        // --- SINKRONISASI STOK & KELAS OTOMATIS ---
+        // --- LOGIKA STOK TANPA ANGKA ---
         db.collection("stok").orderBy("nama").onSnapshot(snap => {
             const selectAroma = document.getElementById('aroma');
-            const oldValue = selectAroma.value; // Simpan pilihan sebelumnya
+            const oldValue = selectAroma.value;
             
             selectAroma.innerHTML = '<option value="" disabled selected>Pilih Aroma...</option>';
             dataStok = {}; 
             
             snap.forEach(doc => {
                 const data = doc.data();
-                // Simpan sisa ML dan Array Kelas
                 dataStok[data.nama] = {
                     sisa_ml: data.sisa_ml,
-                    kelas_tersedia: data.kelas_tersedia || ["Standar", "Premium", "Super Premium", "Diamond"] // Fallback untuk data lama
+                    kelas_tersedia: data.kelas_tersedia || ["Standar", "Premium", "Super Premium", "Diamond"]
                 };
                 
+                // Jika stok di bawah 17.5ml dianggap Kosong
                 if (data.sisa_ml >= 17.5) {
-                    selectAroma.innerHTML += `<option value="${data.nama}">${data.nama} (Sisa: ${data.sisa_ml} ml)</option>`;
+                    selectAroma.innerHTML += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
+                } else {
+                    selectAroma.innerHTML += `<option value="${data.nama}" disabled class="text-red-400">${data.nama} (Kosong)</option>`;
                 }
             });
             
-            if(snap.empty) selectAroma.innerHTML = '<option value="" disabled selected>Belum ada stok tersedia</option>';
-            
-            // Kembalikan pilihan jika masih tersedia
             if(oldValue && dataStok[oldValue] && dataStok[oldValue].sisa_ml >= 17.5) {
                 selectAroma.value = oldValue;
-            } else {
-                document.getElementById('kelas').innerHTML = '<option value="" disabled selected>Pilih aroma terlebih dahulu...</option>';
             }
         });
 
-        // --- UPDATE DROPDOWN KELAS BERDASARKAN AROMA ---
         function updateKelasOptions() {
             const aroma = document.getElementById('aroma').value;
             const selectKelas = document.getElementById('kelas');
-            
             selectKelas.innerHTML = '<option value="" disabled selected>Pilih Kelas...</option>';
-            
             if (aroma && dataStok[aroma]) {
-                const kelasTersedia = dataStok[aroma].kelas_tersedia;
-                kelasTersedia.forEach(k => {
+                dataStok[aroma].kelas_tersedia.forEach(k => {
                     selectKelas.innerHTML += `<option value="${k}">${k} (Rp ${hargaPerMl[k].toLocaleString()}/ml)</option>`;
                 });
             }
-            hitungSubTotal(); // Reset subtotal saat ganti aroma
+            hitungSubTotal();
         }
 
         function hitungSubTotal() {
-            const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = document.getElementById('qty').value;
-            if (kelas && ukuran && qty) { const total = hargaPerMl[kelas] * parseInt(ukuran) * parseInt(qty); document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); return total; }
-            document.getElementById('subtotal-item').innerText = 'Rp 0'; return 0;
+            const kelas = document.getElementById('kelas').value; 
+            const ukuran = document.getElementById('ukuran').value; 
+            const qty = document.getElementById('qty').value;
+            if (kelas && ukuran && qty) { 
+                const total = hargaPerMl[kelas] * parseInt(ukuran) * parseInt(qty); 
+                document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); 
+                return total; 
+            }
+            document.getElementById('subtotal-item').innerText = 'Rp 0'; 
+            return 0;
         }
 
-        // --- VALIDASI STOK SEBELUM MASUK KERANJANG ---
         function tambahKeKeranjang(e) {
             e.preventDefault();
             const aroma = document.getElementById('aroma').value;
             const ukuran = parseInt(document.getElementById('ukuran').value);
             const qty = parseInt(document.getElementById('qty').value);
             const butuhBibit = (ukuran * 0.5) * qty;
-            
             const bibitDiKeranjang = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0);
-            const totalDibutuhkan = butuhBibit + bibitDiKeranjang;
 
-            if (totalDibutuhkan > dataStok[aroma].sisa_ml) {
-                alert(`❌ STOK TIDAK CUKUP!\n\nAnda membutuhkan total ${totalDibutuhkan} ml bibit untuk pesanan ini, tetapi sisa bibit ${aroma} hanya ${dataStok[aroma].sisa_ml} ml.\n\nKurangi Qty atau pilih ukuran botol lebih kecil.`);
+            if ((butuhBibit + bibitDiKeranjang) > dataStok[aroma].sisa_ml) {
+                alert(`❌ MAAF, STOK TIDAK CUKUP!\nSisa bahan untuk aroma ini tidak mencukupi untuk jumlah yang Anda minta.`);
                 return;
             }
 
             keranjang.push({ aroma: aroma, kelas: document.getElementById('kelas').value, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit });
             renderKeranjang();
-            
-            // Reset form item tapi biarkan pilihan aroma
             document.getElementById('qty').value = 1; 
             document.getElementById('subtotal-item').innerText = 'Rp 0';
             document.getElementById('kelas').value = "";
@@ -184,22 +200,28 @@
         }
 
         function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
+        
         function renderKeranjang() {
             const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0;
-            if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; }
-            else {
+            if (!keranjang.length) { 
+                wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; 
+                document.getElementById('btn-submit').disabled = true; 
+            } else {
                 document.getElementById('btn-submit').disabled = false;
                 keranjang.forEach((i, x) => {
                     gt += i.subtotal; tq += i.qty;
                     wadah.innerHTML += `<div class="bg-white p-2 border flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500">${i.kelas} ${i.ukuran}ml</p></div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`;
                 });
             }
-            document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq;
+            document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); 
+            document.getElementById('badge-qty').innerText = tq;
         }
 
         function kirimPesananAkhir() {
-            const nama = document.getElementById('nama').value.trim(); if (!nama) return alert("Isi Nama Pemesan!");
-            const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true;
+            const nama = document.getElementById('nama').value.trim(); 
+            if (!nama) return alert("Harap isi Nama Pemesan!");
+            const btn = document.getElementById('btn-submit'); 
+            btn.innerText = "Memproses..."; btn.disabled = true;
 
             const batch = db.batch(); 
             const refPesanan = db.collection("pesanan").doc();
@@ -214,17 +236,17 @@
             });
 
             batch.commit().then(() => {
-                alert("✅ Pesanan Berhasil! Stok bibit telah otomatis direservasi.");
+                alert("✅ Pesanan Berhasil Terkirim!");
                 keranjang = []; renderKeranjang(); document.getElementById('nama').value = '';
                 btn.innerText = "Kirim Pesanan Sekarang"; switchTab('riwayat');
             }).catch(err => {
-                alert("Gagal memproses pesanan: " + err); btn.innerText = "Kirim Pesanan Sekarang"; btn.disabled = false;
+                alert("Gagal: " + err); btn.disabled = false;
             });
         }
 
         db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => {
             const container = document.getElementById('daftar-riwayat'); container.innerHTML = '';
-            if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5">Belum ada riwayat</p>';
+            if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>';
             let rData = []; snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() }));
             rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => {
                 let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700";
