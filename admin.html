@@ -8,7 +8,14 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <style> .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } </style>
+    <style> 
+        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
+        .text-gold { color: #a38d58; } 
+        .bg-gold { background-color: #a38d58; } 
+        /* Menyembunyikan scrollbar tapi tetap bisa digeser */
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-20">
 
@@ -30,35 +37,26 @@
     <div id="admin-content" class="hidden">
         <header class="bg-gray-800 text-white p-4 sticky top-0 z-20 flex justify-between items-center">
             <h1 class="text-lg font-bold text-[#a38d58]">MI Perfume Admin</h1>
-            <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
+            <button onclick="logoutAdmin()" class="text-xs bg-red-500 hover:bg-red-600 px-3 py-1 rounded">Logout</button>
         </header>
 
-        <div class="flex bg-white shadow-sm mb-4 sticky top-[60px] z-10">
-            <button id="tab-pesanan" class="flex-1 py-3 text-center tab-active text-xs font-bold" onclick="switchTab('pesanan')">Pesanan</button>
-            <button id="tab-stok" class="flex-1 py-3 text-center text-gray-500 text-xs font-bold" onclick="switchTab('stok')">Stok & Modal</button>
-            <button id="tab-dashboard" class="flex-1 py-3 text-center text-gray-500 text-xs font-bold" onclick="switchTab('dashboard')">Analitik</button>
+        <div class="flex bg-white shadow-sm mb-4 sticky top-[60px] z-10 overflow-x-auto hide-scrollbar">
+            <button id="tab-pesanan" class="py-3 px-4 text-center tab-active text-xs font-bold whitespace-nowrap" onclick="switchTab('pesanan')">Pesanan</button>
+            <button id="tab-stok" class="py-3 px-4 text-center text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok & Modal</button>
+            <button id="tab-dashboard" class="py-3 px-4 text-center text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('dashboard')">Analitik</button>
+            <button id="tab-restock" class="py-3 px-4 text-center text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('restock')">Restock 🛒</button>
         </div>
 
         <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4"><div id="daftar-pesanan"></div></div>
 
         <div id="page-stok" class="p-4 max-w-md mx-auto hidden">
-            
             <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
                 <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Tambah Bibit Parfum</h2>
                 <form onsubmit="simpanBibit(event)">
                     <div class="grid grid-cols-3 gap-2 items-end mb-3">
-                        <div class="col-span-3">
-                            <label class="block text-xs text-gray-500 mb-1">Nama Aroma</label>
-                            <input type="text" id="bibit-nama" required class="w-full border p-2 rounded text-sm uppercase" placeholder="Misal: BACCARAT">
-                        </div>
-                        <div class="col-span-1">
-                            <label class="block text-xs text-gray-500 mb-1">Stok (ml)</label>
-                            <input type="number" id="bibit-ml" required min="0" class="w-full border p-2 rounded text-sm text-center">
-                        </div>
-                        <div class="col-span-2">
-                            <label class="block text-xs text-gray-500 mb-1">Harga Modal (Rp / ml)</label>
-                            <input type="number" id="bibit-harga" required min="0" class="w-full border p-2 rounded text-sm text-center" placeholder="Misal: 1500">
-                        </div>
+                        <div class="col-span-3"><label class="block text-xs text-gray-500 mb-1">Nama Aroma</label><input type="text" id="bibit-nama" required class="w-full border p-2 rounded text-sm uppercase" placeholder="Misal: BACCARAT"></div>
+                        <div class="col-span-1"><label class="block text-xs text-gray-500 mb-1">Stok (ml)</label><input type="number" id="bibit-ml" required min="0" class="w-full border p-2 rounded text-sm text-center"></div>
+                        <div class="col-span-2"><label class="block text-xs text-gray-500 mb-1">Harga Modal (Rp / ml)</label><input type="number" id="bibit-harga" required min="0" class="w-full border p-2 rounded text-sm text-center" placeholder="Misal: 1500"></div>
                     </div>
                     <div class="mb-3 bg-gray-50 p-2 rounded border">
                         <label class="block text-xs font-bold text-gray-600 mb-2">Kelas yang Tersedia:</label>
@@ -79,22 +77,14 @@
                     <div class="mb-3">
                         <label class="block text-xs text-gray-500 mb-1">Pilih Bahan Baku</label>
                         <select id="bahan-id" required class="w-full border p-2 rounded text-sm bg-gray-50">
-                            <option value="botol_35">Botol 35 ml (pcs)</option>
-                            <option value="botol_50">Botol 50 ml (pcs)</option>
-                            <option value="botol_100">Botol 100 ml (pcs)</option>
-                            <option value="abs_standar">Absolute Standar (ml)</option>
+                            <option value="botol_35">Botol 35 ml (pcs)</option><option value="botol_50">Botol 50 ml (pcs)</option>
+                            <option value="botol_100">Botol 100 ml (pcs)</option><option value="abs_standar">Absolute Standar (ml)</option>
                             <option value="abs_khusus">Absolute Khusus (ml)</option>
                         </select>
                     </div>
                     <div class="flex gap-2 mb-3">
-                        <div class="flex-1">
-                            <label class="block text-xs text-gray-500 mb-1">Jumlah Stok Baru</label>
-                            <input type="number" id="bahan-qty" required min="0" class="w-full border p-2 rounded text-sm text-center">
-                        </div>
-                        <div class="flex-1">
-                            <label class="block text-xs text-gray-500 mb-1">Modal Satuan (Rp)</label>
-                            <input type="number" id="bahan-harga" required min="0" class="w-full border p-2 rounded text-sm text-center">
-                        </div>
+                        <div class="flex-1"><label class="block text-xs text-gray-500 mb-1">Jumlah Stok Baru</label><input type="number" id="bahan-qty" required min="0" class="w-full border p-2 rounded text-sm text-center"></div>
+                        <div class="flex-1"><label class="block text-xs text-gray-500 mb-1">Modal Satuan (Rp)</label><input type="number" id="bahan-harga" required min="0" class="w-full border p-2 rounded text-sm text-center"></div>
                     </div>
                     <button type="submit" class="w-full bg-blue-600 text-white px-4 py-2 rounded text-sm font-bold shadow active:scale-95">Update Bahan Baku</button>
                 </form>
@@ -128,8 +118,28 @@
                 </div>
             </div>
             
-            <div class="bg-white p-4 rounded-xl shadow mb-6"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2"></div></div>
+            <div class="bg-white p-4 rounded-xl shadow mb-6">
+                <h2 class="text-sm font-bold mb-2 text-gray-700">Grafik Penjualan Bulanan</h2>
+                <canvas id="grafikOmset" width="400" height="250"></canvas>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-red-400"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><p class="text-xs text-gray-500 mb-2 border-b pb-2">Aroma underperforming (paling sedikit terjual).</p><div id="daftar-aroma-bawah" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
         </div>
+
+        <div id="page-restock" class="p-4 max-w-md mx-auto hidden">
+            <div class="bg-red-50 p-4 rounded-xl shadow border-t-4 border-red-600 mb-6">
+                <h2 class="font-bold text-red-700 mb-1 text-md">🚨 Peringatan Restock</h2>
+                <p class="text-xs text-red-600 mb-4 border-b border-red-200 pb-2">Item di bawah ini sudah menyentuh batas kritis dan perlu segera dibeli agar pesanan tidak terhambat.</p>
+                
+                <h3 class="text-xs font-bold text-gray-700 mb-2">💧 Bibit Parfum (< 50 ml)</h3>
+                <div id="restock-bibit" class="space-y-2 mb-4"></div>
+
+                <h3 class="text-xs font-bold text-gray-700 mb-2">🧴 Bahan Baku & Botol (Menipis)</h3>
+                <div id="restock-bahan" class="space-y-2"></div>
+            </div>
+        </div>
+
     </div>
 
     <script>
@@ -139,7 +149,7 @@
         function prosesLogin(e) { e.preventDefault(); if (document.getElementById('input-user').value.toLowerCase().trim() === USERNAME_ADMIN && document.getElementById('input-pass').value.trim() === PASSWORD_ADMIN) { sessionStorage.setItem("admin_logged_in", "true"); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('admin-content').classList.remove('hidden'); } else alert("❌ Salah!"); }
         function logoutAdmin() { if(confirm("Keluar?")) { sessionStorage.removeItem("admin_logged_in"); location.reload(); } }
         function switchTab(t) { 
-            ['pesanan','stok','dashboard'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); });
+            ['pesanan','stok','dashboard','restock'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); });
             document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
         }
     </script>
@@ -157,12 +167,15 @@
 };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        let chartInstance = null;
 
-        // NAMA CANTIK UNTUK BAHAN
         const namaBahan = {
             "botol_35": "Botol 35 ml (pcs)", "botol_50": "Botol 50 ml (pcs)", "botol_100": "Botol 100 ml (pcs)",
             "abs_standar": "Absolute Standar (ml)", "abs_khusus": "Absolute Khusus (ml)"
         };
+
+        let globalBibit = [];
+        let globalBahan = [];
 
         // --- MANAJEMEN BIBIT ---
         function simpanBibit(e) {
@@ -181,8 +194,10 @@
 
         db.collection("stok").orderBy("nama").onSnapshot(snap => {
             const wadah = document.getElementById('daftar-bibit'); wadah.innerHTML = '';
+            globalBibit = [];
             snap.forEach(doc => {
                 const data = doc.data();
+                globalBibit.push(data);
                 const hrg = data.harga_ml ? `Modal: Rp${data.harga_ml}/ml` : 'Modal: Belum diatur';
                 wadah.innerHTML += `
                     <div class="bg-white p-3 rounded border flex justify-between items-center">
@@ -197,6 +212,7 @@
                     </div>
                 `;
             });
+            cekRestock();
         });
 
         // --- MANAJEMEN BAHAN (BOTOL & ABSOLUTE) ---
@@ -213,8 +229,10 @@
 
         db.collection("bahan").orderBy("id").onSnapshot(snap => {
             const wadah = document.getElementById('daftar-bahan'); wadah.innerHTML = '';
+            globalBahan = [];
             snap.forEach(doc => {
                 const data = doc.data();
+                globalBahan.push(data);
                 const unit = doc.id.includes('botol') ? 'pcs' : 'ml';
                 wadah.innerHTML += `
                     <div class="bg-blue-50 p-2 rounded border border-blue-100 flex justify-between items-center">
@@ -226,15 +244,43 @@
                     </div>
                 `;
             });
+            cekRestock();
         });
 
         function hapusDokumen(koleksi, id) { if(confirm("Hapus data ini?")) db.collection(koleksi).doc(id).delete(); }
 
-        // --- MANAJEMEN PESANAN & DASHBOARD HPP ---
+        // --- LOGIKA REKOMENDASI RESTOCK ---
+        function cekRestock() {
+            const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = '';
+            const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = '';
+            
+            let adaBibitKritis = false;
+            globalBibit.forEach(b => {
+                if (b.sisa_ml <= 50) {
+                    adaBibitKritis = true;
+                    wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`;
+                }
+            });
+            if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit masih aman.</p>';
+
+            let adaBahanKritis = false;
+            globalBahan.forEach(b => {
+                let limit = b.id.includes('botol') ? 20 : 100;
+                let unit = b.id.includes('botol') ? 'pcs' : 'ml';
+                if (b.sisa <= limit) {
+                    adaBahanKritis = true;
+                    wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">Sisa: ${b.sisa} ${unit}</span></div>`;
+                }
+            });
+            if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua botol & absolute masih aman.</p>';
+        }
+
+        // --- MANAJEMEN PESANAN & DASHBOARD ---
         db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
             const containerPesanan = document.getElementById('daftar-pesanan'); containerPesanan.innerHTML = ''; 
             
-            let totalOmset = 0, totalHPP = 0, totalQty = 0; const rekapAroma = {};   
+            let totalOmset = 0, totalHPP = 0, totalQty = 0; 
+            const rekapBulanan = {}; const rekapAroma = {};   
             const bulanSekarang = new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
 
             if (snapshot.empty) return containerPesanan.innerHTML = '<p class="text-center text-gray-500 italic mt-4">Belum ada pesanan.</p>';
@@ -244,7 +290,6 @@
                 let statusColor = data.status==="Selesai" ? "bg-green-100 text-green-700" : (data.status==="Ditolak" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700");
                 const itemsJSON = data.items ? encodeURIComponent(JSON.stringify(data.items)) : '[]';
 
-                // Hitung total HPP pesanan ini (Jika data lama tidak punya HPP, anggap 0)
                 const pesananHPP = data.total_hpp || 0;
 
                 let actionButtons = data.status !== "Selesai" && data.status !== "Ditolak" ? `
@@ -267,49 +312,16 @@
                         ${actionButtons}
                     </div>`;
 
-                // Kalkulasi Laporan Keuangan Bulan Ini
+                // Kalkulasi Laporan Keuangan, Grafik, dan Top/Bottom Aroma
                 if (data.status === "Selesai") {
                     const bln = data.waktu ? data.waktu.toDate().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : bulanSekarang;
+                    
+                    // Rekap Bulanan untuk Grafik
+                    if (!rekapBulanan[bln]) rekapBulanan[bln] = 0;
+                    rekapBulanan[bln] += data.total;
+
+                    // Hitungan Bulan Ini untuk Angka Atas
                     if (bln === bulanSekarang) {
                         totalOmset += data.total;
                         totalHPP += pesananHPP;
                     }
-                    (data.items || []).forEach(i => {
-                        if (bln === bulanSekarang) totalQty += i.qty;
-                        const a = i.aroma.trim().toUpperCase(); rekapAroma[a] = (rekapAroma[a] || 0) + i.qty;
-                    });
-                }
-            });
-
-            document.getElementById('dash-omset').innerText = 'Rp ' + totalOmset.toLocaleString('id-ID'); 
-            document.getElementById('dash-hpp').innerText = 'Rp ' + totalHPP.toLocaleString('id-ID'); 
-            document.getElementById('dash-laba').innerText = 'Rp ' + (totalOmset - totalHPP).toLocaleString('id-ID'); 
-            document.getElementById('dash-qty').innerText = totalQty;
-            renderTopAroma(rekapAroma);
-        });
-
-        function selesaikanPesanan(id) { if(confirm("Tandai selesai?")) db.collection("pesanan").doc(id).update({ status: "Selesai" }); }
-        
-        function tolakPesanan(id, itemsJSON) {
-            const alasan = prompt("Alasan menolak pesanan:");
-            if (alasan && alasan.trim() !== "") {
-                const items = JSON.parse(decodeURIComponent(itemsJSON));
-                db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: alasan.trim() })
-                .then(() => {
-                    items.forEach(item => {
-                        // Refund Bibit
-                        if (item.bibit) db.collection("stok").doc(item.aroma).update({ sisa_ml: firebase.firestore.FieldValue.increment(item.bibit) });
-                        // Refund Botol
-                        if (item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(item.qty) });
-                        // Refund Absolute
-                        if (item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(item.absolute_ml) });
-                    });
-                    alert("Pesanan ditolak dan semua komponen stok (Bibit, Botol, Absolute) dikembalikan!");
-                }).catch(e => alert(e));
-            }
-        }
-
-        function renderTopAroma(d) { const c=document.getElementById('daftar-aroma'); c.innerHTML=''; Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,20).forEach((i,x)=>{ c.innerHTML+=`<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x<3?['🥇','🥈','🥉'][x]:x+1+'.'} ${i[0]}</span><span class="bg-gold text-white px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
-    </script>
-</body>
-</html>
