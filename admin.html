@@ -12,7 +12,6 @@
         .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
         .text-gold { color: #a38d58; } 
         .bg-gold { background-color: #a38d58; } 
-        /* Menyembunyikan scrollbar tapi tetap bisa digeser */
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
@@ -98,45 +97,25 @@
         <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
             <h2 class="font-bold text-gray-700 mb-3 text-sm border-b pb-1">Laporan Keuangan (Bulan Ini)</h2>
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-wider">Total Omset</p>
-                    <p id="dash-omset" class="text-md font-bold text-gray-800">Rp 0</p>
-                </div>
-                <div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-400">
-                    <p class="text-[10px] text-gray-500 uppercase tracking-wider">Modal Terpakai (HPP)</p>
-                    <p id="dash-hpp" class="text-md font-bold text-red-600">Rp 0</p>
-                </div>
+                <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]"><p class="text-[10px] text-gray-500 uppercase tracking-wider">Total Omset</p><p id="dash-omset" class="text-md font-bold text-gray-800">Rp 0</p></div>
+                <div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-400"><p class="text-[10px] text-gray-500 uppercase tracking-wider">Modal Terpakai (HPP)</p><p id="dash-hpp" class="text-md font-bold text-red-600">Rp 0</p></div>
             </div>
             <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-6 flex justify-between items-center text-white">
-                <div>
-                    <p class="text-xs text-gray-300 uppercase tracking-wider mb-1">Laba Bersih / Profit</p>
-                    <p id="dash-laba" class="text-2xl font-bold text-[#a38d58]">Rp 0</p>
-                </div>
-                <div class="text-right">
-                    <p class="text-[10px] text-gray-400">Botol Terjual</p>
-                    <p id="dash-qty" class="text-lg font-bold">0</p>
-                </div>
+                <div><p class="text-xs text-gray-300 uppercase tracking-wider mb-1">Laba Bersih / Profit</p><p id="dash-laba" class="text-2xl font-bold text-[#a38d58]">Rp 0</p></div>
+                <div class="text-right"><p class="text-[10px] text-gray-400">Botol Terjual</p><p id="dash-qty" class="text-lg font-bold">0</p></div>
             </div>
             
-            <div class="bg-white p-4 rounded-xl shadow mb-6">
-                <h2 class="text-sm font-bold mb-2 text-gray-700">Grafik Penjualan Bulanan</h2>
-                <canvas id="grafikOmset" width="400" height="250"></canvas>
-            </div>
-
+            <div class="bg-white p-4 rounded-xl shadow mb-6"><h2 class="text-sm font-bold mb-2 text-gray-700">Grafik Penjualan Bulanan</h2><canvas id="grafikOmset" width="400" height="250"></canvas></div>
             <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
-            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-red-400"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><p class="text-xs text-gray-500 mb-2 border-b pb-2">Aroma underperforming (paling sedikit terjual).</p><div id="daftar-aroma-bawah" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-red-400"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><p class="text-xs text-gray-500 mb-2 border-b pb-2">Aroma underperforming.</p><div id="daftar-aroma-bawah" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
         </div>
 
         <div id="page-restock" class="p-4 max-w-md mx-auto hidden">
             <div class="bg-red-50 p-4 rounded-xl shadow border-t-4 border-red-600 mb-6">
                 <h2 class="font-bold text-red-700 mb-1 text-md">🚨 Peringatan Restock</h2>
-                <p class="text-xs text-red-600 mb-4 border-b border-red-200 pb-2">Item di bawah ini sudah menyentuh batas kritis dan perlu segera dibeli agar pesanan tidak terhambat.</p>
-                
-                <h3 class="text-xs font-bold text-gray-700 mb-2">💧 Bibit Parfum (< 50 ml)</h3>
-                <div id="restock-bibit" class="space-y-2 mb-4"></div>
-
-                <h3 class="text-xs font-bold text-gray-700 mb-2">🧴 Bahan Baku & Botol (Menipis)</h3>
-                <div id="restock-bahan" class="space-y-2"></div>
+                <p class="text-xs text-red-600 mb-4 border-b border-red-200 pb-2">Item di bawah ini sudah menyentuh batas kritis.</p>
+                <h3 class="text-xs font-bold text-gray-700 mb-2">💧 Bibit Parfum (< 50 ml)</h3><div id="restock-bibit" class="space-y-2 mb-4"></div>
+                <h3 class="text-xs font-bold text-gray-700 mb-2">🧴 Bahan Baku & Botol (Menipis)</h3><div id="restock-bahan" class="space-y-2"></div>
             </div>
         </div>
 
@@ -197,20 +176,14 @@
             globalBibit = [];
             snap.forEach(doc => {
                 const data = doc.data();
+                data.doc_id = doc.id; // Menyimpan ID dokumen asli
                 globalBibit.push(data);
                 const hrg = data.harga_ml ? `Modal: Rp${data.harga_ml}/ml` : 'Modal: Belum diatur';
                 wadah.innerHTML += `
                     <div class="bg-white p-3 rounded border flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-sm text-gray-700">💧 ${data.nama}</p>
-                            <p class="text-[10px] text-gray-500">${hrg}</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <span class="${data.sisa_ml < 50 ? 'text-red-600 font-bold' : 'text-green-600'} text-sm">${data.sisa_ml} ml</span>
-                            <button onclick="hapusDokumen('stok', '${doc.id}')" class="text-xs text-red-500">🗑️</button>
-                        </div>
-                    </div>
-                `;
+                        <div><p class="font-bold text-sm text-gray-700">💧 ${data.nama}</p><p class="text-[10px] text-gray-500">${hrg}</p></div>
+                        <div class="flex items-center gap-3"><span class="${data.sisa_ml < 50 ? 'text-red-600 font-bold' : 'text-green-600'} text-sm">${data.sisa_ml} ml</span><button onclick="hapusDokumen('stok', '${doc.id}')" class="text-xs text-red-500">🗑️</button></div>
+                    </div>`;
             });
             cekRestock();
         });
@@ -232,50 +205,50 @@
             globalBahan = [];
             snap.forEach(doc => {
                 const data = doc.data();
+                data.doc_id = doc.id; // Menyimpan ID dokumen asli dengan aman
                 globalBahan.push(data);
                 const unit = doc.id.includes('botol') ? 'pcs' : 'ml';
                 wadah.innerHTML += `
                     <div class="bg-blue-50 p-2 rounded border border-blue-100 flex justify-between items-center">
-                        <div>
-                            <p class="font-bold text-xs text-gray-700">${data.nama}</p>
-                            <p class="text-[10px] text-gray-500">Modal: Rp${data.harga_satuan}/${unit}</p>
-                        </div>
+                        <div><p class="font-bold text-xs text-gray-700">${data.nama}</p><p class="text-[10px] text-gray-500">Modal: Rp${data.harga_satuan}/${unit}</p></div>
                         <span class="${data.sisa < 20 ? 'text-red-600 font-bold' : 'text-blue-700'} text-sm font-bold">${data.sisa} ${unit}</span>
-                    </div>
-                `;
+                    </div>`;
             });
             cekRestock();
         });
 
         function hapusDokumen(koleksi, id) { if(confirm("Hapus data ini?")) db.collection(koleksi).doc(id).delete(); }
 
-        // --- LOGIKA REKOMENDASI RESTOCK ---
+        // --- LOGIKA REKOMENDASI RESTOCK (ANTI-CRASH) ---
         function cekRestock() {
             const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = '';
             const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = '';
             
             let adaBibitKritis = false;
             globalBibit.forEach(b => {
-                if (b.sisa_ml <= 50) {
+                const sisa = Number(b.sisa_ml) || 0;
+                if (sisa <= 50) {
                     adaBibitKritis = true;
-                    wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`;
+                    wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${b.nama || 'Tanpa Nama'}</span><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">Sisa: ${sisa} ml</span></div>`;
                 }
             });
             if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit masih aman.</p>';
 
             let adaBahanKritis = false;
             globalBahan.forEach(b => {
-                let limit = b.id.includes('botol') ? 20 : 100;
-                let unit = b.id.includes('botol') ? 'pcs' : 'ml';
-                if (b.sisa <= limit) {
+                const id = b.doc_id || '';
+                const sisa = Number(b.sisa) || 0;
+                let limit = id.includes('botol') ? 20 : 100;
+                let unit = id.includes('botol') ? 'pcs' : 'ml';
+                if (sisa <= limit) {
                     adaBahanKritis = true;
-                    wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">Sisa: ${b.sisa} ${unit}</span></div>`;
+                    wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between items-center"><span class="text-sm font-bold text-gray-800">${b.nama || id}</span><span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`;
                 }
             });
             if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua botol & absolute masih aman.</p>';
         }
 
-        // --- MANAJEMEN PESANAN & DASHBOARD ---
+        // --- MANAJEMEN PESANAN & DASHBOARD (KOMPATIBEL DENGAN DATA LAMA) ---
         db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
             const containerPesanan = document.getElementById('daftar-pesanan'); containerPesanan.innerHTML = ''; 
             
@@ -288,9 +261,13 @@
             snapshot.forEach((doc) => {
                 const data = doc.data(); const id = doc.id; 
                 let statusColor = data.status==="Selesai" ? "bg-green-100 text-green-700" : (data.status==="Ditolak" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700");
-                const itemsJSON = data.items ? encodeURIComponent(JSON.stringify(data.items)) : '[]';
-
-                const pesananHPP = data.total_hpp || 0;
+                
+                // Konversi data lama agar tidak error
+                const itemsToProcess = Array.isArray(data.items) ? data.items : [{ 
+                    qty: 1, aroma: data.aroma || "Unknown", kelas: data.kelas || "", ukuran: data.ukuran || "", hpp_total: data.total_hpp || 0 
+                }];
+                const itemsJSON = encodeURIComponent(JSON.stringify(itemsToProcess));
+                const pesananHPP = Number(data.total_hpp) || 0;
 
                 let actionButtons = data.status !== "Selesai" && data.status !== "Ditolak" ? `
                     <div class="flex gap-2 mt-4 border-t pt-3">
@@ -298,30 +275,90 @@
                         <button onclick="tolakPesanan('${id}', '${itemsJSON}')" class="flex-1 bg-red-100 text-red-700 font-bold text-sm py-2 rounded border border-red-200">Tolak</button>
                     </div>` : '';
 
-                let detailHTML = data.items ? data.items.map(i => `<div class="text-sm border-b pb-1 mb-1"><p><b>${i.qty}x</b> ${i.aroma} <span class="text-xs text-gray-500">(${i.kelas} ${i.ukuran}ml)</span></p><p class="text-[10px] text-gray-400">HPP Item: Rp ${(i.hpp_total || 0).toLocaleString('id-ID')}</p></div>`).join('') : `<div class="text-sm border-b pb-1 mb-1"><b>1x</b> ${data.aroma}</div>`;
+                let detailHTML = itemsToProcess.map(i => `<div class="text-sm border-b pb-1 mb-1"><p><b>${i.qty}x</b> ${i.aroma} <span class="text-xs text-gray-500">(${i.kelas} ${i.ukuran}ml)</span></p><p class="text-[10px] text-gray-400">HPP Item: Rp ${(Number(i.hpp_total) || 0).toLocaleString('id-ID')}</p></div>`).join('');
 
                 containerPesanan.innerHTML += `
                     <div class="bg-white p-4 rounded-xl shadow border-l-4 border-[#a38d58]">
-                        <div class="flex justify-between items-start mb-3 border-b pb-2"><h3 class="font-bold text-gray-800">${data.nama}</h3><span class="text-xs font-bold px-2 py-1 rounded ${statusColor}">${data.status}</span></div>
+                        <div class="flex justify-between items-start mb-3 border-b pb-2"><h3 class="font-bold text-gray-800">${data.nama || 'Tanpa Nama'}</h3><span class="text-xs font-bold px-2 py-1 rounded ${statusColor}">${data.status}</span></div>
                         <div class="bg-gray-50 p-2 rounded mb-3 space-y-1"><p class="text-xs font-bold text-gray-400 mb-1">RINCIAN:</p>${detailHTML}</div>
                         <div class="flex justify-between items-end">
-                            <div><p class="text-[10px] text-gray-500">Modal (HPP): Rp ${pesananHPP.toLocaleString('id-ID')}</p><p class="text-[10px] font-bold text-green-600">Laba: Rp ${(data.total - pesananHPP).toLocaleString('id-ID')}</p></div>
-                            <div class="text-right"><span class="text-xs text-gray-500 font-medium block">Bayar:</span><span class="text-lg font-bold text-[#a38d58]">Rp ${data.total.toLocaleString('id-ID')}</span></div>
+                            <div><p class="text-[10px] text-gray-500">Modal (HPP): Rp ${pesananHPP.toLocaleString('id-ID')}</p><p class="text-[10px] font-bold text-green-600">Laba: Rp ${((Number(data.total)||0) - pesananHPP).toLocaleString('id-ID')}</p></div>
+                            <div class="text-right"><span class="text-xs text-gray-500 font-medium block">Bayar:</span><span class="text-lg font-bold text-[#a38d58]">Rp ${(Number(data.total)||0).toLocaleString('id-ID')}</span></div>
                         </div>
                         ${data.status==="Ditolak"&&data.alasan ? `<div class="mt-2 bg-red-50 p-2 rounded"><p class="text-xs text-red-600">Alasan: ${data.alasan}</p></div>`:''}
                         ${actionButtons}
                     </div>`;
 
-                // Kalkulasi Laporan Keuangan, Grafik, dan Top/Bottom Aroma
+                // Kalkulasi Cerdas (Aman untuk data lama)
                 if (data.status === "Selesai") {
                     const bln = data.waktu ? data.waktu.toDate().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : bulanSekarang;
-                    
-                    // Rekap Bulanan untuk Grafik
                     if (!rekapBulanan[bln]) rekapBulanan[bln] = 0;
-                    rekapBulanan[bln] += data.total;
+                    rekapBulanan[bln] += (Number(data.total) || 0);
 
-                    // Hitungan Bulan Ini untuk Angka Atas
                     if (bln === bulanSekarang) {
-                        totalOmset += data.total;
+                        totalOmset += (Number(data.total) || 0);
                         totalHPP += pesananHPP;
                     }
+                    
+                    itemsToProcess.forEach(i => {
+                        if (bln === bulanSekarang) totalQty += (Number(i.qty) || 1);
+                        const a = String(i.aroma || 'UNKNOWN').trim().toUpperCase(); 
+                        rekapAroma[a] = (rekapAroma[a] || 0) + (Number(i.qty) || 1);
+                    });
+                }
+            });
+
+            document.getElementById('dash-omset').innerText = 'Rp ' + totalOmset.toLocaleString('id-ID'); 
+            document.getElementById('dash-hpp').innerText = 'Rp ' + totalHPP.toLocaleString('id-ID'); 
+            document.getElementById('dash-laba').innerText = 'Rp ' + (totalOmset - totalHPP).toLocaleString('id-ID'); 
+            document.getElementById('dash-qty').innerText = totalQty;
+            
+            renderGrafik(rekapBulanan); renderTopAroma(rekapAroma); renderBottomAroma(rekapAroma);
+        });
+
+        function selesaikanPesanan(id) { if(confirm("Tandai selesai?")) db.collection("pesanan").doc(id).update({ status: "Selesai" }); }
+        
+        function tolakPesanan(id, itemsJSON) {
+            const alasan = prompt("Alasan menolak pesanan:");
+            if (alasan && alasan.trim() !== "") {
+                const items = JSON.parse(decodeURIComponent(itemsJSON));
+                db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: alasan.trim() })
+                .then(() => {
+                    items.forEach(item => {
+                        if (item.bibit) db.collection("stok").doc(item.aroma).update({ sisa_ml: firebase.firestore.FieldValue.increment(item.bibit) });
+                        if (item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(item.qty) });
+                        if (item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(item.absolute_ml) });
+                    });
+                    alert("Pesanan ditolak dan komponen stok (jika ada) dikembalikan!");
+                }).catch(e => alert(e));
+            }
+        }
+
+        // --- FUNGSI RENDER GRAFIK & AROMA ---
+        function renderGrafik(d) { 
+            const ctx = document.getElementById('grafikOmset').getContext('2d'); 
+            const l = Object.keys(d).reverse(), v = Object.values(d).reverse(); 
+            if(chartInstance) chartInstance.destroy(); 
+            chartInstance = new Chart(ctx, { 
+                type: 'bar', 
+                data: { labels: l.length ? l : ['Belum ada'], datasets: [{ label: 'Omset (Rp)', data: v.length ? v : [0], backgroundColor: '#a38d58', borderRadius: 4 }] },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            }); 
+        }
+
+        function renderTopAroma(d) { 
+            const c = document.getElementById('daftar-aroma'); if(!c) return; c.innerHTML = ''; 
+            const sorted = Object.entries(d).sort((a,b) => b[1]-a[1]).slice(0,20);
+            if(sorted.length === 0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Belum ada data penjualan.</p>';
+            sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b border-gray-100 pb-2 pt-1 text-sm"><span class="font-medium text-gray-700">${x<3?['🥇','🥈','🥉'][x]:x+1+'.'} ${i[0]}</span><span class="bg-gold text-white px-2 rounded-full text-xs font-bold">${i[1]}</span></div>` }); 
+        }
+
+        function renderBottomAroma(d) { 
+            const c = document.getElementById('daftar-aroma-bawah'); if(!c) return; c.innerHTML = ''; 
+            const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20);
+            if(sorted.length === 0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Belum ada data penjualan.</p>';
+            sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b border-gray-100 pb-2 pt-1 text-sm"><span class="font-medium text-gray-700">${x===0?'🔻':x+1+'.'} ${i[0]}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs font-bold">${i[1]}</span></div>` }); 
+        }
+    </script>
+</body>
+</html>
