@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin - MI Perfume</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <style>
+        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
+        .text-gold { color: #a38d58; }
+        .bg-gold { background-color: #a38d58; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 pb-20">
+
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 px-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
+            <h1 class="text-2xl font-bold text-center text-[#a38d58] mb-4">MI Perfume</h1>
+            <h2 class="text-center text-gray-600 mb-6 font-medium">Login Admin Area</h2>
+            <form id="form-login" onsubmit="prosesLogin(event)">
+                <div class="mb-4"><input type="text" id="input-user" required class="w-full border p-3 rounded-lg outline-none" placeholder="Username"></div>
+                <div class="mb-6 relative w-full">
+                    <input type="password" id="input-pass" required class="w-full border p-3 rounded-lg outline-none pr-14" placeholder="Password">
+                    <div class="absolute inset-y-0 right-0 flex items-center"><button type="button" onclick="togglePassword()" class="p-3 text-xl">👁️</button></div>
+                </div>
+                <button type="submit" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95">Masuk</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="admin-content" class="hidden">
+        <header class="bg-gray-800 text-white p-4 sticky top-0 z-20 flex justify-between items-center">
+            <h1 class="text-lg font-bold text-[#a38d58]">MI Perfume Admin</h1>
+            <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
+        </header>
+
+        <div class="flex bg-white shadow-sm mb-4 sticky top-[60px] z-10">
+            <button id="tab-pesanan" class="flex-1 py-3 text-center tab-active text-xs font-bold" onclick="switchTab('pesanan')">Pesanan</button>
+            <button id="tab-stok" class="flex-1 py-3 text-center text-gray-500 text-xs font-bold" onclick="switchTab('stok')">Stok Bibit</button>
+            <button id="tab-dashboard" class="flex-1 py-3 text-center text-gray-500 text-xs font-bold" onclick="switchTab('dashboard')">Analitik</button>
+        </div>
+
+        <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4"><div id="daftar-pesanan"></div></div>
+
+        <div id="page-stok" class="p-4 max-w-md mx-auto hidden">
+            <div class="bg-white p-4 rounded-xl shadow mb-4 border-t-4 border-[#a38d58]">
+                <h2 class="font-bold text-gray-700 mb-3 text-sm">➕ Update / Tambah Bibit</h2>
+                <form onsubmit="simpanStok(event)" class="flex gap-2 items-end">
+                    <div class="flex-1">
+                        <label class="block text-xs text-gray-500 mb-1">Nama Aroma</label>
+                        <input type="text" id="stok-nama" required class="w-full border p-2 rounded text-sm uppercase" placeholder="Misal: BACCARAT">
+                    </div>
+                    <div class="w-24">
+                        <label class="block text-xs text-gray-500 mb-1">Bibit (ml)</label>
+                        <input type="number" id="stok-ml" required min="0" class="w-full border p-2 rounded text-sm text-center">
+                    </div>
+                    <button type="submit" class="bg-gray-800 text-white px-4 py-2 rounded text-sm font-bold shadow active:scale-95">Simpan</button>
+                </form>
+            </div>
+            <div id="daftar-stok" class="space-y-2"></div>
+        </div>
+
+        <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
+            <div class="grid grid-cols-2 gap-3 mb-6">
+                <div class="bg-white p-4 rounded-xl shadow border-t-4 border-[#a38d58]"><p class="text-xs text-gray-500">Omset</p><p id="dash-omset" class="text-lg font-bold text-gold">Rp 0</p></div>
+                <div class="bg-white p-4 rounded-xl shadow border-t-4 border-[#a38d58]"><p class="text-xs text-gray-500">Terjual</p><p id="dash-qty" class="text-2xl font-bold">0</p></div>
+            </div>
+            <div class="bg-white p-4 rounded-xl shadow mb-6"><canvas id="grafikOmset" width="400" height="250"></canvas></div>
+            <div class="bg-white p-4 rounded-xl shadow mb-6"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2"></div></div>
+            <div class="bg-white p-4 rounded-xl shadow"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><div id="daftar-aroma-bawah" class="space-y-2"></div></div>
+        </div>
+    </div>
+
+    <script>
+        const USERNAME_ADMIN = "admin"; const PASSWORD_ADMIN = "miperfume123";
+        function togglePassword() { const p = document.getElementById('input-pass'), e = document.getElementById('eye-icon'); p.type = p.type === 'password' ? 'text' : 'password'; e.innerText = p.type === 'password' ? '👁️' : '🙈'; }
+        if (sessionStorage.getItem("admin_logged_in") === "true") { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('admin-content').classList.remove('hidden'); }
+        function prosesLogin(e) { e.preventDefault(); if (document.getElementById('input-user').value.toLowerCase().trim() === USERNAME_ADMIN && document.getElementById('input-pass').value.trim() === PASSWORD_ADMIN) { sessionStorage.setItem("admin_logged_in", "true"); document.getElementById('login-screen').classList.add('hidden'); document.getElementById('admin-content').classList.remove('hidden'); } else alert("❌ Salah!"); }
+        function logoutAdmin() { if(confirm("Keluar?")) { sessionStorage.removeItem("admin_logged_in"); location.reload(); } }
+        function switchTab(t) { 
+            ['pesanan','stok','dashboard'].forEach(id => {
+                document.getElementById('page-'+id).classList.add('hidden');
+                document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500');
+            });
+            document.getElementById('page-'+t).classList.remove('hidden');
+            document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
+        }
+    </script>
+
+    <script>
+        const firebaseConfig = {
+  apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
+  authDomain: "mi-perfume-1989.firebaseapp.com",
+  databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "mi-perfume-1989",
+  storageBucket: "mi-perfume-1989.firebasestorage.app",
+  messagingSenderId: "894897183896",
+  appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
+  measurementId: "G-H2KG1X9KVN"
+};
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+        let chartInstance = null;
+
+        // --- MANAJEMEN STOK ---
+        function simpanStok(e) {
+            e.preventDefault();
+            const nama = document.getElementById('stok-nama').value.trim().toUpperCase();
+            const ml = parseInt(document.getElementById('stok-ml').value);
+            db.collection("stok").doc(nama).set({ nama: nama, sisa_ml: ml })
+            .then(() => { document.getElementById('stok-nama').value = ''; document.getElementById('stok-ml').value = ''; alert("Stok berhasil diupdate!"); })
+            .catch(err => alert("Error: " + err));
+        }
+
+        db.collection("stok").orderBy("nama").onSnapshot(snap => {
+            const wadah = document.getElementById('daftar-stok'); wadah.innerHTML = '';
+            snap.forEach(doc => {
+                const data = doc.data();
+                wadah.innerHTML += `
+                    <div class="bg-white p-3 rounded shadow-sm border flex justify-between items-center">
+                        <span class="font-bold text-sm text-gray-700">${data.nama}</span>
+                        <div class="flex items-center gap-4">
+                            <span class="${data.sisa_ml < 50 ? 'text-red-600 font-bold' : 'text-green-600'} text-sm">${data.sisa_ml} ml</span>
+                            <button onclick="hapusStok('${doc.id}')" class="text-xs text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50">Hapus</button>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        function hapusStok(id) { if(confirm("Hapus aroma ini dari daftar stok?")) db.collection("stok").doc(id).delete(); }
+
+        // --- MANAJEMEN PESANAN ---
+        db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+            const containerPesanan = document.getElementById('daftar-pesanan'); containerPesanan.innerHTML = ''; 
+            let totalOmsetBulanIni = 0, totalQtyBulanIni = 0; const rekapBulanan = {}, rekapAroma = {};   
+            const bulanSekarang = new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' });
+
+            snapshot.forEach((doc) => {
+                const data = doc.data(); const id = doc.id; 
+                let statusColor = data.status==="Selesai" ? "bg-green-100 text-green-700" : (data.status==="Ditolak" ? "bg-red-100 text-red-700" : "bg-yellow-100 text-yellow-700");
+                
+                // Siapkan data items sebagai string JSON agar bisa diproses saat menolak pesanan
+                const itemsJSON = data.items ? encodeURIComponent(JSON.stringify(data.items)) : '[]';
+
+                let actionButtons = data.status !== "Selesai" && data.status !== "Ditolak" ? `
+                    <div class="flex gap-2 mt-4 border-t pt-3">
+                        <button onclick="selesaikanPesanan('${id}')" class="flex-1 bg-gray-800 text-white text-sm py-2 rounded shadow">Selesaikan</button>
+                        <button onclick="tolakPesanan('${id}', '${itemsJSON}')" class="flex-1 bg-red-100 text-red-700 font-bold text-sm py-2 rounded border border-red-200">Tolak</button>
+                    </div>` : '';
+
+                let detailHTML = data.items ? data.items.map(i => `<div class="flex justify-between text-sm border-b pb-1 mb-1"><span><b>${i.qty}x</b> ${i.aroma}</span><span class="text-xs text-gray-500">${i.kelas} ${i.ukuran}ml (Butuh ${i.bibit}ml)</span></div>`).join('') : `<div class="flex justify-between text-sm border-b pb-1 mb-1"><span><b>1x</b> ${data.aroma}</span><span class="text-xs text-gray-500">${data.kelas} ${data.ukuran}ml</span></div>`;
+
+                containerPesanan.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-[#a38d58]">
+                        <div class="flex justify-between items-start mb-3 border-b pb-2"><h3 class="font-bold text-gray-800">${data.nama}</h3><span class="text-xs font-bold px-2 py-1 rounded ${statusColor}">${data.status}</span></div>
+                        <div class="bg-gray-50 p-2 rounded mb-3 space-y-1"><p class="text-xs font-bold text-gray-400 mb-1">RINCIAN:</p>${detailHTML}</div>
+                        <div class="flex justify-between items-end mt-2"><span class="text-sm font-medium">Total:</span><span class="text-lg font-bold text-[#a38d58]">Rp ${data.total.toLocaleString('id-ID')}</span></div>
+                        ${data.status==="Ditolak"&&data.alasan ? `<div class="mt-2 bg-red-50 p-2 rounded"><p class="text-xs text-red-600">Alasan: ${data.alasan}</p></div>`:''}
+                        ${actionButtons}
+                    </div>`;
+
+                // Kalkulasi Dashboard
+                if (data.status === "Selesai") {
+                    const bln = data.waktu ? data.waktu.toDate().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : bulanSekarang;
+                    if (bln === bulanSekarang) totalOmsetBulanIni += data.total;
+                    rekapBulanan[bln] = (rekapBulanan[bln] || 0) + data.total;
+                    (data.items || [{qty:1, aroma:data.aroma}]).forEach(i => {
+                        if (bln === bulanSekarang) totalQtyBulanIni += i.qty;
+                        const a = i.aroma.trim().toUpperCase(); rekapAroma[a] = (rekapAroma[a] || 0) + i.qty;
+                    });
+                }
+            });
+            document.getElementById('dash-omset').innerText = 'Rp ' + totalOmsetBulanIni.toLocaleString('id-ID'); document.getElementById('dash-qty').innerText = totalQtyBulanIni;
+            renderGrafik(rekapBulanan); renderTopAroma(rekapAroma); renderBottomAroma(rekapAroma);
+        });
+
+        // FUNGSI AKSI
+        function selesaikanPesanan(id) { if(confirm("Tandai selesai?")) db.collection("pesanan").doc(id).update({ status: "Selesai" }); }
+        
+        // PENTING: Fungsi Tolak dan Kembalikan Stok (Refund)
+        function tolakPesanan(id, itemsJSON) {
+            const alasan = prompt("Alasan menolak pesanan:");
+            if (alasan && alasan.trim() !== "") {
+                const items = JSON.parse(decodeURIComponent(itemsJSON));
+                
+                // 1. Ubah status pesanan
+                db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: alasan.trim() })
+                .then(() => {
+                    // 2. Kembalikan (tambahkan ulang) stok bibit ke database
+                    items.forEach(item => {
+                        if (item.bibit) {
+                            db.collection("stok").doc(item.aroma).update({
+                                sisa_ml: firebase.firestore.FieldValue.increment(item.bibit)
+                            });
+                        }
+                    });
+                    alert("Pesanan ditolak dan Stok Bibit telah otomatis dikembalikan!");
+                }).catch(e => alert(e));
+            }
+        }
+
+        // Fungsi Render Dashboard Singkat
+        function renderGrafik(d) { const ctx=document.getElementById('grafikOmset').getContext('2d'); const l=Object.keys(d).reverse(), v=Object.values(d).reverse(); if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type:'bar', data:{labels:l.length?l:[''],datasets:[{label:'Omset',data:v.length?v:[0],backgroundColor:'#a38d58',borderRadius:4}]} }); }
+        function renderTopAroma(d) { const c=document.getElementById('daftar-aroma'); c.innerHTML=''; Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,20).forEach((i,x)=>{ c.innerHTML+=`<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x<3?['🥇','🥈','🥉'][x]:x+1+'.'} ${i[0]}</span><span class="bg-gold text-white px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
+        function renderBottomAroma(d) { const c=document.getElementById('daftar-aroma-bawah'); c.innerHTML=''; Object.entries(d).sort((a,b)=>a[1]-b[1]).slice(0,20).forEach((i,x)=>{ c.innerHTML+=`<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${i[0]}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
+    </script>
+</body>
+</html>
