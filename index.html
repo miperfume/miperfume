@@ -113,7 +113,8 @@
         const db = firebase.firestore();
 
         let keranjang = []; 
-        let dataStok = {};
+        let dataStok = {};  // Untuk Bibit
+        let dataBahan = {}; // Untuk Botol & Absolute
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
 
         function switchTab(t) { 
@@ -125,7 +126,17 @@
             document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
         }
 
-        // --- LOGIKA STOK TANPA ANGKA ---
+        // --- MENGAMBIL DATA BAHAN BAKU (Botol & Absolute) ---
+        db.collection("bahan").onSnapshot(snap => {
+            snap.forEach(doc => {
+                dataBahan[doc.id] = {
+                    sisa: doc.data().sisa || 0,
+                    harga_satuan: doc.data().harga_satuan || 0
+                };
+            });
+        });
+
+        // --- MENGAMBIL DATA STOK BIBIT ---
         db.collection("stok").orderBy("nama").onSnapshot(snap => {
             const selectAroma = document.getElementById('aroma');
             const oldValue = selectAroma.value;
@@ -136,11 +147,11 @@
             snap.forEach(doc => {
                 const data = doc.data();
                 dataStok[data.nama] = {
-                    sisa_ml: data.sisa_ml,
+                    sisa_ml: data.sisa_ml || 0,
+                    harga_ml: data.harga_ml || 0,
                     kelas_tersedia: data.kelas_tersedia || ["Standar", "Premium", "Super Premium", "Diamond"]
                 };
                 
-                // Jika stok di bawah 17.5ml dianggap Kosong
                 if (data.sisa_ml >= 17.5) {
                     selectAroma.innerHTML += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
                 } else {
@@ -178,21 +189,50 @@
             return 0;
         }
 
+        // --- VALIDASI 3 LAPIS SEBELUM MASUK KERANJANG ---
         function tambahKeKeranjang(e) {
             e.preventDefault();
             const aroma = document.getElementById('aroma').value;
+            const kelas = document.getElementById('kelas').value;
             const ukuran = parseInt(document.getElementById('ukuran').value);
             const qty = parseInt(document.getElementById('qty').value);
+            
+            // 1. Kebutuhan Komponen
             const butuhBibit = (ukuran * 0.5) * qty;
-            const bibitDiKeranjang = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0);
+            const idBotol = 'botol_' + ukuran;
+            const butuhBotol = qty; // 1 botol per 1 qty
+            const idAbs = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar';
+            const butuhAbs = (ukuran * 0.5) * qty;
 
-            if ((butuhBibit + bibitDiKeranjang) > dataStok[aroma].sisa_ml) {
-                alert(`❌ MAAF, STOK TIDAK CUKUP!\nSisa bahan untuk aroma ini tidak mencukupi untuk jumlah yang Anda minta.`);
-                return;
+            // 2. Cek apakah ada di keranjang sebelumnya (Akumulasi)
+            const cartBibit = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0);
+            const cartBotol = keranjang.filter(i => i.id_botol === idBotol).reduce((sum, i) => sum + i.qty, 0);
+            const cartAbs = keranjang.filter(i => i.id_absolute === idAbs).reduce((sum, i) => sum + i.absolute_ml, 0);
+
+            // 3. Validasi dengan Sisa Database
+            if ((butuhBibit + cartBibit) > (dataStok[aroma]?.sisa_ml || 0)) {
+                return alert(`❌ MAAF, Bibit untuk aroma ${aroma} tidak mencukupi untuk jumlah tersebut.`);
+            }
+            if ((butuhBotol + cartBotol) > (dataBahan[idBotol]?.sisa || 0)) {
+                return alert(`❌ MAAF, Stok Botol ${ukuran}ml saat ini sedang kosong/kurang.`);
+            }
+            if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0)) {
+                return alert(`❌ MAAF, Stok Absolute/Campuran untuk kelas ini sedang kosong/kurang.`);
             }
 
-            keranjang.push({ aroma: aroma, kelas: document.getElementById('kelas').value, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit });
+            // 4. Kalkulasi HPP (Rahasia Admin)
+            const hppBibit = butuhBibit * (dataStok[aroma]?.harga_ml || 0);
+            const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0);
+            const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0);
+            const totalHppItem = hppBibit + hppBotol + hppAbs;
+
+            keranjang.push({ 
+                aroma: aroma, kelas: kelas, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), 
+                bibit: butuhBibit, id_botol: idBotol, id_absolute: idAbs, absolute_ml: butuhAbs,
+                hpp_total: totalHppItem // Disimpan diam-diam
+            });
             renderKeranjang();
+            
             document.getElementById('qty').value = 1; 
             document.getElementById('subtotal-item').innerText = 'Rp 0';
             document.getElementById('kelas').value = "";
@@ -225,14 +265,22 @@
 
             const batch = db.batch(); 
             const refPesanan = db.collection("pesanan").doc();
+            
+            // Hitung Grand Total Modal (HPP)
+            const grandTotalHPP = keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0);
+
             batch.set(refPesanan, {
-                buyer_id: buyerId, nama: nama, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0),
+                buyer_id: buyerId, nama: nama, items: keranjang, 
+                total: keranjang.reduce((s, i) => s + i.subtotal, 0),
+                total_hpp: grandTotalHPP, // Kirim ke admin
                 status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp()
             });
 
+            // Potong 3 Stok Sekaligus per item
             keranjang.forEach(item => {
-                const refStok = db.collection("stok").doc(item.aroma);
-                batch.update(refStok, { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) });
+                batch.update(db.collection("stok").doc(item.aroma), { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) });
+                batch.update(db.collection("bahan").doc(item.id_botol), { sisa: firebase.firestore.FieldValue.increment(-item.qty) });
+                batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
             });
 
             batch.commit().then(() => {
@@ -244,6 +292,7 @@
             });
         }
 
+        // Tampilan Riwayat Pembeli
         db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => {
             const container = document.getElementById('daftar-riwayat'); container.innerHTML = '';
             if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>';
