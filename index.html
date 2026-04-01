@@ -113,8 +113,8 @@
         const db = firebase.firestore();
 
         let keranjang = []; 
-        let dataStok = {};  // Untuk Bibit
-        let dataBahan = {}; // Untuk Botol & Absolute
+        let dataStok = {};  
+        let dataBahan = {}; 
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
 
         function switchTab(t) { 
@@ -164,24 +164,43 @@
             }
         });
 
+        // --- UPDATE DROPDOWN KELAS ---
         function updateKelasOptions() {
             const aroma = document.getElementById('aroma').value;
             const selectKelas = document.getElementById('kelas');
             selectKelas.innerHTML = '<option value="" disabled selected>Pilih Kelas...</option>';
             if (aroma && dataStok[aroma]) {
                 dataStok[aroma].kelas_tersedia.forEach(k => {
-                    selectKelas.innerHTML += `<option value="${k}">${k} (Rp ${hargaPerMl[k].toLocaleString()}/ml)</option>`;
+                    // Beri tahu pelanggan jika ada promo untuk kelas Super Premium
+                    let labelPromo = `Rp ${hargaPerMl[k].toLocaleString()}/ml`;
+                    if (k === "Super Premium") labelPromo = "Harga Khusus Promo";
+
+                    selectKelas.innerHTML += `<option value="${k}">${k} (${labelPromo})</option>`;
                 });
             }
             hitungSubTotal();
         }
 
+        // --- PERHITUNGAN HARGA (DENGAN LOGIKA DISKON SUPER PREMIUM) ---
         function hitungSubTotal() {
             const kelas = document.getElementById('kelas').value; 
             const ukuran = document.getElementById('ukuran').value; 
             const qty = document.getElementById('qty').value;
+            
             if (kelas && ukuran && qty) { 
-                const total = hargaPerMl[kelas] * parseInt(ukuran) * parseInt(qty); 
+                let hargaSatuan = hargaPerMl[kelas] * parseInt(ukuran); // Rumus Normal
+                
+                // --- INJEKSI HARGA KHUSUS SUPER PREMIUM ---
+                if (kelas === "Super Premium") {
+                    if (ukuran === "35") {
+                        hargaSatuan = 100000; // Khusus 35ml
+                    } else if (ukuran === "100") {
+                        hargaSatuan = 280000; // Khusus 100ml
+                    }
+                    // Catatan: Jika 50ml, akan tetap mengikuti rumus normal (3000 x 50 = 150.000)
+                }
+
+                const total = hargaSatuan * parseInt(qty); 
                 document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); 
                 return total; 
             }
