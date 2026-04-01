@@ -32,18 +32,14 @@
             <form id="form-item" onsubmit="tambahKeKeranjang(event)">
                 <div class="mb-3">
                     <label class="block text-xs font-medium mb-1">Aroma Parfum (Sesuai Stok)</label>
-                    <select id="aroma" required class="w-full border p-2 rounded outline-none text-sm bg-gray-50">
+                    <select id="aroma" required onchange="updateKelasOptions()" class="w-full border p-2 rounded outline-none text-sm bg-gray-50">
                         <option value="" disabled selected>Memuat ketersediaan aroma...</option>
                     </select>
                 </div>
                 <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1">Kelas Parfum</label>
+                    <label class="block text-xs font-medium mb-1">Kelas Parfum Tersedia</label>
                     <select id="kelas" required onchange="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm">
-                        <option value="" disabled selected>Pilih...</option>
-                        <option value="Standar">Standar (Rp 1.000/ml)</option>
-                        <option value="Premium">Premium (Rp 2.000/ml)</option>
-                        <option value="Super Premium">Super Premium (Rp 3.000/ml)</option>
-                        <option value="Diamond">Diamond (Rp 4.000/ml)</option>
+                        <option value="" disabled selected>Pilih aroma terlebih dahulu...</option>
                     </select>
                 </div>
                 <div class="grid grid-cols-2 gap-3 mb-4">
@@ -51,9 +47,9 @@
                         <label class="block text-xs font-medium mb-1">Ukuran Botol</label>
                         <select id="ukuran" required onchange="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm">
                             <option value="" disabled selected>Pilih...</option>
-                            <option value="35">35 ml (Butuh 17.5ml Bibit)</option>
-                            <option value="50">50 ml (Butuh 25ml Bibit)</option>
-                            <option value="100">100 ml (Butuh 50ml Bibit)</option>
+                            <option value="35">35 ml</option>
+                            <option value="50">50 ml</option>
+                            <option value="100">100 ml</option>
                         </select>
                     </div>
                     <div>
@@ -76,9 +72,7 @@
         </div>
     </div>
 
-    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden">
-        <div id="daftar-riwayat" class="space-y-3"></div>
-    </div>
+    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
 
     <script>
         let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
@@ -97,41 +91,66 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let keranjang = []; let dataStok = {};
+        let keranjang = []; 
+        let dataStok = {}; // Format baru: { "BACCARAT": { sisa_ml: 100, kelas: ["Premium", "Diamond"] } }
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
 
         function switchTab(t) { 
-            ['pesan','riwayat'].forEach(id => {
-                document.getElementById('page-'+id).classList.add('hidden');
-                document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500');
-            });
-            document.getElementById('page-'+t).classList.remove('hidden');
-            document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
+            ['pesan','riwayat'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); });
+            document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
         }
 
-        // --- SINKRONISASI STOK OTOMATIS (Mencegah Typo) ---
+        // --- SINKRONISASI STOK & KELAS OTOMATIS ---
         db.collection("stok").orderBy("nama").onSnapshot(snap => {
             const selectAroma = document.getElementById('aroma');
+            const oldValue = selectAroma.value; // Simpan pilihan sebelumnya
+            
             selectAroma.innerHTML = '<option value="" disabled selected>Pilih Aroma...</option>';
-            dataStok = {}; // Reset data lokal
+            dataStok = {}; 
             
             snap.forEach(doc => {
                 const data = doc.data();
-                dataStok[data.nama] = data.sisa_ml; // Simpan ketersediaan di memori browser
+                // Simpan sisa ML dan Array Kelas
+                dataStok[data.nama] = {
+                    sisa_ml: data.sisa_ml,
+                    kelas_tersedia: data.kelas_tersedia || ["Standar", "Premium", "Super Premium", "Diamond"] // Fallback untuk data lama
+                };
                 
-                // Hanya tampilkan jika bibit masih cukup untuk minimal ukuran terkecil (35ml butuh 17.5ml)
                 if (data.sisa_ml >= 17.5) {
                     selectAroma.innerHTML += `<option value="${data.nama}">${data.nama} (Sisa: ${data.sisa_ml} ml)</option>`;
                 }
             });
             
             if(snap.empty) selectAroma.innerHTML = '<option value="" disabled selected>Belum ada stok tersedia</option>';
+            
+            // Kembalikan pilihan jika masih tersedia
+            if(oldValue && dataStok[oldValue] && dataStok[oldValue].sisa_ml >= 17.5) {
+                selectAroma.value = oldValue;
+            } else {
+                document.getElementById('kelas').innerHTML = '<option value="" disabled selected>Pilih aroma terlebih dahulu...</option>';
+            }
         });
+
+        // --- UPDATE DROPDOWN KELAS BERDASARKAN AROMA ---
+        function updateKelasOptions() {
+            const aroma = document.getElementById('aroma').value;
+            const selectKelas = document.getElementById('kelas');
+            
+            selectKelas.innerHTML = '<option value="" disabled selected>Pilih Kelas...</option>';
+            
+            if (aroma && dataStok[aroma]) {
+                const kelasTersedia = dataStok[aroma].kelas_tersedia;
+                kelasTersedia.forEach(k => {
+                    selectKelas.innerHTML += `<option value="${k}">${k} (Rp ${hargaPerMl[k].toLocaleString()}/ml)</option>`;
+                });
+            }
+            hitungSubTotal(); // Reset subtotal saat ganti aroma
+        }
 
         function hitungSubTotal() {
             const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = document.getElementById('qty').value;
             if (kelas && ukuran && qty) { const total = hargaPerMl[kelas] * parseInt(ukuran) * parseInt(qty); document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); return total; }
-            return 0;
+            document.getElementById('subtotal-item').innerText = 'Rp 0'; return 0;
         }
 
         // --- VALIDASI STOK SEBELUM MASUK KERANJANG ---
@@ -140,23 +159,24 @@
             const aroma = document.getElementById('aroma').value;
             const ukuran = parseInt(document.getElementById('ukuran').value);
             const qty = parseInt(document.getElementById('qty').value);
-            
-            // Rumus: Kebutuhan bibit = (Ukuran botol * 50%) * Jumlah botol
             const butuhBibit = (ukuran * 0.5) * qty;
             
-            // Hitung bibit yang sudah ada di keranjang untuk aroma yang sama
             const bibitDiKeranjang = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0);
             const totalDibutuhkan = butuhBibit + bibitDiKeranjang;
 
-            // CEK STOK DATABASE
-            if (totalDibutuhkan > dataStok[aroma]) {
-                alert(`❌ STOK TIDAK CUKUP!\n\nAnda membutuhkan total ${totalDibutuhkan} ml bibit untuk pesanan ini, tetapi sisa bibit ${aroma} hanya ${dataStok[aroma]} ml.\n\nKurangi Qty atau pilih ukuran botol lebih kecil.`);
-                return; // Batalkan masuk keranjang
+            if (totalDibutuhkan > dataStok[aroma].sisa_ml) {
+                alert(`❌ STOK TIDAK CUKUP!\n\nAnda membutuhkan total ${totalDibutuhkan} ml bibit untuk pesanan ini, tetapi sisa bibit ${aroma} hanya ${dataStok[aroma].sisa_ml} ml.\n\nKurangi Qty atau pilih ukuran botol lebih kecil.`);
+                return;
             }
 
             keranjang.push({ aroma: aroma, kelas: document.getElementById('kelas').value, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit });
             renderKeranjang();
-            document.getElementById('form-item').reset(); document.getElementById('qty').value = 1; document.getElementById('subtotal-item').innerText = 'Rp 0';
+            
+            // Reset form item tapi biarkan pilihan aroma
+            document.getElementById('qty').value = 1; 
+            document.getElementById('subtotal-item').innerText = 'Rp 0';
+            document.getElementById('kelas').value = "";
+            document.getElementById('ukuran').value = "";
         }
 
         function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
@@ -173,29 +193,22 @@
             document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq;
         }
 
-        // --- KIRIM PESANAN & POTONG STOK OTOMATIS ---
         function kirimPesananAkhir() {
             const nama = document.getElementById('nama').value.trim(); if (!nama) return alert("Isi Nama Pemesan!");
             const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true;
 
-            const batch = db.batch(); // Menggunakan sistem Batch agar aman (Semua sukses atau tidak sama sekali)
-
-            // 1. Siapkan data Pesanan
+            const batch = db.batch(); 
             const refPesanan = db.collection("pesanan").doc();
             batch.set(refPesanan, {
                 buyer_id: buyerId, nama: nama, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0),
                 status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp()
             });
 
-            // 2. Siapkan perintah Potong Stok Bibit
             keranjang.forEach(item => {
                 const refStok = db.collection("stok").doc(item.aroma);
-                batch.update(refStok, { 
-                    sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) // Potong otomatis (angka minus)
-                });
+                batch.update(refStok, { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) });
             });
 
-            // 3. Eksekusi bersamaan
             batch.commit().then(() => {
                 alert("✅ Pesanan Berhasil! Stok bibit telah otomatis direservasi.");
                 keranjang = []; renderKeranjang(); document.getElementById('nama').value = '';
@@ -205,7 +218,6 @@
             });
         }
 
-        // Render Riwayat
         db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => {
             const container = document.getElementById('daftar-riwayat'); container.innerHTML = '';
             if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5">Belum ada riwayat</p>';
