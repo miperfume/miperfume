@@ -70,6 +70,18 @@
 
     <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
 
+    <div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden flex-col items-center justify-center p-4 transition-opacity backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
+            <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none">&times;</button>
+            
+            <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
+            <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600" onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
+            
+            <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
+            <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
+        </div>
+    </div>
+
     <script>
         function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
         setTimeout(closeSplash, 5000); 
@@ -78,15 +90,15 @@
 
         // --- MASUKKAN KODE FIREBASE DI SINI ---
         const firebaseConfig = {
-  apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
-  authDomain: "mi-perfume-1989.firebaseapp.com",
-  databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "mi-perfume-1989",
-  storageBucket: "mi-perfume-1989.firebasestorage.app",
-  messagingSenderId: "894897183896",
-  appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
-  measurementId: "G-H2KG1X9KVN"
-};
+            apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
+            authDomain: "mi-perfume-1989.firebaseapp.com",
+            databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mi-perfume-1989",
+            storageBucket: "mi-perfume-1989.firebasestorage.app",
+            messagingSenderId: "894897183896",
+            appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
+            measurementId: "G-H2KG1X9KVN"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
@@ -167,11 +179,60 @@
         }
 
         function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
+        
         function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${i.kelas} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
 
         function kirimPesananAkhir() { const nama = document.getElementById('nama').value.trim(); const noWa = document.getElementById('no-wa').value.trim(); if (!nama) return alert("Harap isi Nama Pemesan!"); const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true; const batch = db.batch(); const refPesanan = db.collection("pesanan").doc(); batch.set(refPesanan, { buyer_id: buyerId, nama: nama, no_wa: noWa, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0), total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp() }); keranjang.forEach(item => { batch.update(db.collection("stok").doc(item.aroma), { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) }); batch.update(db.collection("bahan").doc(item.id_botol), { sisa: firebase.firestore.FieldValue.increment(-item.qty) }); batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) }); }); batch.commit().then(() => { alert("✅ Pesanan Terkirim!"); keranjang = []; renderKeranjang(); document.getElementById('nama').value = ''; document.getElementById('no-wa').value = ''; btn.innerText = "Kirim Pesanan Sekarang"; switchTab('riwayat'); }).catch(err => { alert("Gagal: " + err); btn.disabled = false; }); }
 
-        db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { const container = document.getElementById('daftar-riwayat'); container.innerHTML = ''; if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; let rData = []; snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"; let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):''; container.innerHTML += `<div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm"><div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2"><span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span><span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span></div><div class="mb-2">${itemsStr}</div><div class="flex justify-between font-bold text-sm"><span>Total</span><span class="text-gold">Rp ${d.total.toLocaleString()}</span></div></div>`; }); });
+        // FUNGSI UNTUK MEMBUKA DAN MENUTUP MODAL QRIS
+        function bukaQris() {
+            const modal = document.getElementById('modal-qris');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function tutupQris() {
+            const modal = document.getElementById('modal-qris');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // BAGIAN RIWAYAT
+        db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { 
+            const container = document.getElementById('daftar-riwayat'); 
+            container.innerHTML = ''; 
+            
+            if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; 
+            
+            let rData = []; 
+            snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); 
+            
+            rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { 
+                let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"; 
+                let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; 
+                let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):''; 
+                
+                // Cek apakah status sudah "Selesai" untuk menampilkan tombol bayar
+                let tombolBayarHtml = '';
+                if(d.status === "Selesai") {
+                    tombolBayarHtml = `<button onclick="bukaQris()" class="mt-3 w-full bg-[#a38d58] hover:bg-[#8c794a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">📱 Bayar dengan QRIS</button>`;
+                }
+
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm">
+                        <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
+                            <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
+                        </div>
+                        <div class="mb-2">${itemsStr}</div>
+                        <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
+                            <span>Total</span>
+                            <span class="text-gold">Rp ${d.total.toLocaleString('id-ID')}</span>
+                        </div>
+                        ${tombolBayarHtml}
+                    </div>`; 
+            }); 
+        });
     </script>
 </body>
 </html>
