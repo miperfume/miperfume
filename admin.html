@@ -104,21 +104,25 @@
         });
 
         function prosesLogin(e) {
-            e.preventDefault();
-            const email = document.getElementById('input-user').value.trim();
-            const pass = document.getElementById('input-pass').value;
-            const btn = document.getElementById('btn-login');
-            btn.innerText = "Memeriksa..."; btn.disabled = true;
+    e.preventDefault();
+    const email = document.getElementById('input-user').value.trim();
+    const pass = document.getElementById('input-pass').value;
+    const btn = document.getElementById('btn-login');
+    btn.innerText = "Memeriksa..."; btn.disabled = true;
 
-            firebase.auth().signInWithEmailAndPassword(email, pass)
-            .then(() => {
-                btn.innerText = "Masuk Terenkripsi"; btn.disabled = false;
-            })
-            .catch(err => {
-                alert("❌ Login Gagal: Pastikan Email dan Password benar!");
-                btn.innerText = "Masuk Terenkripsi"; btn.disabled = false;
-            });
-        }
+    firebase.auth().signInWithEmailAndPassword(email, pass)
+    .then(() => {
+        btn.innerText = "Masuk Terenkripsi"; btn.disabled = false;
+    })
+    .catch(err => {
+        // KITA UBAH BAGIAN INI UNTUK MELIHAT ERROR ASLI FIREBASE
+        console.error("Detail Error Firebase:", err.code, err.message);
+        alert("Pesan dari Firebase: " + err.code); 
+        
+        btn.innerText = "Masuk Terenkripsi"; btn.disabled = false;
+    });
+}
+
 
         function logoutAdmin() { if(confirm("Keluar dari sistem?")) firebase.auth().signOut(); }
         function togglePassword() { const p=document.getElementById('input-pass'); p.type=p.type==='password'?'text':'password'; }
