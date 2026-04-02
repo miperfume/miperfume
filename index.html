@@ -1,130 +1,86 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pesan - MI Perfume</title>
+    <link rel="apple-touch-icon" href="logo.jpeg">
+    <link rel="icon" type="image/jpeg" href="logo.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { darkMode: 'class' }
+    </script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <style> 
-        /* Style untuk Video Entry Fullscreen */
-#video-entry-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: black;
-    z-index: 9999; /* Sangat tinggi agar menutupi header dan tab */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: opacity 0.5s ease-out;
-}
-
-#video-entry {
-    width: 100%;
-    height: 100%;
-    object-fit: cover; /* Agar video memenuhi layar tanpa stretch */
-}
-        .text-gold { color: #a38d58; } 
-        .bg-gold { background-color: #a38d58; } 
+        .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
         .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-20">
-    <div id="video-entry-container">
-    <video id="video-entry" autoplay muted playsinline>
-        <source src="video.mp4" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
-    <button onclick="closeVideoEntry()" class="absolute bottom-10 right-5 bg-black/50 text-white text-xs px-4 py-2 rounded-full border border-white/30">
-        Skip ✕
-    </button>
-</div>
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
-    <header class="bg-white p-3 shadow-sm sticky top-0 z-20 flex items-center gap-3 border-b">
-        <img src="logo.jpeg" alt="Logo MI Perfume" class="h-12 w-12 object-contain rounded-md">
-        <div class="flex flex-col">
-            <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
-            <h2 class="text-[11px] text-gray-500 font-medium tracking-wide uppercase">Pemesanan Online</h2>
+    <div id="splash" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center transition-opacity duration-700">
+        <video src="video.mp4" autoplay muted playsinline onended="closeSplash()" class="w-full max-w-sm object-cover rounded-xl mb-4" onerror="closeSplash()"></video>
+        <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin"></div>
+        <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest">MEMUAT TOKO...</p>
+    </div>
+
+    <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
+        <div class="flex items-center gap-3">
+            <img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md">
+            <div class="flex flex-col">
+                <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
+                <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
+            </div>
         </div>
+        <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg">🌓</button>
     </header>
 
-    <div class="flex bg-white shadow-sm mb-4 sticky top-[73px] z-10">
-        <button id="tab-pesan" class="flex-1 py-3 text-center tab-active text-sm" onclick="switchTab('pesan')">Pesan Baru</button>
+    <div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 sticky top-[73px] z-10">
+        <button id="tab-pesan" class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
         <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm" onclick="switchTab('riwayat')">Riwayat</button>
     </div>
 
     <div id="page-pesan" class="p-4 max-w-md mx-auto">
-        <div class="bg-white p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
-            <div class="mb-3">
-                <label class="block text-sm font-bold mb-1">Nama Pemesan</label>
-                <input type="text" id="nama" required class="w-full border p-2 rounded outline-none" placeholder="Masukkan nama Anda">
-            </div>
-            <div>
-                <label class="block text-sm font-bold mb-1">Nomor WhatsApp</label>
-                <input type="tel" id="no-wa" required class="w-full border p-2 rounded outline-none" placeholder="Contoh: 08123456789">
-            </div>
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
+            <div class="mb-3"><label class="block text-sm font-bold mb-1">Nama Pemesan</label><input type="text" id="nama" required class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="Nama Anda"></div>
+            <div><label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label><input type="tel" id="no-wa" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="0812..."></div>
         </div>
 
-        <div class="bg-white p-4 rounded-xl shadow mb-4">
-            <h2 class="font-bold mb-3 border-b pb-2">➕ Tambah Parfum</h2>
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
+            <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
             <form id="form-item" onsubmit="tambahKeKeranjang(event)">
-                <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1 text-gray-600">Aroma Parfum</label>
-                    <select id="aroma" required onchange="updateKelasOptions()" class="w-full border p-2 rounded outline-none text-sm bg-gray-50">
-                        <option value="" disabled selected>Memuat ketersediaan aroma...</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1 text-gray-600">Kelas Parfum</label>
-                    <select id="kelas" required onchange="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm">
-                        <option value="" disabled selected>Pilih aroma terlebih dahulu...</option>
-                    </select>
-                </div>
+                <div class="mb-3"><label class="block text-xs font-medium mb-1">Aroma</label><select id="aroma" required onchange="updateKelasOptions()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Memuat...</option></select></div>
+                <div class="mb-3"><label class="block text-xs font-medium mb-1">Kelas</label><select id="kelas" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih aroma dulu</option></select></div>
                 <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                        <label class="block text-xs font-medium mb-1 text-gray-600">Ukuran Botol</label>
-                        <select id="ukuran" required onchange="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm">
-                            <option value="" disabled selected>Pilih...</option>
-                            <option value="35">35 ml</option>
-                            <option value="50">50 ml</option>
-                            <option value="100">100 ml</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium mb-1 text-gray-600">Jumlah (Qty)</label>
-                        <input type="number" id="qty" required min="1" value="1" oninput="hitungSubTotal()" class="w-full border p-2 rounded outline-none text-sm text-center">
-                    </div>
+                    <div><label class="block text-xs font-medium mb-1">Ukuran</label><select id="ukuran" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih...</option><option value="35">35 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
+                    <div><label class="block text-xs font-medium mb-1">Jumlah</label><input type="number" id="qty" required min="1" value="1" oninput="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm text-center"></div>
                 </div>
-                <div class="flex justify-between items-center bg-gray-50 p-2 rounded mb-3 border">
-                    <span class="text-xs">Subtotal:</span><span id="subtotal-item" class="font-bold text-gold">Rp 0</span>
-                </div>
-                <button type="submit" class="w-full bg-gray-800 text-white text-sm font-bold py-2 rounded shadow active:scale-95 transition">Masukkan Keranjang</button>
+                <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600"><span class="text-xs">Subtotal:</span><span id="subtotal-item" class="font-bold text-gold">Rp 0</span></div>
+                <button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">Masukkan Keranjang</button>
             </form>
         </div>
 
-        <div class="bg-[#fbf9f2] p-4 rounded-xl shadow border border-[#e8dfc8]">
-            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between">
-                <span>🛒 Keranjang</span><span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span>
-            </h2>
+        <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
+            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between"><span>🛒 Keranjang</span><span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span></h2>
             <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto"><p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p></div>
-            <div class="flex justify-between items-end border-t border-[#e8dfc8] pt-3 mb-4">
-                <span class="text-sm font-bold text-gray-700">Total Pembayaran:</span><span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span>
-            </div>
-            <button id="btn-submit" onclick="kirimPesananAkhir()" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50 transition" disabled>Kirim Pesanan Sekarang</button>
+            <div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4"><span class="text-sm font-bold">Total:</span><span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span></div>
+            <button id="btn-submit" onclick="kirimPesananAkhir()" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>Kirim Pesanan Sekarang</button>
         </div>
     </div>
 
     <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
 
     <script>
+        // --- LOGIKA SPLASH SCREEN ---
+        function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
+        setTimeout(closeSplash, 5000); // Fallback keamanan
+
         let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
         localStorage.setItem('mi_buyer_id', buyerId);
 
-       const firebaseConfig = {
+        // --- FIREBASE CONFIG ---
+        const firebaseConfig = {
   apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
   authDomain: "mi-perfume-1989.firebaseapp.com",
   databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
@@ -152,7 +108,7 @@
             selectAroma.innerHTML = '<option value="" disabled selected>Pilih Aroma...</option>'; dataStok = {}; 
             snap.forEach(doc => {
                 const data = doc.data();
-                dataStok[data.nama] = { sisa_ml: data.sisa_ml || 0, harga_ml: data.harga_ml || 0, kelas_tersedia: data.kelas_tersedia || ["Standar", "Premium", "Super Premium", "Diamond"] };
+                dataStok[data.nama] = { sisa_ml: data.sisa_ml || 0, modal: data.modal || {}, kelas_tersedia: data.kelas_tersedia || ["Standar"] };
                 if (data.sisa_ml >= 17.5) selectAroma.innerHTML += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
                 else selectAroma.innerHTML += `<option value="${data.nama}" disabled class="text-red-400">${data.nama} (Kosong)</option>`;
             });
@@ -173,14 +129,26 @@
         }
 
         function hitungSubTotal() {
-            const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = document.getElementById('qty').value;
+            const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = parseInt(document.getElementById('qty').value) || 0;
             if (kelas && ukuran && qty) { 
+                let total = 0;
                 let hargaSatuan = hargaPerMl[kelas] * parseInt(ukuran); 
+                
+                // Diskon Super Premium
                 if (kelas === "Super Premium") {
                     if (ukuran === "35") hargaSatuan = 100000;
                     else if (ukuran === "100") hargaSatuan = 280000;
+                    total = hargaSatuan * qty;
+                } 
+                // 7. Promo 3pcs Standar 35ml
+                else if (kelas === "Standar" && ukuran === "35") {
+                    total = hargaSatuan * qty;
+                    const kelipatanTiga = Math.floor(qty / 3);
+                    total -= (kelipatanTiga * 5000); // Diskon 5rb tiap 3pcs
+                } else {
+                    total = hargaSatuan * qty;
                 }
-                const total = hargaSatuan * parseInt(qty); 
+
                 document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); return total; 
             }
             document.getElementById('subtotal-item').innerText = 'Rp 0'; return 0;
@@ -196,11 +164,15 @@
             const cartBotol = keranjang.filter(i => i.id_botol === idBotol).reduce((sum, i) => sum + i.qty, 0);
             const cartAbs = keranjang.filter(i => i.id_absolute === idAbs).reduce((sum, i) => sum + i.absolute_ml, 0);
 
-            if ((butuhBibit + cartBibit) > (dataStok[aroma]?.sisa_ml || 0)) return alert(`❌ MAAF, Bibit aroma ${aroma} tidak mencukupi.`);
-            if ((butuhBotol + cartBotol) > (dataBahan[idBotol]?.sisa || 0)) return alert(`❌ MAAF, Stok Botol ${ukuran}ml kosong/kurang.`);
-            if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0)) return alert(`❌ MAAF, Stok Absolute kelas ini kosong/kurang.`);
+            if ((butuhBibit + cartBibit) > (dataStok[aroma]?.sisa_ml || 0)) return alert(`❌ Bibit aroma ${aroma} tidak mencukupi.`);
+            if ((butuhBotol + cartBotol) > (dataBahan[idBotol]?.sisa || 0)) return alert(`❌ Stok Botol ${ukuran}ml kurang.`);
+            if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0)) return alert(`❌ Stok Absolute kelas ini kurang.`);
 
-            const hppBibit = butuhBibit * (dataStok[aroma]?.harga_ml || 0); const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0); const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0);
+            // 3. Kalkulasi HPP dengan Multi-Modal
+            const hppBibitPerMl = dataStok[aroma]?.modal[kelas] || 0; 
+            const hppBibit = butuhBibit * hppBibitPerMl; 
+            const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0); 
+            const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0);
             const totalHppItem = hppBibit + hppBotol + hppAbs;
 
             keranjang.push({ aroma: aroma, kelas: kelas, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit, id_botol: idBotol, id_absolute: idAbs, absolute_ml: butuhAbs, hpp_total: totalHppItem });
@@ -208,7 +180,6 @@
         }
 
         function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
-        
         function renderKeranjang() {
             const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0;
             if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } 
@@ -216,27 +187,20 @@
                 document.getElementById('btn-submit').disabled = false;
                 keranjang.forEach((i, x) => {
                     gt += i.subtotal; tq += i.qty;
-                    wadah.innerHTML += `<div class="bg-white p-2 border flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500">${i.kelas} ${i.ukuran}ml</p></div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`;
+                    let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo Kelipatan 3pcs Aktif</span>' : '';
+                    wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${i.kelas} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`;
                 });
             }
             document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq;
         }
 
         function kirimPesananAkhir() {
-            const nama = document.getElementById('nama').value.trim(); 
-            const noWa = document.getElementById('no-wa').value.trim(); 
-            if (!nama || !noWa) return alert("Harap isi Nama Pemesan dan Nomor WhatsApp!");
-            
+            const nama = document.getElementById('nama').value.trim(); const noWa = document.getElementById('no-wa').value.trim(); 
+            if (!nama) return alert("Harap isi Nama Pemesan!");
             const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true;
 
             const batch = db.batch(); const refPesanan = db.collection("pesanan").doc();
-            const grandTotalHPP = keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0);
-
-            batch.set(refPesanan, {
-                buyer_id: buyerId, nama: nama, no_wa: noWa, items: keranjang, 
-                total: keranjang.reduce((s, i) => s + i.subtotal, 0), total_hpp: grandTotalHPP, 
-                status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp()
-            });
+            batch.set(refPesanan, { buyer_id: buyerId, nama: nama, no_wa: noWa, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0), total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp() });
 
             keranjang.forEach(item => {
                 batch.update(db.collection("stok").doc(item.aroma), { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) });
@@ -245,8 +209,7 @@
             });
 
             batch.commit().then(() => {
-                alert("✅ Pesanan Berhasil Terkirim!");
-                keranjang = []; renderKeranjang(); document.getElementById('nama').value = ''; document.getElementById('no-wa').value = '';
+                alert("✅ Pesanan Terkirim!"); keranjang = []; renderKeranjang(); document.getElementById('nama').value = ''; document.getElementById('no-wa').value = '';
                 btn.innerText = "Kirim Pesanan Sekarang"; switchTab('riwayat');
             }).catch(err => { alert("Gagal: " + err); btn.disabled = false; });
         }
@@ -259,30 +222,9 @@
                 let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700";
                 let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja';
                 let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):'';
-                container.innerHTML += `<div class="bg-white border p-3 rounded-lg mb-2 shadow-sm"><div class="flex justify-between border-b pb-2 mb-2"><span class="text-xs text-gray-500">${tgl}</span><span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span></div><div class="mb-2">${itemsStr}</div><div class="flex justify-between font-bold text-sm"><span>Total</span><span class="text-gold">Rp ${d.total.toLocaleString()}</span></div>${d.status==="Ditolak"&&d.alasan?`<p class="mt-2 text-xs text-red-600 bg-red-50 p-1">Alasan Ditolak: ${d.alasan}</p>`:''}</div>`;
+                container.innerHTML += `<div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm"><div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2"><span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span><span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span></div><div class="mb-2">${itemsStr}</div><div class="flex justify-between font-bold text-sm"><span>Total</span><span class="text-gold">Rp ${d.total.toLocaleString()}</span></div></div>`;
             });
         });
-        // Fungsi untuk menutup video entry
-function closeVideoEntry() {
-    const container = document.getElementById('video-entry-container');
-    if (container) {
-        container.style.opacity = '0';
-        setTimeout(() => {
-            container.remove(); // Hapus dari DOM agar tidak membebani memori
-        }, 500); // Sinkron dengan transisi CSS
-    }
-}
-
-// Event listener saat video selesai diputar
-const entryVideo = document.getElementById('video-entry');
-if (entryVideo) {
-    entryVideo.onended = function() {
-        closeVideoEntry();
-    };
-    
-    // Backup: Jika video gagal load atau terlalu lama, tutup otomatis setelah 5 detik
-    setTimeout(closeVideoEntry, 5000); 
-}
     </script>
 </body>
 </html>
