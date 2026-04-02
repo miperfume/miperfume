@@ -7,15 +7,10 @@
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { darkMode: 'class' }
-    </script>
+    <script>tailwind.config = { darkMode: 'class' }</script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <style> 
-        .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
-        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
-    </style>
+    <style> .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
@@ -26,13 +21,7 @@
     </div>
 
     <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
-        <div class="flex items-center gap-3">
-            <img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md">
-            <div class="flex flex-col">
-                <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
-                <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
-            </div>
-        </div>
+        <div class="flex items-center gap-3"><img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md"><div class="flex flex-col"><h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1><h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2></div></div>
         <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg">🌓</button>
     </header>
 
@@ -50,7 +39,17 @@
         <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
             <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
             <form id="form-item" onsubmit="tambahKeKeranjang(event)">
-                <div class="mb-3"><label class="block text-xs font-medium mb-1">Aroma</label><select id="aroma" required onchange="updateKelasOptions()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Memuat...</option></select></div>
+                
+                <div class="mb-3">
+                    <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
+                    <div class="mb-2 relative">
+                        <input type="text" id="search-aroma" oninput="filterAroma()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm pr-8 bg-white dark:bg-gray-700" placeholder="🔍 Ketik untuk mencari aroma...">
+                    </div>
+                    <select id="aroma" required onchange="updateKelasOptions()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm bg-gray-50 dark:bg-gray-700">
+                        <option value="" disabled selected>Memuat ketersediaan...</option>
+                    </select>
+                </div>
+
                 <div class="mb-3"><label class="block text-xs font-medium mb-1">Kelas</label><select id="kelas" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih aroma dulu</option></select></div>
                 <div class="grid grid-cols-2 gap-3 mb-4">
                     <div><label class="block text-xs font-medium mb-1">Ukuran</label><select id="ukuran" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih...</option><option value="35">35 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
@@ -72,14 +71,12 @@
     <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
 
     <script>
-        // --- LOGIKA SPLASH SCREEN ---
         function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
-        setTimeout(closeSplash, 5000); // Fallback keamanan
+        setTimeout(closeSplash, 5000); 
 
-        let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9));
-        localStorage.setItem('mi_buyer_id', buyerId);
+        let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)); localStorage.setItem('mi_buyer_id', buyerId);
 
-        // --- FIREBASE CONFIG ---
+        // --- MASUKKAN KODE FIREBASE DI SINI ---
         const firebaseConfig = {
   apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
   authDomain: "mi-perfume-1989.firebaseapp.com",
@@ -93,27 +90,44 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        let keranjang = []; let dataStok = {}; let dataBahan = {}; 
+        let keranjang = []; let dataStok = {}; let dataBahan = {}; let rawAromas = [];
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
 
-        function switchTab(t) { 
-            ['pesan','riwayat'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); });
-            document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
-        }
+        function switchTab(t) { ['pesan','riwayat'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); }); document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active'); }
 
         db.collection("bahan").onSnapshot(snap => { snap.forEach(doc => { dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 }; }); });
 
+        // LOGIKA PENCARIAN AROMA
         db.collection("stok").orderBy("nama").onSnapshot(snap => {
-            const selectAroma = document.getElementById('aroma'); const oldValue = selectAroma.value;
-            selectAroma.innerHTML = '<option value="" disabled selected>Pilih Aroma...</option>'; dataStok = {}; 
+            rawAromas = []; dataStok = {}; 
             snap.forEach(doc => {
                 const data = doc.data();
                 dataStok[data.nama] = { sisa_ml: data.sisa_ml || 0, modal: data.modal || {}, kelas_tersedia: data.kelas_tersedia || ["Standar"] };
-                if (data.sisa_ml >= 17.5) selectAroma.innerHTML += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
-                else selectAroma.innerHTML += `<option value="${data.nama}" disabled class="text-red-400">${data.nama} (Kosong)</option>`;
+                rawAromas.push(data);
             });
-            if(oldValue && dataStok[oldValue] && dataStok[oldValue].sisa_ml >= 17.5) selectAroma.value = oldValue;
+            renderAromaOptions("");
         });
+
+        function renderAromaOptions(filterText) {
+            const selectAroma = document.getElementById('aroma');
+            const oldVal = selectAroma.value;
+            let html = '<option value="" disabled selected>Pilih Aroma...</option>';
+            const query = filterText.toLowerCase();
+
+            rawAromas.forEach(data => {
+                if (data.nama.toLowerCase().includes(query)) {
+                    if (data.sisa_ml >= 17.5) html += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
+                    else html += `<option value="${data.nama}" disabled class="text-red-400">${data.nama} (Kosong)</option>`;
+                }
+            });
+            selectAroma.innerHTML = html;
+            if(oldVal && html.includes(`value="${oldVal}"`)) selectAroma.value = oldVal;
+        }
+
+        function filterAroma() {
+            const searchTxt = document.getElementById('search-aroma').value;
+            renderAromaOptions(searchTxt);
+        }
 
         function updateKelasOptions() {
             const aroma = document.getElementById('aroma').value; const selectKelas = document.getElementById('kelas');
@@ -131,100 +145,33 @@
         function hitungSubTotal() {
             const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = parseInt(document.getElementById('qty').value) || 0;
             if (kelas && ukuran && qty) { 
-                let total = 0;
-                let hargaSatuan = hargaPerMl[kelas] * parseInt(ukuran); 
-                
-                // Diskon Super Premium
-                if (kelas === "Super Premium") {
-                    if (ukuran === "35") hargaSatuan = 100000;
-                    else if (ukuran === "100") hargaSatuan = 280000;
-                    total = hargaSatuan * qty;
-                } 
-                // 7. Promo 3pcs Standar 35ml
-                else if (kelas === "Standar" && ukuran === "35") {
-                    total = hargaSatuan * qty;
-                    const kelipatanTiga = Math.floor(qty / 3);
-                    total -= (kelipatanTiga * 5000); // Diskon 5rb tiap 3pcs
-                } else {
-                    total = hargaSatuan * qty;
-                }
-
+                let total = 0; let hargaSatuan = hargaPerMl[kelas] * parseInt(ukuran); 
+                if (kelas === "Super Premium") { if (ukuran === "35") hargaSatuan = 100000; else if (ukuran === "100") hargaSatuan = 280000; total = hargaSatuan * qty; } 
+                else if (kelas === "Standar" && ukuran === "35") { total = hargaSatuan * qty; const kelipatanTiga = Math.floor(qty / 3); total -= (kelipatanTiga * 5000); } 
+                else { total = hargaSatuan * qty; }
                 document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); return total; 
             }
             document.getElementById('subtotal-item').innerText = 'Rp 0'; return 0;
         }
 
         function tambahKeKeranjang(e) {
-            e.preventDefault();
-            const aroma = document.getElementById('aroma').value; const kelas = document.getElementById('kelas').value; const ukuran = parseInt(document.getElementById('ukuran').value); const qty = parseInt(document.getElementById('qty').value);
-            const butuhBibit = (ukuran * 0.5) * qty; const idBotol = 'botol_' + ukuran; const butuhBotol = qty; 
-            const idAbs = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar'; const butuhAbs = (ukuran * 0.5) * qty;
-
-            const cartBibit = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0);
-            const cartBotol = keranjang.filter(i => i.id_botol === idBotol).reduce((sum, i) => sum + i.qty, 0);
-            const cartAbs = keranjang.filter(i => i.id_absolute === idAbs).reduce((sum, i) => sum + i.absolute_ml, 0);
-
+            e.preventDefault(); const aroma = document.getElementById('aroma').value; const kelas = document.getElementById('kelas').value; const ukuran = parseInt(document.getElementById('ukuran').value); const qty = parseInt(document.getElementById('qty').value);
+            const butuhBibit = (ukuran * 0.5) * qty; const idBotol = 'botol_' + ukuran; const butuhBotol = qty; const idAbs = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar'; const butuhAbs = (ukuran * 0.5) * qty;
+            const cartBibit = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0); const cartBotol = keranjang.filter(i => i.id_botol === idBotol).reduce((sum, i) => sum + i.qty, 0); const cartAbs = keranjang.filter(i => i.id_absolute === idAbs).reduce((sum, i) => sum + i.absolute_ml, 0);
             if ((butuhBibit + cartBibit) > (dataStok[aroma]?.sisa_ml || 0)) return alert(`❌ Bibit aroma ${aroma} tidak mencukupi.`);
             if ((butuhBotol + cartBotol) > (dataBahan[idBotol]?.sisa || 0)) return alert(`❌ Stok Botol ${ukuran}ml kurang.`);
             if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0)) return alert(`❌ Stok Absolute kelas ini kurang.`);
-
-            // 3. Kalkulasi HPP dengan Multi-Modal
-            const hppBibitPerMl = dataStok[aroma]?.modal[kelas] || 0; 
-            const hppBibit = butuhBibit * hppBibitPerMl; 
-            const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0); 
-            const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0);
-            const totalHppItem = hppBibit + hppBotol + hppAbs;
-
+            const hppBibitPerMl = dataStok[aroma]?.modal[kelas] || 0; const hppBibit = butuhBibit * hppBibitPerMl; const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0); const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0); const totalHppItem = hppBibit + hppBotol + hppAbs;
             keranjang.push({ aroma: aroma, kelas: kelas, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit, id_botol: idBotol, id_absolute: idAbs, absolute_ml: butuhAbs, hpp_total: totalHppItem });
-            renderKeranjang(); document.getElementById('qty').value = 1; document.getElementById('subtotal-item').innerText = 'Rp 0'; document.getElementById('kelas').value = ""; document.getElementById('ukuran').value = "";
+            renderKeranjang(); document.getElementById('qty').value = 1; document.getElementById('subtotal-item').innerText = 'Rp 0'; document.getElementById('kelas').value = ""; document.getElementById('ukuran').value = ""; document.getElementById('search-aroma').value = ""; filterAroma();
         }
 
         function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
-        function renderKeranjang() {
-            const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0;
-            if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } 
-            else {
-                document.getElementById('btn-submit').disabled = false;
-                keranjang.forEach((i, x) => {
-                    gt += i.subtotal; tq += i.qty;
-                    let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo Kelipatan 3pcs Aktif</span>' : '';
-                    wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${i.kelas} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`;
-                });
-            }
-            document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq;
-        }
+        function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${i.kelas} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
 
-        function kirimPesananAkhir() {
-            const nama = document.getElementById('nama').value.trim(); const noWa = document.getElementById('no-wa').value.trim(); 
-            if (!nama) return alert("Harap isi Nama Pemesan!");
-            const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true;
+        function kirimPesananAkhir() { const nama = document.getElementById('nama').value.trim(); const noWa = document.getElementById('no-wa').value.trim(); if (!nama) return alert("Harap isi Nama Pemesan!"); const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true; const batch = db.batch(); const refPesanan = db.collection("pesanan").doc(); batch.set(refPesanan, { buyer_id: buyerId, nama: nama, no_wa: noWa, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0), total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp() }); keranjang.forEach(item => { batch.update(db.collection("stok").doc(item.aroma), { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) }); batch.update(db.collection("bahan").doc(item.id_botol), { sisa: firebase.firestore.FieldValue.increment(-item.qty) }); batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) }); }); batch.commit().then(() => { alert("✅ Pesanan Terkirim!"); keranjang = []; renderKeranjang(); document.getElementById('nama').value = ''; document.getElementById('no-wa').value = ''; btn.innerText = "Kirim Pesanan Sekarang"; switchTab('riwayat'); }).catch(err => { alert("Gagal: " + err); btn.disabled = false; }); }
 
-            const batch = db.batch(); const refPesanan = db.collection("pesanan").doc();
-            batch.set(refPesanan, { buyer_id: buyerId, nama: nama, no_wa: noWa, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0), total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp() });
-
-            keranjang.forEach(item => {
-                batch.update(db.collection("stok").doc(item.aroma), { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) });
-                batch.update(db.collection("bahan").doc(item.id_botol), { sisa: firebase.firestore.FieldValue.increment(-item.qty) });
-                batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
-            });
-
-            batch.commit().then(() => {
-                alert("✅ Pesanan Terkirim!"); keranjang = []; renderKeranjang(); document.getElementById('nama').value = ''; document.getElementById('no-wa').value = '';
-                btn.innerText = "Kirim Pesanan Sekarang"; switchTab('riwayat');
-            }).catch(err => { alert("Gagal: " + err); btn.disabled = false; });
-        }
-
-        db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => {
-            const container = document.getElementById('daftar-riwayat'); container.innerHTML = '';
-            if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>';
-            let rData = []; snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() }));
-            rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => {
-                let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700";
-                let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja';
-                let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):'';
-                container.innerHTML += `<div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm"><div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2"><span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span><span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span></div><div class="mb-2">${itemsStr}</div><div class="flex justify-between font-bold text-sm"><span>Total</span><span class="text-gold">Rp ${d.total.toLocaleString()}</span></div></div>`;
-            });
-        });
+        db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { const container = document.getElementById('daftar-riwayat'); container.innerHTML = ''; if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; let rData = []; snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"; let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):''; container.innerHTML += `<div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm"><div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2"><span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span><span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span></div><div class="mb-2">${itemsStr}</div><div class="flex justify-between font-bold text-sm"><span>Total</span><span class="text-gold">Rp ${d.total.toLocaleString()}</span></div></div>`; }); });
     </script>
 </body>
 </html>
