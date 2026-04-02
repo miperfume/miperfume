@@ -8,12 +8,41 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <style> 
+        /* Style untuk Video Entry Fullscreen */
+#video-entry-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    z-index: 9999; /* Sangat tinggi agar menutupi header dan tab */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.5s ease-out;
+}
+
+#video-entry {
+    width: 100%;
+    height: 100%;
+    object-fit: cover; /* Agar video memenuhi layar tanpa stretch */
+}
         .text-gold { color: #a38d58; } 
         .bg-gold { background-color: #a38d58; } 
         .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-20">
+    <div id="video-entry-container">
+    <video id="video-entry" autoplay muted playsinline>
+        <source src="video.mp4" type="video/mp4">
+        Your browser does not support the video tag.
+    </video>
+    <button onclick="closeVideoEntry()" class="absolute bottom-10 right-5 bg-black/50 text-white text-xs px-4 py-2 rounded-full border border-white/30">
+        Skip ✕
+    </button>
+</div>
 
     <header class="bg-white p-3 shadow-sm sticky top-0 z-20 flex items-center gap-3 border-b">
         <img src="logo.jpeg" alt="Logo MI Perfume" class="h-12 w-12 object-contain rounded-md">
@@ -233,6 +262,27 @@
                 container.innerHTML += `<div class="bg-white border p-3 rounded-lg mb-2 shadow-sm"><div class="flex justify-between border-b pb-2 mb-2"><span class="text-xs text-gray-500">${tgl}</span><span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span></div><div class="mb-2">${itemsStr}</div><div class="flex justify-between font-bold text-sm"><span>Total</span><span class="text-gold">Rp ${d.total.toLocaleString()}</span></div>${d.status==="Ditolak"&&d.alasan?`<p class="mt-2 text-xs text-red-600 bg-red-50 p-1">Alasan Ditolak: ${d.alasan}</p>`:''}</div>`;
             });
         });
+        // Fungsi untuk menutup video entry
+function closeVideoEntry() {
+    const container = document.getElementById('video-entry-container');
+    if (container) {
+        container.style.opacity = '0';
+        setTimeout(() => {
+            container.remove(); // Hapus dari DOM agar tidak membebani memori
+        }, 500); // Sinkron dengan transisi CSS
+    }
+}
+
+// Event listener saat video selesai diputar
+const entryVideo = document.getElementById('video-entry');
+if (entryVideo) {
+    entryVideo.onended = function() {
+        closeVideoEntry();
+    };
+    
+    // Backup: Jika video gagal load atau terlalu lama, tutup otomatis setelah 5 detik
+    setTimeout(closeVideoEntry, 5000); 
+}
     </script>
 </body>
 </html>
