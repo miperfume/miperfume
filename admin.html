@@ -116,6 +116,15 @@
     <iframe id="print-frame" style="position: absolute; width: 0; height: 0; border: none; visibility: hidden;"></iframe>
 
     <script>
+        // Fungsi Sanitasi (Anti-XSS)
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.toString().replace(/[&<>'"]/g, function(tag) {
+                const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                return charsToReplace[tag] || tag;
+            });
+        }
+
         const firebaseConfig = {
             apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
             authDomain: "mi-perfume-1989.firebaseapp.com",
@@ -143,10 +152,9 @@
 
         let chartInstance = null; let globalBibit = []; let globalBahan = []; let dataPesananExport = [];
         
-        // (Semua Logika Form Stok sama seperti sebelumnya)
         function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').style.display = v === '_NEW_' ? 'block' : 'none'; } 
         function toggleModalInput(id) { const cb = document.getElementById('cb-'+id); document.getElementById('m-'+id).disabled = !cb.checked; document.getElementById('ml-'+id).disabled = !cb.checked; }
-        function migrasiModalLama() { /* ... kode migrasi ... */ }
+        function migrasiModalLama() { /* kode migrasi */ }
         function simpanBibit(e) { 
             e.preventDefault(); const isNew = document.getElementById('bibit-pilih').value === '_NEW_'; const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value; 
             let modObj = {}; let stokAdd = {}; let klsArr = []; 
@@ -166,36 +174,39 @@
         db.collection("stok").orderBy("nama").onSnapshot(snap => { 
             const wadah = document.getElementById('daftar-bibit'); const sel = document.getElementById('bibit-pilih'); wadah.innerHTML = ''; sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>'; globalBibit = []; 
             snap.forEach(doc => { 
-                const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data); sel.innerHTML += `<option value="${data.nama}">${data.nama}</option>`; 
-                let infoKelas = data.stok_kelas ? Object.entries(data.stok_kelas).map(([k,v]) => `<b>${k}:</b> ${v}ml (Rp${(data.modal&&data.modal[k])?data.modal[k]:0}/ml)`).join('<br>') : `Total: ${data.sisa_ml} ml (Format Lama)`;
-                wadah.innerHTML += `<div class="bg-white p-3 rounded border flex justify-between items-center"><div><p class="font-bold text-sm">💧 ${data.nama}</p><p class="text-[10px] text-gray-600 mt-1">${infoKelas}</p></div><div class="flex items-center gap-2"><button onclick="bukaModalEdit('${doc.id}')" class="text-blue-500 bg-blue-50 p-2 rounded text-xs font-bold shadow-sm">✏️ Edit</button><button onclick="hapusDokumen('stok', '${doc.id}')" class="text-red-500 bg-red-50 p-2 rounded text-xs shadow-sm">🗑️</button></div></div>`; 
+                const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data); sel.innerHTML += `<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`; 
+                let infoKelas = data.stok_kelas ? Object.entries(data.stok_kelas).map(([k,v]) => `<b>${escapeHTML(k)}:</b> ${v}ml (Rp${(data.modal&&data.modal[k])?data.modal[k]:0}/ml)`).join('<br>') : `Total: ${data.sisa_ml} ml (Format Lama)`;
+                wadah.innerHTML += `<div class="bg-white p-3 rounded border flex justify-between items-center"><div><p class="font-bold text-sm">💧 ${escapeHTML(data.nama)}</p><p class="text-[10px] text-gray-600 mt-1">${infoKelas}</p></div><div class="flex items-center gap-2"><button onclick="bukaModalEdit('${doc.id}')" class="text-blue-500 bg-blue-50 p-2 rounded text-xs font-bold shadow-sm">✏️ Edit</button><button onclick="hapusDokumen('stok', '${doc.id}')" class="text-red-500 bg-red-50 p-2 rounded text-xs shadow-sm">🗑️</button></div></div>`; 
             }); cekRestock(); 
         });
 
-        function bukaModalEdit(id) { const dataLama = globalBibit.find(b => b.doc_id === id); if (!dataLama) return; document.getElementById('edit-id-bibit').value = id; document.getElementById('edit-nama-bibit').innerText = dataLama.nama; const wadahInput = document.getElementById('edit-container-kelas'); wadahInput.innerHTML = ''; if (dataLama.stok_kelas) { Object.entries(dataLama.stok_kelas).forEach(([kelas, stok]) => { let modalHarga = (dataLama.modal && dataLama.modal[kelas]) ? dataLama.modal[kelas] : 0; wadahInput.innerHTML += `<div class="bg-gray-50 p-2 rounded border"><label class="block text-xs font-bold text-gray-700 mb-1">${kelas}</label><div class="flex gap-2"><input type="number" id="edit-modal-${kelas}" value="${modalHarga}" class="w-1/2 border p-1 rounded text-sm" placeholder="Modal Rp"><input type="number" id="edit-stok-${kelas}" value="${stok}" class="w-1/2 border p-1 rounded text-sm" placeholder="Stok Fix (ml)"></div></div>`; }); } document.getElementById('modal-edit').classList.remove('hidden'); }
+        function bukaModalEdit(id) { const dataLama = globalBibit.find(b => b.doc_id === id); if (!dataLama) return; document.getElementById('edit-id-bibit').value = id; document.getElementById('edit-nama-bibit').innerText = dataLama.nama; const wadahInput = document.getElementById('edit-container-kelas'); wadahInput.innerHTML = ''; if (dataLama.stok_kelas) { Object.entries(dataLama.stok_kelas).forEach(([kelas, stok]) => { let modalHarga = (dataLama.modal && dataLama.modal[kelas]) ? dataLama.modal[kelas] : 0; wadahInput.innerHTML += `<div class="bg-gray-50 p-2 rounded border"><label class="block text-xs font-bold text-gray-700 mb-1">${escapeHTML(kelas)}</label><div class="flex gap-2"><input type="number" id="edit-modal-${kelas}" value="${modalHarga}" class="w-1/2 border p-1 rounded text-sm" placeholder="Modal Rp"><input type="number" id="edit-stok-${kelas}" value="${stok}" class="w-1/2 border p-1 rounded text-sm" placeholder="Stok Fix (ml)"></div></div>`; }); } document.getElementById('modal-edit').classList.remove('hidden'); }
         function tutupModalEdit() { document.getElementById('modal-edit').classList.add('hidden'); }
         function simpanEditBibit(e) { e.preventDefault(); const id = document.getElementById('edit-id-bibit').value; const dataLama = globalBibit.find(b => b.doc_id === id); if (!dataLama || !dataLama.stok_kelas) return tutupModalEdit(); let finalStokKelas = { ...dataLama.stok_kelas }; let finalModal = { ...dataLama.modal }; Object.keys(dataLama.stok_kelas).forEach(kelas => { finalStokKelas[kelas] = parseInt(document.getElementById(`edit-stok-${kelas}`).value) || 0; finalModal[kelas] = parseInt(document.getElementById(`edit-modal-${kelas}`).value) || 0; }); let totalSemuaMl = Object.values(finalStokKelas).reduce((a, b) => a + b, 0); db.collection("stok").doc(id).update({ sisa_ml: totalSemuaMl, stok_kelas: finalStokKelas, modal: finalModal }).then(() => { alert("Data berhasil dikoreksi!"); tutupModalEdit(); }); }
 
         const namaBahan = { "botol_35": "Botol 35 ml", "botol_50": "Botol 50 ml", "botol_100": "Botol 100 ml", "abs_standar": "Absolute Standar", "abs_khusus": "Absolute Khusus" }; 
         function simpanBahan(e) { e.preventDefault(); const id = document.getElementById('bahan-id').value; const qty = parseInt(document.getElementById('bahan-qty').value); const harga = parseInt(document.getElementById('bahan-harga').value); db.collection("bahan").doc(id).get().then(doc=>{ let current = doc.exists ? doc.data().sisa||0 : 0; db.collection("bahan").doc(id).set({ id: id, nama: namaBahan[id], sisa: current+qty, harga_satuan: harga }, {merge:true}).then(()=>alert("Bahan diupdate!")); }); }
-        db.collection("bahan").orderBy("id").onSnapshot(snap => { const wadah = document.getElementById('daftar-bahan'); wadah.innerHTML = ''; globalBahan = []; snap.forEach(doc => { const data = doc.data(); data.doc_id = doc.id; globalBahan.push(data); const unit = doc.id.includes('botol') ? 'pcs' : 'ml'; wadah.innerHTML += `<div class="bg-blue-50 p-2 rounded border flex justify-between"><div><p class="font-bold text-xs">${data.nama}</p><p class="text-[10px]">Rp${data.harga_satuan}/${unit}</p></div><span class="font-bold text-blue-700">${data.sisa} ${unit}</span></div>`; }); cekRestock(); });
+        db.collection("bahan").orderBy("id").onSnapshot(snap => { const wadah = document.getElementById('daftar-bahan'); wadah.innerHTML = ''; globalBahan = []; snap.forEach(doc => { const data = doc.data(); data.doc_id = doc.id; globalBahan.push(data); const unit = doc.id.includes('botol') ? 'pcs' : 'ml'; wadah.innerHTML += `<div class="bg-blue-50 p-2 rounded border flex justify-between"><div><p class="font-bold text-xs">${escapeHTML(data.nama)}</p><p class="text-[10px]">Rp${data.harga_satuan}/${unit}</p></div><span class="font-bold text-blue-700">${data.sisa} ${unit}</span></div>`; }); cekRestock(); });
         function hapusDokumen(col, id) { if(confirm("Hapus?")) db.collection(col).doc(id).delete(); }
 
-        function cekRestock() { const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; let adaBibitKritis = false; globalBibit.forEach(b => { if (b.stok_kelas) { Object.entries(b.stok_kelas).forEach(([k, v]) => { if (v <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama} <span class="text-[10px] text-gray-500">(${k})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`; } }); } else if (b.sisa_ml <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; } }); if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama || id}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; }
+        function cekRestock() { const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; let adaBibitKritis = false; globalBibit.forEach(b => { if (b.stok_kelas) { Object.entries(b.stok_kelas).forEach(([k, v]) => { if (v <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)} <span class="text-[10px] text-gray-500">(${escapeHTML(k)})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`; } }); } else if (b.sisa_ml <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; } }); if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama || id)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; }
 
-        // LOGIKA PESANAN TERBARU
+        // LOGIKA PESANAN (MENGGUNAKAN LIMIT 20 AGAR HEMAT KUOTA/CEPAT)
         let isInitialLoad = true;
-        db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
+        db.collection("pesanan").orderBy("waktu", "desc").limit(20).onSnapshot(snapshot => {
             const containerPesanan = document.getElementById('daftar-pesanan'); containerPesanan.innerHTML = ''; 
             let totalOmset = 0, totalHPP = 0, totalQty = 0; const rekapBulanan = {}; const rekapAroma = {}; dataPesananExport = [];
             const blnSkg = new Date().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }); const now = new Date(); let pesananSelesaiUntukFollowUp = []; let crmDatabase = {}; 
 
             snapshot.docChanges().forEach(change => { if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") { document.getElementById('notif-sound').play().catch(e=>{}); if ("Notification" in window && Notification.permission === "granted") { new Notification("Pesanan Baru!", { body: `Dari ${change.doc.data().nama}`, icon: 'logo.jpeg' }); } } }); isInitialLoad = false;
-            if (snapshot.empty) return containerPesanan.innerHTML = '<p class="text-center text-gray-500 italic mt-4">Belum ada pesanan.</p>';
+            if (snapshot.empty) return containerPesanan.innerHTML = '<p class="text-center text-gray-500 italic mt-4">Belum ada pesanan terbaru.</p>';
 
             snapshot.forEach((doc) => {
                 const data = doc.data(); const id = doc.id; 
-                // Warna Status Dinamis
+                
+                const safeNama = escapeHTML(data.nama);
+                const safeWA = escapeHTML(data.no_wa || '-');
+
                 let statusColor = "bg-yellow-100 text-yellow-700";
                 if(data.status === "Diproses") statusColor = "bg-blue-100 text-blue-700";
                 if(data.status === "Selesai") statusColor = "bg-green-100 text-green-700";
@@ -205,9 +216,8 @@
                 const itemsJSON = encodeURIComponent(JSON.stringify(itemsToProcess)); 
                 const pesananHPP = Number(data.total_hpp) || 0;
 
-                let detHTML = itemsToProcess.map(i => `<p class="text-sm border-b pb-1"><b>${i.qty}x</b> ${i.aroma} (${i.kelas} ${i.ukuran}ml)</p>`).join('');
+                let detHTML = itemsToProcess.map(i => `<p class="text-sm border-b pb-1"><b>${i.qty}x</b> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)} ${i.ukuran}ml)</p>`).join('');
 
-                // Tombol Aksi Berdasarkan Status
                 let actionButtons = '';
                 if (data.status === "Menunggu Diproses") {
                     actionButtons = `
@@ -225,7 +235,7 @@
                 containerPesanan.innerHTML += `
                 <div class="bg-white p-4 rounded-xl shadow border-l-4 border-[#a38d58]">
                     <div class="flex justify-between items-start mb-2 border-b pb-2">
-                        <div><h3 class="font-bold text-gray-800">${data.nama}</h3><p class="text-xs text-gray-500">📞 ${data.no_wa||'-'}</p></div>
+                        <div><h3 class="font-bold text-gray-800">${safeNama}</h3><p class="text-xs text-gray-500">📞 ${safeWA}</p></div>
                         <div class="text-right">
                             <span class="text-[10px] font-bold px-2 py-1 rounded ${statusColor} block mb-1">${data.status}</span>
                             <button onclick="cetakStruk('${encodeURIComponent(JSON.stringify(data))}')" class="text-xs bg-gray-200 px-2 py-1 rounded shadow">🖨️ Print</button>
@@ -239,12 +249,11 @@
                     ${actionButtons}
                 </div>`;
 
-                // ANALITIK HANYA DIHITUNG JIKA STATUS = SELESAI
                 if (data.status === "Selesai") {
-                    dataPesananExport.push({ Tanggal: data.waktu ? data.waktu.toDate().toLocaleString('id-ID') : '-', Nama: data.nama, WA: data.no_wa||'-', Omset: data.total, HPP: data.total_hpp||0, Laba: data.total-(data.total_hpp||0), Status: data.status });
+                    dataPesananExport.push({ Tanggal: data.waktu ? data.waktu.toDate().toLocaleString('id-ID') : '-', Nama: safeNama, WA: safeWA, Omset: data.total, HPP: data.total_hpp||0, Laba: data.total-(data.total_hpp||0), Status: data.status });
                     let wktSelesai = data.waktu ? data.waktu.toDate() : now;
-                    let custKey = (data.no_wa || data.nama).toLowerCase().trim(); if(!crmDatabase[custKey]) { crmDatabase[custKey] = { nama: data.nama, no_wa: data.no_wa || '', total_spent: 0, order_count: 0, aromas: new Set() }; } crmDatabase[custKey].total_spent += (Number(data.total) || 0); crmDatabase[custKey].order_count += 1; itemsToProcess.forEach(i => { if(i.aroma) crmDatabase[custKey].aromas.add(i.aroma); });
-                    if (data.no_wa) { let sHari = Math.floor((now - wktSelesai) / (1000 * 60 * 60 * 24)); pesananSelesaiUntukFollowUp.push({ nama: data.nama, no_wa: data.no_wa, hari_lalu: sHari, aroma: itemsToProcess.map(i=>i.aroma).join(', ') }); }
+                    let custKey = (safeWA || safeNama).toLowerCase().trim(); if(!crmDatabase[custKey]) { crmDatabase[custKey] = { nama: safeNama, no_wa: safeWA || '', total_spent: 0, order_count: 0, aromas: new Set() }; } crmDatabase[custKey].total_spent += (Number(data.total) || 0); crmDatabase[custKey].order_count += 1; itemsToProcess.forEach(i => { if(i.aroma) crmDatabase[custKey].aromas.add(i.aroma); });
+                    if (data.no_wa) { let sHari = Math.floor((now - wktSelesai) / (1000 * 60 * 60 * 24)); pesananSelesaiUntukFollowUp.push({ nama: safeNama, no_wa: safeWA, hari_lalu: sHari, aroma: itemsToProcess.map(i=>escapeHTML(i.aroma)).join(', ') }); }
                     const bln = data.waktu ? data.waktu.toDate().toLocaleDateString('id-ID', { month: 'short', year: 'numeric' }) : blnSkg; if (!rekapBulanan[bln]) rekapBulanan[bln] = 0; rekapBulanan[bln] += (data.total||0);
                     if (bln === blnSkg) { totalOmset += (data.total||0); totalHPP += pesananHPP; }
                     itemsToProcess.forEach(i => { if (bln === blnSkg) totalQty += (Number(i.qty)||0); const a = String(i.aroma||'').toUpperCase(); rekapAroma[a] = (rekapAroma[a]||0) + (Number(i.qty)||0); });
@@ -258,34 +267,23 @@
         // 1. TERIMA PESANAN & POTONG STOK
         function terimaPesanan(id, itemsJSON) { 
             const items = JSON.parse(decodeURIComponent(itemsJSON)); 
-            
-            // Validasi Stok
-            let stokAman = true;
-            let pesanError = "";
+            let stokAman = true; let pesanError = "";
 
             for (let item of items) {
                 if (item.bibit) {
                     const dataBibit = globalBibit.find(b => b.nama === item.aroma);
                     if (!dataBibit) { stokAman = false; pesanError += `- Aroma ${item.aroma} tidak ditemukan.\n`; continue; }
-
                     let stokTersedia = 0;
                     if (item.kelas && dataBibit.stok_kelas && dataBibit.stok_kelas[item.kelas] !== undefined) {
                         stokTersedia = dataBibit.stok_kelas[item.kelas];
-                    } else {
-                        stokTersedia = dataBibit.sisa_ml || 0; 
-                    }
-
+                    } else { stokTersedia = dataBibit.sisa_ml || 0; }
                     if (stokTersedia < item.bibit) {
                         stokAman = false;
                         pesanError += `- Stok ${item.aroma} (${item.kelas}) sisa ${stokTersedia}ml (Butuh: ${item.bibit}ml).\n`;
                     }
                 }
             }
-
-            if (!stokAman) {
-                alert("⚠️ GAGAL DITERIMA! STOK TIDAK CUKUP:\n\n" + pesanError);
-                return; 
-            }
+            if (!stokAman) { alert("⚠️ GAGAL DITERIMA! STOK TIDAK CUKUP:\n\n" + pesanError); return; }
 
             if(confirm("Terima pesanan? Stok akan otomatis dipotong dan status menjadi 'Diproses'.")) { 
                 db.collection("pesanan").doc(id).update({ status: "Diproses" }).then(() => { 
@@ -303,24 +301,15 @@
             } 
         }
 
-        // 2. TOLAK PESANAN (TIDAK ADA PERUBAHAN STOK)
+        // 2. TOLAK PESANAN
         function tolakPesanan(id) { 
             const alasan = prompt("Alasan menolak pesanan:"); 
-            if (alasan && alasan.trim() !== "") { 
-                db.collection("pesanan").doc(id).update({ 
-                    status: "Ditolak", 
-                    alasan: alasan.trim() 
-                }).then(() => alert("🚫 Pesanan ditolak.")).catch(e => alert(e.message)); 
-            } 
+            if (alasan && alasan.trim() !== "") { db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: escapeHTML(alasan.trim()) }).then(() => alert("🚫 Pesanan ditolak.")).catch(e => alert(e.message)); } 
         }
 
-        // 3. SELESAIKAN PESANAN (UPDATE ANALITIK & MUNCULKAN QRIS DI PEMBELI)
+        // 3. SELESAIKAN PESANAN
         function selesaikanPesanan(id) { 
-            if(confirm("Tandai selesai? Pesanan dianggap sudah diserahkan. Tombol QRIS akan muncul di pembeli dan data akan masuk ke Analitik Keuangan.")) { 
-                db.collection("pesanan").doc(id).update({ status: "Selesai" })
-                  .then(() => alert("🎉 Pesanan selesai!"))
-                  .catch(e => alert(e.message)); 
-            } 
+            if(confirm("Tandai selesai? Pesanan dianggap sudah diserahkan. Tombol QRIS akan muncul di pembeli dan data akan masuk ke Analitik Keuangan.")) { db.collection("pesanan").doc(id).update({ status: "Selesai" }).then(() => alert("🎉 Pesanan selesai!")).catch(e => alert(e.message)); } 
         }
         
         function renderCRM(dataList) { const wadah = document.getElementById('daftar-crm'); wadah.innerHTML = ''; dataList.sort((a, b) => b.total_spent - a.total_spent); if(dataList.length === 0) return wadah.innerHTML = '<p class="text-xs text-gray-500 italic">Belum ada data pelanggan selesai.</p>'; dataList.forEach((cust, index) => { let aromaFav = Array.from(cust.aromas).slice(0,3).join(', '); if(cust.aromas.size > 3) aromaFav += '...'; let badge = ''; if(index === 0) badge = '👑 Sultan #1'; else if(index === 1) badge = '🥈 Top #2'; else if(index === 2) badge = '🥉 Top #3'; else if(cust.order_count >= 3) badge = '⭐ Setia'; let badgeHtml = badge ? `<span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">${badge}</span>` : ''; let btnWA = ''; if (cust.no_wa) { let noBersih = cust.no_wa.replace(/\D/g, ''); if (noBersih.startsWith('0')) noBersih = '62' + noBersih.substring(1); btnWA = `<a href="https://wa.me/${noBersih}" target="_blank" class="bg-green-100 text-green-700 p-1.5 rounded-full shadow-sm text-xs border border-green-200">💬</a>`; } wadah.innerHTML += `<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-2 border-b border-gray-50 pb-2"><div><h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">${cust.nama} ${badgeHtml}</h3><p class="text-[10px] text-gray-500">${cust.no_wa || 'Tanpa WA'}</p></div>${btnWA}</div><div class="grid grid-cols-2 gap-2 mb-2"><div class="bg-gray-50 p-2 rounded"><p class="text-[9px] text-gray-400">TOTAL BELANJA</p><p class="font-bold text-gold text-sm">Rp ${cust.total_spent.toLocaleString()}</p></div><div class="bg-gray-50 p-2 rounded text-center"><p class="text-[9px] text-gray-400">JML ORDER</p><p class="font-bold text-gray-700 text-sm">${cust.order_count}x</p></div></div><p class="text-[10px] text-gray-500">❤️ <b>Favorit:</b> ${aromaFav}</p></div>`; }); }
@@ -328,7 +317,7 @@
         function renderGrafik(d) { const ctx = document.getElementById('grafikOmset').getContext('2d'); const l = Object.keys(d).reverse(), v = Object.values(d).reverse(); if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'bar', data: { labels: l.length ? l : ['Belum ada'], datasets: [{ label: 'Omset (Rp)', data: v.length ? v : [0], backgroundColor: '#a38d58', borderRadius: 4 }] }, options: { responsive: true, scales: { y: { beginAtZero: true } } } }); }
         function renderTopAroma(d) { const c = document.getElementById('daftar-aroma'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => b[1]-a[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x<3?['🥇','🥈','🥉'][x]:x+1+'.'} ${i[0]}</span><span class="bg-gold text-white px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
         function renderBottomAroma(d) { const c = document.getElementById('daftar-aroma-bawah'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${i[0]}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
-        function cetakStruk(dataStr) { const data = JSON.parse(decodeURIComponent(dataStr)); let itemHtml = (data.items||[]).map(i => `<tr><td>${i.qty}x</td><td>${i.aroma} ${i.ukuran}ml</td><td style="text-align:right">${(i.subtotal||0).toLocaleString()}</td></tr>`).join(''); const iframe = document.getElementById('print-frame'); const doc = iframe.contentWindow.document; doc.open(); doc.write(`<html><head><title>Struk</title><style>body{font-family:monospace;width:58mm;margin:0 auto;padding:5px;font-size:12px;color:#000;} .c{text-align:center;} .b{border-bottom:1px dashed #000;margin:5px 0;padding-bottom:5px;} table{width:100%;font-size:11px;} td{vertical-align:top;}</style></head><body><div class="c"><img src="logo.jpeg" style="width:40px;filter:grayscale(100%);"><br><b>MI PERFUME</b><br></div><div class="b"></div>Nama: ${data.nama}<br>Status: LUNAS<div class="b"></div><table>${itemHtml}</table><div class="b"></div><div style="text-align:right"><b>Total: Rp ${data.total.toLocaleString()}</b></div><div class="c" style="margin-top:10px">Terima Kasih</div></body></html>`); doc.close(); setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 500); }
+        function cetakStruk(dataStr) { const data = JSON.parse(decodeURIComponent(dataStr)); let itemHtml = (data.items||[]).map(i => `<tr><td>${i.qty}x</td><td>${escapeHTML(i.aroma)} ${i.ukuran}ml</td><td style="text-align:right">${(i.subtotal||0).toLocaleString()}</td></tr>`).join(''); const iframe = document.getElementById('print-frame'); const doc = iframe.contentWindow.document; doc.open(); doc.write(`<html><head><title>Struk</title><style>body{font-family:monospace;width:58mm;margin:0 auto;padding:5px;font-size:12px;color:#000;} .c{text-align:center;} .b{border-bottom:1px dashed #000;margin:5px 0;padding-bottom:5px;} table{width:100%;font-size:11px;} td{vertical-align:top;}</style></head><body><div class="c"><img src="logo.jpeg" style="width:40px;filter:grayscale(100%);"><br><b>MI PERFUME</b><br></div><div class="b"></div>Nama: ${escapeHTML(data.nama)}<br>Status: LUNAS<div class="b"></div><table>${itemHtml}</table><div class="b"></div><div style="text-align:right"><b>Total: Rp ${data.total.toLocaleString()}</b></div><div class="c" style="margin-top:10px">Terima Kasih</div></body></html>`); doc.close(); setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 500); }
         function exportExcel() { if(dataPesananExport.length===0) return alert("Data kosong"); let csv = "Tanggal,Nama Pemesan,WhatsApp,Omset,HPP Modal,Laba Bersih,Status\n"; dataPesananExport.forEach(row => { csv += `"${row.Tanggal}","${row.Nama}","${row.WA}",${row.Omset},${row.HPP},${row.Laba},"${row.Status}"\n`; }); let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); let url = window.URL.createObjectURL(blob); let a = document.createElement("a"); a.href = url; a.download = "Laporan_MI_Perfume.csv"; a.click(); }
     </script>
 </body>
