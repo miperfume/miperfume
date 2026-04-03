@@ -58,15 +58,59 @@
             <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
                 <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Update/Tambah Bibit</h2>
                 <form onsubmit="simpanBibit(event)">
-                    <div class="mb-3"><select id="bibit-pilih" class="w-full border p-2 rounded text-sm bg-gray-50 mb-1" onchange="toggleBibitBaru()"><option value="_NEW_">➕ BUAT AROMA BARU...</option></select><input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mt-2" placeholder="Ketik nama baru..."></div>
-                    <div class="mb-3"><input type="number" id="bibit-ml" required min="0" class="w-full border p-2 rounded text-sm" placeholder="Tambah Stok (ml)"></div>
-                    <div class="mb-3 bg-gray-50 p-2 rounded border"><label class="block text-xs font-bold text-gray-600 mb-2">Harga Modal (Rp/ml):</label><div class="grid grid-cols-2 gap-2 text-xs"><div><label><input type="checkbox" id="cb-standar" checked onchange="toggleModalInput('Standar')"> Std</label><input type="number" id="m-standar" class="w-full border p-1 mt-1"></div><div><label><input type="checkbox" id="cb-premium" checked onchange="toggleModalInput('Premium')"> Prm</label><input type="number" id="m-premium" class="w-full border p-1 mt-1"></div><div><label><input type="checkbox" id="cb-super" checked onchange="toggleModalInput('Super Premium')"> Super</label><input type="number" id="m-super" class="w-full border p-1 mt-1"></div><div><label><input type="checkbox" id="cb-diamond" checked onchange="toggleModalInput('Diamond')"> Diamond</label><input type="number" id="m-diamond" class="w-full border p-1 mt-1"></div></div></div>
+                    <div class="mb-3">
+                        <select id="bibit-pilih" class="w-full border p-2 rounded text-sm bg-gray-50 mb-1" onchange="toggleBibitBaru()">
+                            <option value="_NEW_">➕ BUAT AROMA BARU...</option>
+                        </select>
+                        <input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mt-2" placeholder="Ketik nama baru...">
+                    </div>
+                    
+                    <div class="mb-3 bg-gray-50 p-2 rounded border">
+                        <label class="block text-xs font-bold text-gray-600 mb-2">Pilih Kelas, Modal, & Tambah Stok (ml):</label>
+                        <div class="grid grid-cols-1 gap-2 text-xs">
+                            <div class="flex items-center gap-2">
+                                <label class="w-1/3"><input type="checkbox" id="cb-standar" checked onchange="toggleModalInput('standar')"> Standar</label>
+                                <input type="number" id="m-standar" class="w-1/3 border p-1 rounded" placeholder="Modal Rp">
+                                <input type="number" id="ml-standar" class="w-1/3 border p-1 rounded" placeholder="+ Stok ml">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="w-1/3"><input type="checkbox" id="cb-premium" checked onchange="toggleModalInput('premium')"> Premium</label>
+                                <input type="number" id="m-premium" class="w-1/3 border p-1 rounded" placeholder="Modal Rp">
+                                <input type="number" id="ml-premium" class="w-1/3 border p-1 rounded" placeholder="+ Stok ml">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="w-1/3"><input type="checkbox" id="cb-super" checked onchange="toggleModalInput('super')"> Super Prm</label>
+                                <input type="number" id="m-super" class="w-1/3 border p-1 rounded" placeholder="Modal Rp">
+                                <input type="number" id="ml-super" class="w-1/3 border p-1 rounded" placeholder="+ Stok ml">
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="w-1/3"><input type="checkbox" id="cb-diamond" checked onchange="toggleModalInput('diamond')"> Diamond</label>
+                                <input type="number" id="m-diamond" class="w-1/3 border p-1 rounded" placeholder="Modal Rp">
+                                <input type="number" id="ml-diamond" class="w-1/3 border p-1 rounded" placeholder="+ Stok ml">
+                            </div>
+                        </div>
+                    </div>
                     <button type="submit" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit</button>
                 </form>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500"><h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Update Botol & Absolute</h2><form onsubmit="simpanBahan(event)"><div class="mb-3"><select id="bahan-id" required class="w-full border p-2 rounded text-sm"><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option></select></div><div class="flex gap-2 mb-3"><input type="number" id="bahan-qty" required class="w-full border p-2 rounded text-sm" placeholder="Tambah Stok Baru"><input type="number" id="bahan-harga" required class="w-full border p-2 rounded text-sm" placeholder="Modal Satuan (Rp)"></div><button type="submit" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Update Bahan</button></form></div>
-            <div class="flex justify-between items-center border-b pb-2 mb-3"><h2 class="font-bold text-gray-700 text-sm">Daftar Stok Saat Ini</h2><button onclick="migrasiModalLama()" class="bg-yellow-500 text-white text-xs px-2 py-1 rounded shadow">🪄 Auto-Migrasi</button></div>
-            <div id="daftar-bahan" class="mb-4 space-y-2"></div><div id="daftar-bibit" class="space-y-2"></div>
+            
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
+                <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Update Botol & Absolute</h2>
+                <form onsubmit="simpanBahan(event)">
+                    <div class="mb-3">
+                        <select id="bahan-id" required class="w-full border p-2 rounded text-sm"><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option></select>
+                    </div>
+                    <div class="flex gap-2 mb-3">
+                        <input type="number" id="bahan-qty" required class="w-full border p-2 rounded text-sm" placeholder="Tambah Stok Baru">
+                        <input type="number" id="bahan-harga" required class="w-full border p-2 rounded text-sm" placeholder="Modal Satuan (Rp)">
+                    </div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Update Bahan</button>
+                </form>
+            </div>
+            
+            <div class="flex justify-between items-center border-b pb-2 mb-3"><h2 class="font-bold text-gray-700 text-sm">Daftar Stok Saat Ini</h2><button onclick="migrasiModalLama()" class="bg-yellow-500 text-white text-[10px] px-2 py-1 rounded shadow">🪄 Auto-Migrasi Format</button></div>
+            <div id="daftar-bahan" class="mb-4 space-y-2"></div>
+            <div id="daftar-bibit" class="space-y-2"></div>
         </div>
 
         <div id="page-crm" class="p-4 max-w-md mx-auto hidden"><div class="bg-gradient-to-r from-[#a38d58] to-yellow-600 p-4 rounded-xl shadow mb-4 text-white"><h2 class="font-bold text-lg">👥 Database Pelanggan Pintar</h2><p class="text-xs text-yellow-100 mt-1">Daftar pelanggan Anda yang diurutkan berdasarkan total belanja terbanyak.</p></div><div id="daftar-crm" class="space-y-3"></div></div>
@@ -78,70 +122,182 @@
     <iframe id="print-frame" style="position: absolute; width: 0; height: 0; border: none; visibility: hidden;"></iframe>
 
     <script>
-        // --- MASUKKAN KODE FIREBASE DI SINI ---
-       const firebaseConfig = {
-  apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
-  authDomain: "mi-perfume-1989.firebaseapp.com",
-  databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "mi-perfume-1989",
-  storageBucket: "mi-perfume-1989.firebasestorage.app",
-  messagingSenderId: "894897183896",
-  appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
-  measurementId: "G-H2KG1X9KVN"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
+            authDomain: "mi-perfume-1989.firebaseapp.com",
+            databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mi-perfume-1989",
+            storageBucket: "mi-perfume-1989.firebasestorage.app",
+            messagingSenderId: "894897183896",
+            appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
+            measurementId: "G-H2KG1X9KVN"
+        };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         
-        // --- SISTEM LOGIN BARU (FIREBASE AUTH) ---
         firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('admin-content').classList.remove('hidden');
-            } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('admin-content').classList.add('hidden');
-            }
+            if (user) { document.getElementById('login-screen').classList.add('hidden'); document.getElementById('admin-content').classList.remove('hidden'); }
+            else { document.getElementById('login-screen').classList.remove('hidden'); document.getElementById('admin-content').classList.add('hidden'); }
         });
 
-        function prosesLogin(e) {
-    e.preventDefault();
-    const email = document.getElementById('input-user').value.trim();
-    const pass = document.getElementById('input-pass').value;
-    const btn = document.getElementById('btn-login');
-    btn.innerText = "Memeriksa..."; btn.disabled = true;
-
-    firebase.auth().signInWithEmailAndPassword(email, pass)
-    .then(() => {
-        btn.innerText = "Masuk Terenkripsi"; btn.disabled = false;
-    })
-    .catch(err => {
-        // KITA UBAH BAGIAN INI UNTUK MELIHAT ERROR ASLI FIREBASE
-        console.error("Detail Error Firebase:", err.code, err.message);
-        alert("Pesan dari Firebase: " + err.code); 
-        
-        btn.innerText = "Masuk Terenkripsi"; btn.disabled = false;
-    });
-}
-
-
+        function prosesLogin(e) { e.preventDefault(); const email = document.getElementById('input-user').value.trim(); const pass = document.getElementById('input-pass').value; const btn = document.getElementById('btn-login'); btn.innerText = "Memeriksa..."; btn.disabled = true; firebase.auth().signInWithEmailAndPassword(email, pass).then(() => { btn.innerText = "Masuk Terenkripsi"; btn.disabled = false; }).catch(err => { console.error("Error:", err); alert(err.message); btn.innerText = "Masuk Terenkripsi"; btn.disabled = false; }); }
         function logoutAdmin() { if(confirm("Keluar dari sistem?")) firebase.auth().signOut(); }
         function togglePassword() { const p=document.getElementById('input-pass'); p.type=p.type==='password'?'text':'password'; }
         
-        // FUNGSI UI & TAB
         function switchTab(t) { ['pesanan','stok','crm','dashboard','restock','followup'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); }); document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active'); }
         function aktifkanNotif() { if ("Notification" in window) Notification.requestPermission().then(perm => { if(perm==="granted")alert("✅ Izin diberikan!"); }); const audio = document.getElementById('notif-sound'); audio.volume = 0; audio.play().then(() => { audio.pause(); audio.volume = 1; }).catch(e=>{}); }
 
-        // --- SISTEM APLIKASI (SAMA SEPERTI SEBELUMNYA) ---
         let chartInstance = null; let globalBibit = []; let globalBahan = []; let dataPesananExport = [];
         
-        function migrasiModalLama() { if(!confirm("Auto-Migrasi Modal?")) return; const batch = db.batch(); let jml = 0; globalBibit.forEach(b => { if (b.harga_ml && (!b.modal || Object.keys(b.modal).length === 0)) { let obj = {}; (b.kelas_tersedia || ['Standar']).forEach(k => obj[k] = b.harga_ml); batch.update(db.collection("stok").doc(b.doc_id), { modal: obj }); jml++; } }); if(jml>0) batch.commit().then(() => alert(`✅ ${jml} aroma dimigrasi.`)); else alert("👍 Sudah format baru."); }
-        function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').style.display = v === '_NEW_' ? 'block' : 'none'; } function toggleModalInput(id) { const cb = document.getElementById('cb-'+id.toLowerCase().split(' ')[0]); document.getElementById('m-'+id.toLowerCase().split(' ')[0]).disabled = !cb.checked; }
-        function simpanBibit(e) { e.preventDefault(); const isNew = document.getElementById('bibit-pilih').value === '_NEW_'; const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value; const tambahMl = parseInt(document.getElementById('bibit-ml').value); let modObj = {}; let klsArr = []; ['Standar','Premium','Super Premium','Diamond'].forEach(k => { let pid = k.toLowerCase().split(' ')[0]; if(document.getElementById('cb-'+pid).checked) { klsArr.push(k); modObj[k] = parseInt(document.getElementById('m-'+pid).value)||0; } }); if(klsArr.length === 0) return alert("Pilih minimal 1 kelas!"); const docRef = db.collection("stok").doc(nama); docRef.get().then(doc => { let finalMl = doc.exists ? (doc.data().sisa_ml || 0) + tambahMl : tambahMl; docRef.set({ nama: nama, sisa_ml: finalMl, modal: modObj, kelas_tersedia: klsArr }, {merge: true}).then(() => { alert("Stok Diupdate!"); document.getElementById('bibit-ml').value=''; if(isNew)document.getElementById('bibit-nama').value=''; }); }); }
-        db.collection("stok").orderBy("nama").onSnapshot(snap => { const wadah = document.getElementById('daftar-bibit'); const sel = document.getElementById('bibit-pilih'); wadah.innerHTML = ''; sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>'; globalBibit = []; snap.forEach(doc => { const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data); sel.innerHTML += `<option value="${data.nama}">${data.nama}</option>`; let hrgList = Object.entries(data.modal||{}).map(([k,v])=>`${k}: Rp${v}`).join(' | '); wadah.innerHTML += `<div class="bg-white p-3 rounded border flex justify-between items-center"><div><p class="font-bold text-sm">💧 ${data.nama}</p><p class="text-[9px] text-gray-500">${hrgList}</p></div><div class="flex items-center gap-3"><span class="text-sm font-bold text-green-600">${data.sisa_ml} ml</span><button onclick="hapusDokumen('stok', '${doc.id}')" class="text-red-500">🗑️</button></div></div>`; }); cekRestock(); });
-        const namaBahan = { "botol_35": "Botol 35 ml", "botol_50": "Botol 50 ml", "botol_100": "Botol 100 ml", "abs_standar": "Absolute Standar", "abs_khusus": "Absolute Khusus" }; function simpanBahan(e) { e.preventDefault(); const id = document.getElementById('bahan-id').value; const qty = parseInt(document.getElementById('bahan-qty').value); const harga = parseInt(document.getElementById('bahan-harga').value); db.collection("bahan").doc(id).get().then(doc=>{ let current = doc.exists ? doc.data().sisa||0 : 0; db.collection("bahan").doc(id).set({ id: id, nama: namaBahan[id], sisa: current+qty, harga_satuan: harga }, {merge:true}).then(()=>alert("Bahan diupdate!")); }); }
+        function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').style.display = v === '_NEW_' ? 'block' : 'none'; } 
+        
+        // Disable/Enable input berdasarkan Centang
+        function toggleModalInput(id) { 
+            const cb = document.getElementById('cb-'+id); 
+            document.getElementById('m-'+id).disabled = !cb.checked; 
+            document.getElementById('ml-'+id).disabled = !cb.checked; 
+        }
+
+        // AUTO MIGRASI KE FORMAT BARU
+        function migrasiModalLama() { 
+            if(!confirm("Mulai auto-migrasi ke format kelas? Pastikan tidak ada transaksi berjalan.")) return; 
+            const batch = db.batch(); let jml = 0; 
+            globalBibit.forEach(b => { 
+                let needsUpdate = false;
+                let objModal = b.modal || {};
+                let objStok = b.stok_kelas || {};
+
+                // Migrasi model harga lama ke mapping kelas
+                if (b.harga_ml && (!b.modal || Object.keys(b.modal).length === 0)) { 
+                    (b.kelas_tersedia || ['Standar']).forEach(k => objModal[k] = b.harga_ml); 
+                    needsUpdate = true;
+                } 
+                // Migrasi sisa_ml tunggal ke objek stok_kelas spesifik
+                if (b.sisa_ml !== undefined && Object.keys(objStok).length === 0) {
+                    let firstClass = (b.kelas_tersedia && b.kelas_tersedia.length > 0) ? b.kelas_tersedia[0] : 'Standar';
+                    objStok[firstClass] = b.sisa_ml;
+                    needsUpdate = true;
+                }
+
+                if(needsUpdate) {
+                    batch.update(db.collection("stok").doc(b.doc_id), { modal: objModal, stok_kelas: objStok }); 
+                    jml++; 
+                }
+            }); 
+            if(jml>0) batch.commit().then(() => alert(`✅ ${jml} aroma berhasil dimigrasi.`)); 
+            else alert("👍 Sudah sesuai format baru."); 
+        }
+
+        // SIMPAN BIBIT (DIPERBARUI)
+        function simpanBibit(e) { 
+            e.preventDefault(); 
+            const isNew = document.getElementById('bibit-pilih').value === '_NEW_'; 
+            const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value; 
+            
+            let modObj = {}; 
+            let stokAdd = {};
+            let klsArr = []; 
+
+            // Ambil data untuk setiap kelas
+            ['standar','premium','super','diamond'].forEach((pid, idx) => { 
+                const k = ['Standar', 'Premium', 'Super Premium', 'Diamond'][idx];
+                if(document.getElementById('cb-'+pid).checked) { 
+                    klsArr.push(k); 
+                    // Ambil nilai, biarkan null/0 jika kosong
+                    let mValue = document.getElementById('m-'+pid).value;
+                    let mlValue = document.getElementById('ml-'+pid).value;
+                    if(mValue !== "") modObj[k] = parseInt(mValue); 
+                    if(mlValue !== "") stokAdd[k] = parseInt(mlValue); 
+                } 
+            }); 
+            if(klsArr.length === 0) return alert("Pilih minimal 1 kelas!"); 
+            
+            const docRef = db.collection("stok").doc(nama); 
+            docRef.get().then(doc => { 
+                let currentStok = (doc.exists && doc.data().stok_kelas) ? doc.data().stok_kelas : {};
+                let currentModal = (doc.exists && doc.data().modal) ? doc.data().modal : {};
+
+                // Fallback untuk doc lama yang belum termigrasi
+                if(doc.exists && !doc.data().stok_kelas && doc.data().sisa_ml) {
+                    let oldClass = (doc.data().kelas_tersedia && doc.data().kelas_tersedia.length > 0) ? doc.data().kelas_tersedia[0] : 'Standar';
+                    currentStok[oldClass] = doc.data().sisa_ml;
+                }
+
+                let finalStokKelas = { ...currentStok };
+                let finalModal = { ...currentModal, ...modObj }; // Merge pembaruan modal
+
+                // Tambahkan ML stok per kelas
+                klsArr.forEach(k => {
+                    finalStokKelas[k] = (finalStokKelas[k] || 0) + (stokAdd[k] || 0);
+                });
+
+                let totalSemuaMl = Object.values(finalStokKelas).reduce((a,b)=>a+b, 0);
+
+                docRef.set({ 
+                    nama: nama, 
+                    sisa_ml: totalSemuaMl, 
+                    stok_kelas: finalStokKelas,
+                    modal: finalModal, 
+                    kelas_tersedia: Object.keys(finalStokKelas) // Refresh kelas tersedia sesuai data stok
+                }, {merge: true}).then(() => { 
+                    alert("Stok & Modal Diupdate!"); 
+                    // Kosongkan form
+                    ['standar','premium','super','diamond'].forEach(pid => { document.getElementById('ml-'+pid).value=''; });
+                    if(isNew) document.getElementById('bibit-nama').value=''; 
+                }); 
+            }); 
+        }
+
+        // TAMPILAN BIBIT (DIPERBARUI)
+        db.collection("stok").orderBy("nama").onSnapshot(snap => { 
+            const wadah = document.getElementById('daftar-bibit'); const sel = document.getElementById('bibit-pilih'); 
+            wadah.innerHTML = ''; sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>'; 
+            globalBibit = []; 
+            snap.forEach(doc => { 
+                const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data); 
+                sel.innerHTML += `<option value="${data.nama}">${data.nama}</option>`; 
+                
+                let infoKelas = '';
+                if(data.stok_kelas) {
+                    infoKelas = Object.entries(data.stok_kelas).map(([k,v]) => {
+                        let mod = (data.modal && data.modal[k]) ? data.modal[k] : 0;
+                        return `<b>${k}:</b> ${v}ml (Rp${mod}/ml)`;
+                    }).join('<br>');
+                } else {
+                    infoKelas = `Total: ${data.sisa_ml} ml (Format Lama)`;
+                }
+
+                wadah.innerHTML += `<div class="bg-white p-3 rounded border flex justify-between items-center"><div><p class="font-bold text-sm">💧 ${data.nama}</p><p class="text-[10px] text-gray-600 mt-1">${infoKelas}</p></div><div class="flex items-center gap-3"><button onclick="hapusDokumen('stok', '${doc.id}')" class="text-red-500">🗑️</button></div></div>`; 
+            }); cekRestock(); 
+        });
+
+        const namaBahan = { "botol_35": "Botol 35 ml", "botol_50": "Botol 50 ml", "botol_100": "Botol 100 ml", "abs_standar": "Absolute Standar", "abs_khusus": "Absolute Khusus" }; 
+        function simpanBahan(e) { e.preventDefault(); const id = document.getElementById('bahan-id').value; const qty = parseInt(document.getElementById('bahan-qty').value); const harga = parseInt(document.getElementById('bahan-harga').value); db.collection("bahan").doc(id).get().then(doc=>{ let current = doc.exists ? doc.data().sisa||0 : 0; db.collection("bahan").doc(id).set({ id: id, nama: namaBahan[id], sisa: current+qty, harga_satuan: harga }, {merge:true}).then(()=>alert("Bahan diupdate!")); }); }
         db.collection("bahan").orderBy("id").onSnapshot(snap => { const wadah = document.getElementById('daftar-bahan'); wadah.innerHTML = ''; globalBahan = []; snap.forEach(doc => { const data = doc.data(); data.doc_id = doc.id; globalBahan.push(data); const unit = doc.id.includes('botol') ? 'pcs' : 'ml'; wadah.innerHTML += `<div class="bg-blue-50 p-2 rounded border flex justify-between"><div><p class="font-bold text-xs">${data.nama}</p><p class="text-[10px]">Rp${data.harga_satuan}/${unit}</p></div><span class="font-bold text-blue-700">${data.sisa} ${unit}</span></div>`; }); cekRestock(); });
         function hapusDokumen(col, id) { if(confirm("Hapus?")) db.collection(col).doc(id).delete(); }
-        function cekRestock() { const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; let adaBibitKritis = false; globalBibit.forEach(b => { if (b.sisa_ml <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; } }); if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama || id}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; }
+
+        // CEK RESTOCK (DIPERBARUI UNTUK MENGECEK STOK PER KELAS)
+        function cekRestock() { 
+            const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; 
+            const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; 
+            let adaBibitKritis = false; 
+            
+            globalBibit.forEach(b => { 
+                if (b.stok_kelas) {
+                    Object.entries(b.stok_kelas).forEach(([k, v]) => {
+                        if (v <= 50) {
+                            adaBibitKritis = true;
+                            wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama} <span class="text-[10px] text-gray-500">(${k})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`;
+                        }
+                    });
+                } else if (b.sisa_ml <= 50) { 
+                    adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; 
+                } 
+            }); 
+            if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; 
+
+            let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${b.nama || id}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; 
+        }
 
         let isInitialLoad = true;
         db.collection("pesanan").orderBy("waktu", "desc").onSnapshot(snapshot => {
@@ -182,7 +338,27 @@
         function renderBottomAroma(d) { const c = document.getElementById('daftar-aroma-bawah'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${i[0]}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
 
         function selesaikanPesanan(id) { if(confirm("Tandai selesai?")) db.collection("pesanan").doc(id).update({ status: "Selesai" }); }
-        function tolakPesanan(id, itemsJSON) { const alasan = prompt("Alasan menolak pesanan:"); if (alasan && alasan.trim() !== "") { const items = JSON.parse(decodeURIComponent(itemsJSON)); db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: alasan.trim() }).then(() => { items.forEach(item => { if (item.bibit) db.collection("stok").doc(item.aroma).update({ sisa_ml: firebase.firestore.FieldValue.increment(item.bibit) }); if (item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(item.qty) }); if (item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(item.absolute_ml) }); }); alert("Ditolak & Stok dikembalikan!"); }).catch(e => alert(e)); } }
+        
+        // TOLAK PESANAN (DIPERBARUI UNTUK MENGEMBALIKAN STOK KE KELAS SPESIFIK)
+        function tolakPesanan(id, itemsJSON) { 
+            const alasan = prompt("Alasan menolak pesanan:"); 
+            if (alasan && alasan.trim() !== "") { 
+                const items = JSON.parse(decodeURIComponent(itemsJSON)); 
+                db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: alasan.trim() }).then(() => { 
+                    items.forEach(item => { 
+                        if (item.bibit) {
+                            let objPengembalian = { sisa_ml: firebase.firestore.FieldValue.increment(item.bibit) };
+                            if(item.kelas) objPengembalian[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(item.bibit);
+                            db.collection("stok").doc(item.aroma).update(objPengembalian); 
+                        }
+                        if (item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(item.qty) }); 
+                        if (item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(item.absolute_ml) }); 
+                    }); 
+                    alert("Ditolak & Stok dikembalikan!"); 
+                }).catch(e => alert(e)); 
+            } 
+        }
+        
         function cetakStruk(dataStr) { const data = JSON.parse(decodeURIComponent(dataStr)); let itemHtml = (data.items||[]).map(i => `<tr><td>${i.qty}x</td><td>${i.aroma} ${i.ukuran}ml</td><td style="text-align:right">${(i.subtotal||0).toLocaleString()}</td></tr>`).join(''); const iframe = document.getElementById('print-frame'); const doc = iframe.contentWindow.document; doc.open(); doc.write(`<html><head><title>Struk</title><style>body{font-family:monospace;width:58mm;margin:0 auto;padding:5px;font-size:12px;color:#000;} .c{text-align:center;} .b{border-bottom:1px dashed #000;margin:5px 0;padding-bottom:5px;} table{width:100%;font-size:11px;} td{vertical-align:top;}</style></head><body><div class="c"><img src="logo.jpeg" style="width:40px;filter:grayscale(100%);"><br><b>MI PERFUME</b><br></div><div class="b"></div>Nama: ${data.nama}<br>Status: LUNAS<div class="b"></div><table>${itemHtml}</table><div class="b"></div><div style="text-align:right"><b>Total: Rp ${data.total.toLocaleString()}</b></div><div class="c" style="margin-top:10px">Terima Kasih</div></body></html>`); doc.close(); setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 500); }
         function exportExcel() { if(dataPesananExport.length===0) return alert("Data kosong"); let csv = "Tanggal,Nama Pemesan,WhatsApp,Omset,HPP Modal,Laba Bersih,Status\n"; dataPesananExport.forEach(row => { csv += `"${row.Tanggal}","${row.Nama}","${row.WA}",${row.Omset},${row.HPP},${row.Laba},"${row.Status}"\n`; }); let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); let url = window.URL.createObjectURL(blob); let a = document.createElement("a"); a.href = url; a.download = "Laporan_MI_Perfume.csv"; a.click(); }
     </script>
