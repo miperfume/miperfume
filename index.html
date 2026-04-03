@@ -15,9 +15,9 @@
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
     <div id="splash" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center transition-opacity duration-700">
-        <video src="video.mp4" autoplay muted playsinline onended="closeSplash()" class="w-full max-w-sm object-cover rounded-xl mb-4" onerror="closeSplash()"></video>
+        <img src="logo.jpeg" alt="MI Perfume Logo" class="w-32 h-32 object-contain rounded-2xl mb-6 shadow-[0_0_20px_rgba(163,141,88,0.4)] animate-pulse">
         <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin"></div>
-        <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest">MEMUAT TOKO...</p>
+        <p class="text-[#a38d58] mt-4 text-xs font-bold tracking-widest animate-pulse">MEMUAT TOKO...</p>
     </div>
 
     <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
@@ -81,8 +81,18 @@
     </div>
 
     <script>
+        // Fungsi Sanitasi (Anti-XSS) agar aplikasi lebih aman
+        function escapeHTML(str) {
+            if (!str) return '';
+            return str.toString().replace(/[&<>'"]/g, function(tag) {
+                const charsToReplace = { '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' };
+                return charsToReplace[tag] || tag;
+            });
+        }
+
         function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
-        setTimeout(closeSplash, 5000); 
+        // Mengubah durasi loading menjadi 2.5 detik (2500ms)
+        setTimeout(closeSplash, 2500); 
 
         let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)); localStorage.setItem('mi_buyer_id', buyerId);
 
@@ -124,8 +134,8 @@
 
             rawAromas.forEach(data => {
                 if (data.nama.toLowerCase().includes(query)) {
-                    if (data.sisa_ml >= 17.5) html += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
-                    else html += `<option value="${data.nama}" disabled class="text-red-400">${data.nama} (Kosong)</option>`;
+                    if (data.sisa_ml >= 17.5) html += `<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)} (Tersedia)</option>`;
+                    else html += `<option value="${escapeHTML(data.nama)}" disabled class="text-red-400">${escapeHTML(data.nama)} (Kosong)</option>`;
                 }
             });
             selectAroma.innerHTML = html;
@@ -141,7 +151,7 @@
                 dataStok[aroma].kelas_tersedia.forEach(k => {
                     let labelPromo = `Rp ${hargaPerMl[k].toLocaleString()}/ml`;
                     if (k === "Super Premium") labelPromo = "Harga Khusus Promo";
-                    selectKelas.innerHTML += `<option value="${k}">${k} (${labelPromo})</option>`;
+                    selectKelas.innerHTML += `<option value="${escapeHTML(k)}">${escapeHTML(k)} (${labelPromo})</option>`;
                 });
             }
             hitungSubTotal();
@@ -176,7 +186,7 @@
 
         function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
         
-        function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${i.kelas} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
+        function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${escapeHTML(i.aroma)} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${escapeHTML(i.kelas)} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
 
         function kirimPesananAkhir() { 
             const nama = document.getElementById('nama').value.trim(); 
@@ -188,11 +198,10 @@
             btn.innerText = "Memproses..."; 
             btn.disabled = true; 
             
-            // HANYA MENGIRIM PESANAN, TIDAK MEMOTONG STOK
             db.collection("pesanan").add({ 
                 buyer_id: buyerId, 
-                nama: nama, 
-                no_wa: noWa, 
+                nama: escapeHTML(nama), 
+                no_wa: escapeHTML(noWa), 
                 items: keranjang, 
                 total: keranjang.reduce((s, i) => s + i.subtotal, 0), 
                 total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), 
@@ -226,12 +235,10 @@
             snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); 
             
             rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { 
-                // Warna Status
                 let sColor = d.status==="Selesai" ? "bg-green-100 text-green-700" : (d.status==="Ditolak" ? "bg-red-100 text-red-700" : (d.status==="Diproses" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700")); 
                 let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; 
-                let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):''; 
+                let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`).join(''):''; 
                 
-                // Tampilkan tombol bayar HANYA jika status "Selesai"
                 let tombolBayarHtml = '';
                 if(d.status === "Selesai") {
                     tombolBayarHtml = `<button onclick="bukaQris()" class="mt-3 w-full bg-[#a38d58] hover:bg-[#8c794a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">📱 Bayar dengan QRIS</button>`;
