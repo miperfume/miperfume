@@ -1,91 +1,152 @@
 <!DOCTYPE html>
-<html lang="id" class="light">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Pesan - MI Perfume</title>
+    <title>Admin - MI Perfume</title>
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
     
-    <style> .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } </style>
+    <style> 
+        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
+        .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
+        .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* KODE BARU: Sembunyikan wadah print di layar normal */
+        #print-section { display: none; }
+        
+        @media print {
+            body * { visibility: hidden; }
+            #print-section { 
+                display: block; 
+                position: absolute; 
+                left: 0; top: 0; 
+                width: 58mm; 
+                margin: 0; padding: 0; 
+                color: #000; background: #fff; 
+                font-family: monospace; font-size: 12px; 
+            }
+            #print-section * { visibility: visible; }
+            @page { margin: 0; size: 58mm auto; }
+        }
+    </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
+<body class="bg-gray-100 text-gray-800 pb-20">
 
-    <div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
-        <img src="loading.PNG" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
-        <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
-            <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
-            <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
-        </div>
-    </div>
+    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" style="display:none;"></audio>
 
-    <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
-        <div class="flex items-center gap-3"><img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md"><div class="flex flex-col"><h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1><h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2></div></div>
-        <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg">🌓</button>
-    </header>
-
-    <div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 sticky top-[73px] z-10">
-        <button id="tab-pesan" class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
-        <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm" onclick="switchTab('riwayat')">Riwayat</button>
-    </div>
-
-    <div id="page-pesan" class="p-4 max-w-md mx-auto">
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
-            <div class="mb-3"><label class="block text-sm font-bold mb-1">Nama Pemesan</label><input type="text" id="nama" required class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="Nama Anda"></div>
-            <div><label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label><input type="tel" id="no-wa" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="0812..."></div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
-            <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
-            <form id="form-item" onsubmit="tambahKeKeranjang(event)">
-                <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
-                    <div class="mb-2 relative">
-                        <input type="text" id="search-aroma" oninput="filterAroma()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm pr-8 bg-white dark:bg-gray-700" placeholder="🔍 Ketik untuk mencari aroma...">
-                    </div>
-                    <select id="aroma" required onchange="updateKelasOptions()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm bg-gray-50 dark:bg-gray-700">
-                        <option value="" disabled selected>Memuat ketersediaan...</option>
-                    </select>
-                </div>
-
-                <div class="mb-3"><label class="block text-xs font-medium mb-1">Kelas</label><select id="kelas" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih aroma dulu</option></select></div>
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div><label class="block text-xs font-medium mb-1">Ukuran</label><select id="ukuran" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih...</option><option value="35">35 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
-                    <div><label class="block text-xs font-medium mb-1">Jumlah</label><input type="number" id="qty" required min="1" value="1" oninput="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm text-center"></div>
-                </div>
-                <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600"><span class="text-xs">Subtotal:</span><span id="subtotal-item" class="font-bold text-gold">Rp 0</span></div>
-                <button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">Masukkan Keranjang</button>
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 px-4">
+        <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
+            <img src="logo.jpeg" class="h-16 w-auto mx-auto mb-2 rounded"><h1 class="text-2xl font-bold text-center text-[#a38d58] mb-4">Admin System</h1>
+            <form id="form-login" onsubmit="prosesLogin(event)">
+                <div class="mb-4"><input type="email" id="input-user" required class="w-full border p-3 rounded" placeholder="Email Admin"></div>
+                <div class="mb-6 relative"><input type="password" id="input-pass" required class="w-full border p-3 rounded" placeholder="Password"><button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3">👁️</button></div>
+                <button type="submit" id="btn-login" class="w-full bg-gold text-white font-bold py-3 rounded">Masuk Terenkripsi</button>
             </form>
         </div>
+    </div>
 
-        <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
-            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between"><span>🛒 Keranjang</span><span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span></h2>
-            <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto"><p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p></div>
-            <div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4"><span class="text-sm font-bold">Total:</span><span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span></div>
-            <button id="btn-submit" onclick="kirimPesananAkhir()" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>Kirim Pesanan Sekarang</button>
+    <div id="admin-content" class="hidden">
+        <header class="bg-gray-800 text-white p-3 sticky top-0 z-20 flex justify-between items-center">
+            <div class="flex items-center gap-2"><img src="logo.jpeg" class="h-8 w-8 rounded"><h1 class="font-bold text-[#a38d58]">MI Perfume</h1></div>
+            <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
+        </header>
+
+        <div class="flex bg-white shadow-sm mb-4 sticky top-[56px] z-10 overflow-x-auto hide-scrollbar">
+            <button id="tab-pesanan" class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap" onclick="switchTab('pesanan')">Pesanan</button>
+            <button id="tab-stok" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok</button>
+            <button id="tab-crm" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap text-[#a38d58]" onclick="switchTab('crm')">CRM 👥</button>
+            <button id="tab-dashboard" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('dashboard')">Analitik</button>
+            <button id="tab-restock" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('restock')">Restock 🛒</button>
+            <button id="tab-followup" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('followup')">Follow-Up 💬</button>
+        </div>
+
+        <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4">
+            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 text-center mb-2"><p class="text-xs text-blue-700 mb-1">Agar notifikasi berbunyi saat ditutup:</p><button onclick="aktifkanNotif()" class="text-xs bg-blue-600 text-white px-3 py-1 rounded shadow">🔔 Aktifkan Izin Notifikasi</button></div>
+            <div id="daftar-pesanan"></div>
+        </div>
+
+        <div id="page-stok" class="p-4 max-w-md mx-auto hidden">
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
+                <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Restock / Tambah Bibit</h2>
+                <form onsubmit="simpanBibit(event)">
+                    <div class="mb-3">
+                        <select id="bibit-pilih" class="w-full border p-2 rounded text-sm bg-gray-50 mb-1" onchange="toggleBibitBaru()">
+                            <option value="_NEW_">➕ BUAT AROMA BARU...</option>
+                        </select>
+                        <input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mt-2" placeholder="Ketik nama baru...">
+                    </div>
+                    <div class="mb-3 bg-gray-50 p-2 rounded border">
+                        <label class="block text-xs font-bold text-gray-600 mb-2">Pilih Kelas, Modal, & Tambah/Kurang Stok (ml):</label>
+                        <div class="grid grid-cols-1 gap-2 text-xs">
+                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-standar" checked onchange="toggleModalInput('standar')"> Standar</label><input type="number" id="m-standar" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-standar" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
+                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-premium" checked onchange="toggleModalInput('premium')"> Premium</label><input type="number" id="m-premium" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-premium" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
+                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-super" checked onchange="toggleModalInput('super')"> Super Prm</label><input type="number" id="m-super" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-super" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
+                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-diamond" checked onchange="toggleModalInput('diamond')"> Diamond</label><input type="number" id="m-diamond" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-diamond" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
+                        </div>
+                    </div>
+                    <button type="submit" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit</button>
+                </form>
+            </div>
+            
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
+                <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Update Botol & Absolute</h2>
+                <form onsubmit="simpanBahan(event)">
+                    <div class="mb-3"><select id="bahan-id" required class="w-full border p-2 rounded text-sm"><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option></select></div>
+                    <div class="flex gap-2 mb-3"><input type="number" id="bahan-qty" required class="w-full border p-2 rounded text-sm" placeholder="Tambah Stok Baru"><input type="number" id="bahan-harga" required class="w-full border p-2 rounded text-sm" placeholder="Modal Satuan (Rp)"></div>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Update Bahan</button>
+                </form>
+            </div>
+            
+            <div class="flex justify-between items-center border-b pb-2 mb-3"><h2 class="font-bold text-gray-700 text-sm">Daftar Stok Saat Ini</h2></div>
+            <div id="daftar-bahan" class="mb-4 space-y-2"></div>
+            <div id="daftar-bibit" class="space-y-2"></div>
+        </div>
+
+        <div id="page-crm" class="p-4 max-w-md mx-auto hidden"><div class="bg-gradient-to-r from-[#a38d58] to-yellow-600 p-4 rounded-xl shadow mb-4 text-white"><h2 class="font-bold text-lg">👥 Database Pelanggan Pintar</h2><p class="text-xs text-yellow-100 mt-1">Daftar pelanggan Anda dari seluruh masa, siap difollow-up.</p></div><div id="daftar-crm" class="space-y-3"></div></div>
+        
+        <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
+            <div class="flex justify-between items-center border-b pb-1 mb-3"><h2 class="font-bold text-gray-700 text-sm">Laporan Keseluruhan (Global)</h2><button onclick="exportExcel()" class="bg-green-600 text-white text-xs px-2 py-1 rounded shadow">📥 Download CSV</button></div>
+            <div class="grid grid-cols-2 gap-3 mb-4"><div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]"><p class="text-[10px] text-gray-500">OMSET</p><p id="dash-omset" class="text-md font-bold">Rp 0</p></div><div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-400"><p class="text-[10px] text-gray-500">HPP</p><p id="dash-hpp" class="text-md font-bold text-red-600">Rp 0</p></div></div>
+            <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-6 flex justify-between items-center text-white"><div><p class="text-xs text-gray-300 mb-1">LABA BERSIH</p><p id="dash-laba" class="text-2xl font-bold text-[#a38d58]">Rp 0</p></div><div class="text-right"><p class="text-[10px] text-gray-400">Total Botol Terjual</p><p id="dash-qty" class="text-lg font-bold">0</p></div></div>
+            
+            <div class="bg-white p-4 rounded-xl shadow mb-6 relative h-64">
+                <canvas id="grafikOmset"></canvas>
+            </div>
+            
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
+            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-red-400"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><p class="text-xs text-gray-500 mb-2 border-b pb-2">Aroma underperforming.</p><div id="daftar-aroma-bawah" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
+        </div>
+        
+        <div id="page-restock" class="p-4 max-w-md mx-auto hidden"><div class="bg-red-50 p-4 rounded-xl shadow border-t-4 border-red-600 mb-6"><h2 class="font-bold text-red-700 mb-1 text-md">🚨 Peringatan Restock</h2><h3 class="text-xs font-bold text-gray-700 mb-2 mt-3">💧 Bibit (< 50 ml)</h3><div id="restock-bibit" class="space-y-2 mb-4"></div><h3 class="text-xs font-bold text-gray-700 mb-2 mt-3">🧴 Bahan Baku & Botol (Menipis)</h3><div id="restock-bahan" class="space-y-2"></div></div></div>
+        <div id="page-followup" class="p-4 max-w-md mx-auto hidden"><div class="bg-green-50 p-4 rounded-xl shadow border-t-4 border-green-500 mb-6"><h2 class="font-bold text-green-700 mb-1 text-md">💬 Follow-Up WA (≥ 7 Hari)</h2><p class="text-xs text-green-700 mb-4 border-b border-green-200 pb-2">Otomatis deteksi pelanggan lama.</p><div id="daftar-followup" class="space-y-3 mt-3"></div></div></div>
+    </div>
+
+    <div id="modal-edit" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white p-5 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
+            <h2 class="font-bold text-gray-800 mb-4">✏️ Edit Data (Timpa Nilai)</h2>
+            <p id="edit-nama-bibit" class="text-sm font-bold text-[#a38d58] mb-3"></p>
+            <form id="form-edit-bibit" onsubmit="simpanEditBibit(event)">
+                <input type="hidden" id="edit-id-bibit">
+                <div id="edit-container-kelas" class="space-y-3 mb-4 max-h-60 overflow-y-auto"></div>
+                <div class="flex gap-2">
+                    <button type="button" onclick="tutupModalEdit()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded text-sm font-bold">Batal</button>
+                    <button type="submit" class="flex-1 bg-gold text-white py-2 rounded text-sm font-bold">Simpan</button>
+                </div>
+            </form>
         </div>
     </div>
 
-    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
-
-    <div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden flex-col items-center justify-center p-4 transition-opacity backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
-            <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none">&times;</button>
-            <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
-            <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600" onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
-            <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
-            <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
-        </div>
-    </div>
+    <div id="print-section"></div>
 
     <script>
+        // Fungsi Sanitasi (Anti-XSS)
         function escapeHTML(str) {
             if (!str) return '';
             return str.toString().replace(/[&<>'"]/g, function(tag) {
@@ -94,10 +155,6 @@
             });
         }
 
-        function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
-        setTimeout(closeSplash, 2500); 
-
-        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
             authDomain: "mi-perfume-1989.firebaseapp.com",
@@ -110,170 +167,315 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const functions = firebase.app().functions('asia-southeast2');
-
-        let buyerId = ""; // Kosongkan sejak awal agar pakai UID resmi dari Firebase
-
-// 1. LOGIN PINTAR (ANTI-TABRAKAN DENGAN ADMIN)
-        firebase.auth().onAuthStateChanged(user => {
-            if (user) {
-                // Jika sudah ada sesi (bisa jadi itu sesi Admin atau sesi Anonim sebelumnya)
-                buyerId = user.uid; 
-                loadRiwayat();
-            } else {
-                // Jika web benar-benar baru dibuka dan belum ada sesi sama sekali
-                firebase.auth().signInAnonymously().catch(error => console.error("Gagal Auth Anonim:", error));
-            }
-        });
-
-        let keranjang = []; let dataStok = {}; let dataBahan = {}; let rawAromas = [];
-        const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
-
-        function switchTab(t) { ['pesan','riwayat'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); }); document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active'); }
-
-        db.collection("bahan").onSnapshot(snap => { snap.forEach(doc => { dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 }; }); });
-
-        db.collection("stok").orderBy("nama").onSnapshot(snap => {
-            rawAromas = []; dataStok = {}; 
-            snap.forEach(doc => {
-                const data = doc.data();
-                dataStok[data.nama] = { sisa_ml: data.sisa_ml || 0, modal: data.modal || {}, kelas_tersedia: data.kelas_tersedia || ["Standar"] };
-                rawAromas.push(data);
-            });
-            renderAromaOptions("");
-        });
-
-        function renderAromaOptions(filterText) {
-            const selectAroma = document.getElementById('aroma');
-            const oldVal = selectAroma.value;
-            let html = '<option value="" disabled selected>Pilih Aroma...</option>';
-            const query = filterText.toLowerCase();
-
-            rawAromas.forEach(data => {
-                if (data.nama.toLowerCase().includes(query)) {
-                    if (data.sisa_ml >= 17.5) html += `<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)} (Tersedia)</option>`;
-                    else html += `<option value="${escapeHTML(data.nama)}" disabled class="text-red-400">${escapeHTML(data.nama)} (Kosong)</option>`;
-                }
-            });
-            selectAroma.innerHTML = html;
-            if(oldVal && html.includes(`value="${oldVal}"`)) selectAroma.value = oldVal;
-        }
-
-        function filterAroma() { const searchTxt = document.getElementById('search-aroma').value; renderAromaOptions(searchTxt); }
-
-        function updateKelasOptions() {
-            const aroma = document.getElementById('aroma').value; const selectKelas = document.getElementById('kelas');
-            selectKelas.innerHTML = '<option value="" disabled selected>Pilih Kelas...</option>';
-            if (aroma && dataStok[aroma]) {
-                dataStok[aroma].kelas_tersedia.forEach(k => {
-                    let labelPromo = `Rp ${hargaPerMl[k].toLocaleString()}/ml`;
-                    if (k === "Super Premium") labelPromo = "Harga Khusus Promo";
-                    selectKelas.innerHTML += `<option value="${escapeHTML(k)}">${escapeHTML(k)} (${labelPromo})</option>`;
-                });
-            }
-            hitungSubTotal();
-        }
-
-        function hitungSubTotal() {
-            const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = parseInt(document.getElementById('qty').value) || 0;
-            if (kelas && ukuran && qty) { 
-                let total = 0; let hargaSatuan = hargaPerMl[kelas] * parseInt(ukuran); 
-                if (kelas === "Super Premium") { if (ukuran === "35") hargaSatuan = 100000; else if (ukuran === "100") hargaSatuan = 280000; total = hargaSatuan * qty; } 
-                else if (kelas === "Standar" && ukuran === "35") { total = hargaSatuan * qty; const kelipatanTiga = Math.floor(qty / 3); total -= (kelipatanTiga * 5000); } 
-                else { total = hargaSatuan * qty; }
-                document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); return total; 
-            }
-            document.getElementById('subtotal-item').innerText = 'Rp 0'; return 0;
-        }
-
-        function tambahKeKeranjang(e) {
-            e.preventDefault(); const aroma = document.getElementById('aroma').value; const kelas = document.getElementById('kelas').value; const ukuran = parseInt(document.getElementById('ukuran').value); const qty = parseInt(document.getElementById('qty').value);
-            const butuhBibit = (ukuran * 0.5) * qty; const idBotol = 'botol_' + ukuran; const butuhBotol = qty; const idAbs = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar'; const butuhAbs = (ukuran * 0.5) * qty;
-            const cartBibit = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0); const cartBotol = keranjang.filter(i => i.id_botol === idBotol).reduce((sum, i) => sum + i.qty, 0); const cartAbs = keranjang.filter(i => i.id_absolute === idAbs).reduce((sum, i) => sum + i.absolute_ml, 0);
-            
-            if ((butuhBibit + cartBibit) > (dataStok[aroma]?.sisa_ml || 0)) return alert(`❌ Bibit aroma ${aroma} tidak mencukupi.`);
-            if ((butuhBotol + cartBotol) > (dataBahan[idBotol]?.sisa || 0)) return alert(`❌ Stok Botol ${ukuran}ml kurang.`);
-            if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0)) return alert(`❌ Stok Absolute kelas ini kurang.`);
-            
-            const hppBibitPerMl = dataStok[aroma]?.modal[kelas] || 0; const hppBibit = butuhBibit * hppBibitPerMl; const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0); const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0); const totalHppItem = hppBibit + hppBotol + hppAbs;
-            
-            keranjang.push({ aroma: aroma, kelas: kelas, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit, id_botol: idBotol, id_absolute: idAbs, absolute_ml: butuhAbs, hpp_total: totalHppItem });
-            renderKeranjang(); document.getElementById('qty').value = 1; document.getElementById('subtotal-item').innerText = 'Rp 0'; document.getElementById('kelas').value = ""; document.getElementById('ukuran').value = ""; document.getElementById('search-aroma').value = ""; filterAroma();
-        }
-
-        function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
         
-        function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${escapeHTML(i.aroma)} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${escapeHTML(i.kelas)} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
+        let chartInstance = null; let globalBibit = []; let globalBahan = []; let dataPesananExport = [];
+        let dataSudahDimuat = false; // Bendera agar data tidak dobel dimuat
+        
+        // ==========================================
+        // KUNCI ANTI-DELAY (LOGIN DULU, BARU MUAT DATA)
+        // ==========================================
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) { 
+                document.getElementById('login-screen').classList.add('hidden'); 
+                document.getElementById('admin-content').classList.remove('hidden'); 
+                
+                // Jika belum muat data, panggil SEKARANG!
+                if (!dataSudahDimuat) {
+                    initAdminData();
+                    dataSudahDimuat = true;
+                }
+            } else { 
+                document.getElementById('login-screen').classList.remove('hidden'); 
+                document.getElementById('admin-content').classList.add('hidden'); 
+                dataSudahDimuat = false; // Reset jika logout
+            }
+        });
 
-        function kirimPesananAkhir() { 
-            if (!buyerId) return alert("Sistem keamanan sedang memuat. Mohon tunggu beberapa detik dan coba lagi.");
-            const nama = document.getElementById('nama').value.trim(); 
-            const noWa = document.getElementById('no-wa').value.trim(); 
-            if (!nama) return alert("Harap isi Nama Pemesan!"); 
-            
-            const btn = document.getElementById('btn-submit'); 
-            btn.innerText = "Memproses..."; btn.disabled = true; 
-            
-            db.collection("pesanan").add({ 
-                buyer_id: buyerId, 
-                nama: escapeHTML(nama), 
-                no_wa: escapeHTML(noWa), 
-                items: keranjang, 
-                total: keranjang.reduce((s, i) => s + i.subtotal, 0), 
-                total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), 
-                status: "Menunggu Diproses", 
-                waktu: firebase.firestore.FieldValue.serverTimestamp() 
-            }).then(() => { 
-                alert("✅ Pesanan Terkirim! Menunggu konfirmasi admin."); 
-                keranjang = []; renderKeranjang(); 
-                document.getElementById('nama').value = ''; document.getElementById('no-wa').value = ''; 
-                btn.innerText = "Kirim Pesanan Sekarang"; 
-                switchTab('riwayat'); 
-            }).catch(err => { 
-                alert("Gagal: " + err.message); 
-                btn.disabled = false; btn.innerText = "Kirim Pesanan Sekarang";
+        function prosesLogin(e) { e.preventDefault(); const email = document.getElementById('input-user').value.trim(); const pass = document.getElementById('input-pass').value; const btn = document.getElementById('btn-login'); btn.innerText = "Memeriksa..."; btn.disabled = true; firebase.auth().signInWithEmailAndPassword(email, pass).then(() => { btn.innerText = "Masuk Terenkripsi"; btn.disabled = false; }).catch(err => { console.error("Error:", err); alert(err.message); btn.innerText = "Masuk Terenkripsi"; btn.disabled = false; }); }
+        function logoutAdmin() { if(confirm("Keluar dari sistem?")) firebase.auth().signOut(); }
+        function togglePassword() { const p=document.getElementById('input-pass'); p.type=p.type==='password'?'text':'password'; }
+        
+        function switchTab(t) { 
+            ['pesanan','stok','crm','dashboard','restock','followup'].forEach(id => { 
+                document.getElementById('page-'+id).classList.add('hidden'); 
+                document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); 
             }); 
+            document.getElementById('page-'+t).classList.remove('hidden'); 
+            document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active'); 
+            
+            if (t === 'dashboard' && chartInstance) {
+                setTimeout(() => {
+                    chartInstance.resize();
+                    chartInstance.update();
+                }, 100);
+            }
+        }
+        
+        function aktifkanNotif() { if ("Notification" in window) Notification.requestPermission().then(perm => { if(perm==="granted")alert("✅ Izin diberikan!"); }); const audio = document.getElementById('notif-sound'); audio.volume = 0; audio.play().then(() => { audio.pause(); audio.volume = 1; }).catch(e=>{}); }
+
+        // ==========================================
+        // FUNGSI MANAJEMEN STOK & BAHAN
+        // ==========================================
+        function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').style.display = v === '_NEW_' ? 'block' : 'none'; } 
+        function toggleModalInput(id) { const cb = document.getElementById('cb-'+id); document.getElementById('m-'+id).disabled = !cb.checked; document.getElementById('ml-'+id).disabled = !cb.checked; }
+        
+        function simpanBibit(e) { e.preventDefault(); const isNew = document.getElementById('bibit-pilih').value === '_NEW_'; const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value; let modObj = {}; let stokAdd = {}; let klsArr = []; ['standar','premium','super','diamond'].forEach((pid, idx) => { const k = ['Standar', 'Premium', 'Super Premium', 'Diamond'][idx]; if(document.getElementById('cb-'+pid).checked) { klsArr.push(k); let mValue = document.getElementById('m-'+pid).value; let mlValue = document.getElementById('ml-'+pid).value; if(mValue !== "") modObj[k] = parseInt(mValue); if(mlValue !== "") stokAdd[k] = parseInt(mlValue); } }); if(klsArr.length === 0) return alert("Pilih minimal 1 kelas!"); const docRef = db.collection("stok").doc(nama); docRef.get().then(doc => { let currentStok = (doc.exists && doc.data().stok_kelas) ? doc.data().stok_kelas : {}; let currentModal = (doc.exists && doc.data().modal) ? doc.data().modal : {}; if(doc.exists && !doc.data().stok_kelas && doc.data().sisa_ml) { let oldClass = (doc.data().kelas_tersedia && doc.data().kelas_tersedia.length > 0) ? doc.data().kelas_tersedia[0] : 'Standar'; currentStok[oldClass] = doc.data().sisa_ml; } let finalStokKelas = { ...currentStok }; let finalModal = { ...currentModal, ...modObj }; let isStokValid = true; klsArr.forEach(k => { let stokLama = finalStokKelas[k] || 0; let nilaiPerubahan = stokAdd[k] || 0; let stokBaru = stokLama + nilaiPerubahan; if (stokBaru < 0) { alert(`⚠️ Pengurangan terlalu banyak!`); isStokValid = false; } else { finalStokKelas[k] = stokBaru; } }); if (!isStokValid) return; let totalSemuaMl = Object.values(finalStokKelas).reduce((a,b)=>a+b, 0); docRef.set({ nama: nama, sisa_ml: totalSemuaMl, stok_kelas: finalStokKelas, modal: finalModal, kelas_tersedia: Object.keys(finalStokKelas) }, {merge: true}).then(() => { alert("Stok Diupdate!"); ['standar','premium','super','diamond'].forEach(pid => { document.getElementById('ml-'+pid).value=''; }); if(isNew) document.getElementById('bibit-nama').value=''; }); }); }
+        
+        function bukaModalEdit(id) { const dataLama = globalBibit.find(b => b.doc_id === id); if (!dataLama) return; document.getElementById('edit-id-bibit').value = id; document.getElementById('edit-nama-bibit').innerText = dataLama.nama; const wadahInput = document.getElementById('edit-container-kelas'); wadahInput.innerHTML = ''; if (dataLama.stok_kelas) { Object.entries(dataLama.stok_kelas).forEach(([kelas, stok]) => { let modalHarga = (dataLama.modal && dataLama.modal[kelas]) ? dataLama.modal[kelas] : 0; wadahInput.innerHTML += `<div class="bg-gray-50 p-2 rounded border"><label class="block text-xs font-bold text-gray-700 mb-1">${escapeHTML(kelas)}</label><div class="flex gap-2"><input type="number" id="edit-modal-${kelas}" value="${modalHarga}" class="w-1/2 border p-1 rounded text-sm" placeholder="Modal Rp"><input type="number" id="edit-stok-${kelas}" value="${stok}" class="w-1/2 border p-1 rounded text-sm" placeholder="Stok Fix (ml)"></div></div>`; }); } document.getElementById('modal-edit').classList.remove('hidden'); }
+        function tutupModalEdit() { document.getElementById('modal-edit').classList.add('hidden'); }
+        function simpanEditBibit(e) { e.preventDefault(); const id = document.getElementById('edit-id-bibit').value; const dataLama = globalBibit.find(b => b.doc_id === id); if (!dataLama || !dataLama.stok_kelas) return tutupModalEdit(); let finalStokKelas = { ...dataLama.stok_kelas }; let finalModal = { ...dataLama.modal }; Object.keys(dataLama.stok_kelas).forEach(kelas => { finalStokKelas[kelas] = parseInt(document.getElementById(`edit-stok-${kelas}`).value) || 0; finalModal[kelas] = parseInt(document.getElementById(`edit-modal-${kelas}`).value) || 0; }); let totalSemuaMl = Object.values(finalStokKelas).reduce((a, b) => a + b, 0); db.collection("stok").doc(id).update({ sisa_ml: totalSemuaMl, stok_kelas: finalStokKelas, modal: finalModal }).then(() => { alert("Data berhasil dikoreksi!"); tutupModalEdit(); }); }
+        
+        const namaBahan = { "botol_35": "Botol 35 ml", "botol_50": "Botol 50 ml", "botol_100": "Botol 100 ml", "abs_standar": "Absolute Standar", "abs_khusus": "Absolute Khusus" }; 
+        function simpanBahan(e) { e.preventDefault(); const id = document.getElementById('bahan-id').value; const qty = parseInt(document.getElementById('bahan-qty').value); const harga = parseInt(document.getElementById('bahan-harga').value); db.collection("bahan").doc(id).get().then(doc=>{ let current = doc.exists ? doc.data().sisa||0 : 0; db.collection("bahan").doc(id).set({ id: id, nama: namaBahan[id], sisa: current+qty, harga_satuan: harga }, {merge:true}).then(()=>alert("Bahan diupdate!")); }); }
+        
+        function hapusDokumen(col, id) { if(confirm("Hapus?")) db.collection(col).doc(id).delete(); }
+        
+        function cekRestock() { const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; let adaBibitKritis = false; globalBibit.forEach(b => { if (b.stok_kelas) { Object.entries(b.stok_kelas).forEach(([k, v]) => { if (v <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)} <span class="text-[10px] text-gray-500">(${escapeHTML(k)})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`; } }); } else if (b.sisa_ml <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; } }); if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama || id)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; }
+
+        // ==========================================
+        // PROSES BISNIS (TOMBOL AKSI)
+        // ==========================================
+        function terimaPesanan(id, itemsJSON) { 
+            const items = JSON.parse(decodeURIComponent(itemsJSON)); 
+            let stokAman = true; let pesanError = "";
+            
+            // Pengecekan Ketersediaan Stok 
+            for (let item of items) {
+                if (item.bibit) {
+                    const dataBibit = globalBibit.find(b => b.nama === item.aroma);
+                    if (!dataBibit) { stokAman = false; pesanError += `- Aroma ${item.aroma} tidak ditemukan.\n`; continue; }
+                    let stokTersedia = 0;
+                    if (item.kelas && dataBibit.stok_kelas && dataBibit.stok_kelas[item.kelas] !== undefined) {
+                        stokTersedia = dataBibit.stok_kelas[item.kelas];
+                    } else { stokTersedia = dataBibit.sisa_ml || 0; }
+                    if (stokTersedia < item.bibit) {
+                        stokAman = false;
+                        pesanError += `- Stok ${item.aroma} (${item.kelas}) sisa ${stokTersedia}ml (Butuh: ${item.bibit}ml).\n`;
+                    }
+                }
+            }
+            if (!stokAman) { alert("⚠️ GAGAL DITERIMA! STOK TIDAK CUKUP:\n\n" + pesanError); return; }
+
+            // PROSES PEMOTONGAN STOK (MENGGUNAKAN BATCH)
+            if(confirm("Terima pesanan? Stok akan otomatis dipotong dan status menjadi 'Diproses'.")) { 
+                const batch = db.batch(); 
+                const pesananRef = db.collection("pesanan").doc(id);
+                batch.update(pesananRef, { status: "Diproses" });
+
+                items.forEach(item => { 
+                    if (item.bibit) {
+                        let objPengurangan = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
+                        if(item.kelas) objPengurangan[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
+                        const stokRef = db.collection("stok").doc(item.aroma);
+                        batch.update(stokRef, objPengurangan); 
+                    }
+                    if (item.id_botol) {
+                        const botolRef = db.collection("bahan").doc(item.id_botol);
+                        batch.update(botolRef, { sisa: firebase.firestore.FieldValue.increment(-item.qty) }); 
+                    }
+                    if (item.id_absolute) {
+                        const absRef = db.collection("bahan").doc(item.id_absolute);
+                        batch.update(absRef, { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) }); 
+                    }
+                }); 
+
+                batch.commit().then(() => { 
+                    alert("✅ Pesanan diterima & Stok berhasil dipotong!"); 
+                }).catch(e => {
+                    alert("Gagal memproses (Cek koneksi internet Anda): " + e.message);
+                }); 
+            } 
         }
 
-        function bukaQris() { document.getElementById('modal-qris').classList.remove('hidden'); document.getElementById('modal-qris').classList.add('flex'); }
-        function tutupQris() { document.getElementById('modal-qris').classList.add('hidden'); document.getElementById('modal-qris').classList.remove('flex'); }
+        function tolakPesanan(id) { 
+            const alasan = prompt("Alasan menolak pesanan:"); 
+            if (alasan && alasan.trim() !== "") { db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: escapeHTML(alasan.trim()) }).then(() => alert("🚫 Pesanan ditolak.")).catch(e => alert(e.message)); } 
+        }
 
-        // FUNGSI PENARIK RIWAYAT (DIPANGGIL SETELAH LOGIN ANONIM BERHASIL)
-        let riwayatListener = null;
-        function loadRiwayat() {
-            if (riwayatListener) riwayatListener(); // Hapus listener lama jika ada
+        function selesaikanPesanan(id, dataStr) { 
+            if(!confirm("Tandai selesai? Omset akan masuk ke Buku Analitik via Server.")) return;
+            db.collection("pesanan").doc(id).update({ status: "Selesai" })
+              .then(() => alert("🎉 Pesanan Selesai! Data rekap akan diperbarui oleh Server."))
+              .catch(e => alert(e.message));
+        }
+
+        // ==========================================
+        // FUNGSI RENDER UI
+        // ==========================================
+        function renderCRM(dataList) { const wadah = document.getElementById('daftar-crm'); wadah.innerHTML = ''; if(dataList.length === 0) return wadah.innerHTML = '<p class="text-xs text-gray-500 italic">Belum ada data pelanggan selesai.</p>'; dataList.forEach((cust, index) => { let aromaFav = Array.from(cust.aromas).slice(0,3).join(', '); if(cust.aromas.size > 3) aromaFav += '...'; let badge = ''; if(index === 0) badge = '👑 Sultan #1'; else if(index === 1) badge = '🥈 Top #2'; else if(index === 2) badge = '🥉 Top #3'; else if(cust.order_count >= 3) badge = '⭐ Setia'; let badgeHtml = badge ? `<span class="bg-yellow-100 text-yellow-800 text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">${badge}</span>` : ''; let btnWA = ''; if (cust.no_wa) { let noBersih = cust.no_wa.replace(/\D/g, ''); if (noBersih.startsWith('0')) noBersih = '62' + noBersih.substring(1); btnWA = `<a href="https://wa.me/${noBersih}" target="_blank" class="bg-green-100 text-green-700 p-1.5 rounded-full shadow-sm text-xs border border-green-200">💬</a>`; } wadah.innerHTML += `<div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100"><div class="flex justify-between items-start mb-2 border-b border-gray-50 pb-2"><div><h3 class="font-bold text-gray-800 text-sm flex items-center gap-2">${escapeHTML(cust.nama)} ${badgeHtml}</h3><p class="text-[10px] text-gray-500">${escapeHTML(cust.no_wa) || 'Tanpa WA'}</p></div>${btnWA}</div><div class="grid grid-cols-2 gap-2 mb-2"><div class="bg-gray-50 p-2 rounded"><p class="text-[9px] text-gray-400">TOTAL BELANJA</p><p class="font-bold text-gold text-sm">Rp ${cust.total_spent.toLocaleString()}</p></div><div class="bg-gray-50 p-2 rounded text-center"><p class="text-[9px] text-gray-400">JML ORDER</p><p class="font-bold text-gray-700 text-sm">${cust.order_count}x</p></div></div><p class="text-[10px] text-gray-500">❤️ <b>Favorit:</b> ${escapeHTML(aromaFav)}</p></div>`; }); }
+        
+        function renderFollowUp(dataList) { const wadah = document.getElementById('daftar-followup'); wadah.innerHTML = ''; if (dataList.length === 0) return wadah.innerHTML = '<p class="text-xs text-gray-500 italic">Belum ada target follow up.</p>'; dataList.forEach(item => { let noBersih = item.no_wa.replace(/\D/g, ''); if (noBersih.startsWith('0')) noBersih = '62' + noBersih.substring(1); let pesanText = encodeURIComponent(`Halo Kak ${item.nama}, sebulan lalu kakak pesan parfum ${item.aroma}. Gimana wanginya kak? 😊 Kalau udah mau habis, kita lagi ada promo spesial lho kak...`); let linkWA = `https://wa.me/${noBersih}?text=${pesanText}`; let cardStyle = item.hari_lalu >= 30 ? "bg-white border-l-4 border-red-500" : "bg-white border opacity-90"; let hariTeks = item.hari_lalu >= 30 ? `<span class="text-red-600 font-bold">${item.hari_lalu} Hari Lalu</span>` : `${item.hari_lalu} Hari Lalu`; wadah.innerHTML += `<div class="p-3 rounded flex flex-col gap-2 shadow-sm ${cardStyle}"><div class="flex justify-between items-start"><div><p class="font-bold text-sm">${escapeHTML(item.nama)}</p><p class="text-[10px] text-gray-500">${escapeHTML(item.aroma)}</p></div><span class="text-xs">${hariTeks}</span></div><a href="${linkWA}" target="_blank" class="w-full bg-[#25D366] text-white text-center py-2 rounded text-xs font-bold shadow">Kirim WA Promo</a></div>`; }); }
+        
+        function renderGrafik(d) { const ctx = document.getElementById('grafikOmset').getContext('2d'); const l = Object.keys(d).length ? Object.keys(d) : ['Belum ada']; const v = Object.values(d).length ? Object.values(d) : [0]; if(chartInstance) chartInstance.destroy(); chartInstance = new Chart(ctx, { type: 'bar', data: { labels: l, datasets: [{ label: 'Omset (Rp)', data: v, backgroundColor: '#a38d58', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } }); }
+        
+        function renderTopAroma(d) { const c = document.getElementById('daftar-aroma'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => b[1]-a[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x<3?['🥇','🥈','🥉'][x]:x+1+'.'} ${escapeHTML(i[0])}</span><span class="bg-gold text-white px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
+        
+        function renderBottomAroma(d) { const c = document.getElementById('daftar-aroma-bawah'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${escapeHTML(i[0])}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
+        
+        function cetakStruk(dataStr) { 
+            const data = JSON.parse(decodeURIComponent(dataStr)); 
             
-            riwayatListener = db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { 
-                const container = document.getElementById('daftar-riwayat'); container.innerHTML = ''; 
+            let itemHtml = (data.items||[]).map(i => `
+                <tr>
+                    <td style="vertical-align:top; width:15%;">${i.qty}x</td>
+                    <td style="vertical-align:top; width:55%;">${escapeHTML(i.aroma)}<br><small style="font-size:10px;">${escapeHTML(i.kelas)} ${i.ukuran}ml</small></td>
+                    <td style="vertical-align:top; width:30%; text-align:right;">${(i.subtotal||0).toLocaleString('id-ID')}</td>
+                </tr>
+            `).join(''); 
+            
+            const printHtml = `
+                <div style="text-align:center; margin-bottom:10px;">
+                    <img src="logo.jpeg" style="width:50px; height:auto; margin-bottom:5px; filter:grayscale(100%);"><br>
+                    <b style="font-size:16px;">MI PERFUME</b><br>
+                    <span style="font-size:10px;">Nota Pembelian</span>
+                </div>
+                <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
+                Nama : ${escapeHTML(data.nama)}<br>
+                Status: <b>LUNAS</b>
+                <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
+                <table style="width:100%; font-size:11px; margin-bottom:5px;">
+                    ${itemHtml}
+                </table>
+                <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
+                <div style="text-align:right; font-size:13px; margin-top:5px;">
+                    <b>Total: Rp ${data.total.toLocaleString('id-ID')}</b>
+                </div>
+                <div style="text-align:center; margin-top:15px; font-size:11px;">
+                    Terima Kasih 🙏
+                </div>
+            `;
+            
+            const printSec = document.getElementById('print-section');
+            printSec.innerHTML = printHtml;
+            setTimeout(() => { window.print(); }, 300); 
+        }
+
+        function exportExcel() { if(dataPesananExport.length===0) return alert("Hanya mengekspor pesanan 3 hari terakhir yang tampil di layar."); let csv = "Tanggal,Nama Pemesan,WhatsApp,Omset,HPP Modal,Laba Bersih,Status\n"; dataPesananExport.forEach(row => { csv += `"${row.Tanggal}","${row.Nama}","${row.WA}",${row.Omset},${row.HPP},${row.Laba},"${row.Status}"\n`; }); let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); let url = window.URL.createObjectURL(blob); let a = document.createElement("a"); a.href = url; a.download = "Laporan_Terbaru_MI_Perfume.csv"; a.click(); }
+
+        // ========================================================
+        // INI WADAH PUSAT PENGENDALI DATA (DIPANGGIL SETELAH LOGIN)
+        // ========================================================
+        function initAdminData() {
+            
+            // 1. Tarik Data Bibit
+            db.collection("stok").orderBy("nama").onSnapshot(snap => { 
+                const wadah = document.getElementById('daftar-bibit'); const sel = document.getElementById('bibit-pilih'); wadah.innerHTML = ''; sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>'; globalBibit = []; 
+                snap.forEach(doc => { 
+                    const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data); 
+                    sel.innerHTML += `<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`; 
+                    let infoKelas = data.stok_kelas ? Object.entries(data.stok_kelas).map(([k,v]) => `<b>${escapeHTML(k)}:</b> ${v}ml (Rp${(data.modal&&data.modal[k])?data.modal[k]:0}/ml)`).join('<br>') : `Total: ${data.sisa_ml} ml (Format Lama)`; 
+                    wadah.innerHTML += `<div class="bg-white p-3 rounded border flex justify-between items-center"><div><p class="font-bold text-sm">💧 ${escapeHTML(data.nama)}</p><p class="text-[10px] text-gray-600 mt-1">${infoKelas}</p></div><div class="flex items-center gap-2"><button onclick="bukaModalEdit('${doc.id}')" class="text-blue-500 bg-blue-50 p-2 rounded text-xs font-bold shadow-sm">✏️ Edit</button><button onclick="hapusDokumen('stok', '${doc.id}')" class="text-red-500 bg-red-50 p-2 rounded text-xs shadow-sm">🗑️</button></div></div>`; 
+                }); 
+                cekRestock(); 
+            });
+
+            // 2. Tarik Data Bahan Botol
+            db.collection("bahan").orderBy("id").onSnapshot(snap => { 
+                const wadah = document.getElementById('daftar-bahan'); wadah.innerHTML = ''; globalBahan = []; 
+                snap.forEach(doc => { 
+                    const data = doc.data(); data.doc_id = doc.id; globalBahan.push(data); 
+                    const unit = doc.id.includes('botol') ? 'pcs' : 'ml'; 
+                    wadah.innerHTML += `<div class="bg-blue-50 p-2 rounded border flex justify-between"><div><p class="font-bold text-xs">${escapeHTML(data.nama)}</p><p class="text-[10px]">Rp${data.harga_satuan}/${unit}</p></div><span class="font-bold text-blue-700">${data.sisa} ${unit}</span></div>`; 
+                }); 
+                cekRestock(); 
+            });
+
+            // 3. Tarik Pesanan (DIJAMIN CEPAT KARENA KTP ADMIN SUDAH DICEK)
+            let isInitialLoad = true;
+            db.collection("pesanan").orderBy("waktu", "desc").limit(30).onSnapshot(snapshot => {
+                const containerPesanan = document.getElementById('daftar-pesanan'); 
+                containerPesanan.innerHTML = ''; 
+                dataPesananExport = [];
+
+                snapshot.docChanges().forEach(change => { 
+                    if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") { 
+                        document.getElementById('notif-sound').play().catch(e=>{}); 
+                        if ("Notification" in window && Notification.permission === "granted") { 
+                            new Notification("Pesanan Baru!", { body: `Dari ${change.doc.data().nama}`, icon: 'logo.jpeg' }); 
+                        } 
+                    } 
+                }); 
+                isInitialLoad = false;
                 
-                if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; 
-                
-                let rData = []; snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); 
-                
-                rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { 
-                    let sColor = d.status==="Selesai" ? "bg-green-100 text-green-700" : (d.status==="Ditolak" ? "bg-red-100 text-red-700" : (d.status==="Diproses" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700")); 
-                    let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; 
-                    let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`).join(''):''; 
-                    
-                    let tombolBayarHtml = '';
-                    if(d.status === "Selesai") {
-                        tombolBayarHtml = `<button onclick="bukaQris()" class="mt-3 w-full bg-[#a38d58] hover:bg-[#8c794a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">📱 Bayar dengan QRIS</button>`;
+                if (snapshot.empty) return containerPesanan.innerHTML = '<p class="text-center text-gray-500 italic mt-4">Belum ada pesanan terbaru.</p>';
+
+                snapshot.forEach((doc) => {
+                    const data = doc.data(); const id = doc.id; 
+                    const safeNama = escapeHTML(data.nama); const safeWA = escapeHTML(data.no_wa || '-'); 
+                    let statusColor = "bg-yellow-100 text-yellow-700"; 
+                    if(data.status === "Diproses") statusColor = "bg-blue-100 text-blue-700"; 
+                    if(data.status === "Selesai") statusColor = "bg-green-100 text-green-700"; 
+                    if(data.status === "Ditolak") statusColor = "bg-red-100 text-red-700";
+
+                    const itemsToProcess = Array.isArray(data.items) ? data.items : [{ qty: 1, aroma: data.aroma || "Unknown", kelas: data.kelas || "", ukuran: data.ukuran || "", hpp_total: data.total_hpp || 0 }]; 
+                    const itemsJSON = encodeURIComponent(JSON.stringify(itemsToProcess)); 
+                    const pesananHPP = Number(data.total_hpp) || 0;
+                    let detHTML = itemsToProcess.map(i => `<p class="text-sm border-b pb-1"><b>${i.qty}x</b> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)} ${i.ukuran}ml)</p>`).join('');
+
+                    let actionButtons = '';
+                    if (data.status === "Menunggu Diproses") {
+                        actionButtons = `<div class="flex gap-2 mt-2 border-t pt-2"><button onclick="terimaPesanan('${id}','${itemsJSON}')" class="flex-1 bg-blue-600 text-white text-sm py-2 rounded font-bold shadow">Terima (Potong Stok)</button><button onclick="tolakPesanan('${id}')" class="flex-1 text-red-500 bg-red-50 text-sm py-2 rounded border border-red-200">Tolak</button></div>`;
+                    } else if (data.status === "Diproses") {
+                        const fulldataJSON = encodeURIComponent(JSON.stringify(data));
+                        actionButtons = `<div class="flex gap-2 mt-2 border-t pt-2"><button onclick="selesaikanPesanan('${id}', '${fulldataJSON}')" class="w-full bg-green-600 text-white text-sm py-2 rounded font-bold shadow">✅ Serahkan Pembeli (Selesai)</button></div>`;
                     }
 
-                    container.innerHTML += `
-                        <div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm">
-                            <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
-                                <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
-                                <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
-                            </div>
-                            <div class="mb-2">${itemsStr}</div>
-                            <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
-                                <span>Total</span>
-                                <span class="text-gold">Rp ${d.total.toLocaleString('id-ID')}</span>
-                            </div>
-                            ${tombolBayarHtml}
-                        </div>`; 
-                }); 
+                    containerPesanan.innerHTML += `
+                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-[#a38d58]">
+                        <div class="flex justify-between items-start mb-2 border-b pb-2">
+                            <div><h3 class="font-bold text-gray-800">${safeNama}</h3><p class="text-xs text-gray-500">📞 ${safeWA}</p></div>
+                            <div class="text-right"><span class="text-[10px] font-bold px-2 py-1 rounded ${statusColor} block mb-1">${data.status}</span><button onclick="cetakStruk('${encodeURIComponent(JSON.stringify(data))}')" class="text-xs bg-gray-200 px-2 py-1 rounded shadow">🖨️ Print</button></div>
+                        </div>
+                        <div class="bg-gray-50 p-2 rounded mb-3 space-y-1">${detHTML}</div>
+                        <div class="flex justify-between items-end mb-2">
+                            <div><p class="text-[10px] text-gray-500">Modal: Rp ${pesananHPP.toLocaleString()}</p><p class="text-[10px] font-bold text-green-600">Laba: Rp ${(data.total-pesananHPP).toLocaleString()}</p></div>
+                            <span class="text-lg font-bold text-gold">Rp ${(data.total||0).toLocaleString()}</span>
+                        </div>
+                        ${actionButtons}
+                    </div>`;
+
+                    if (data.status === "Selesai") {
+                        dataPesananExport.push({ Tanggal: data.waktu ? data.waktu.toDate().toLocaleString('id-ID') : '-', Nama: safeNama, WA: safeWA, Omset: data.total, HPP: data.total_hpp||0, Laba: data.total-(data.total_hpp||0), Status: data.status });
+                    }
+                });
+            }, error => {
+                console.error(error);
+                alert("Gagal memuat pesanan: " + error.message);
+            });
+
+            // 4. Tarik Analitik Dashboard
+            db.collection("statistik").doc("global").onSnapshot(doc => {
+                if (doc.exists) {
+                    const stat = doc.data();
+                    const laba = (stat.total_omset || 0) - (stat.total_hpp || 0);
+                    document.getElementById('dash-omset').innerText = 'Rp ' + (stat.total_omset || 0).toLocaleString();
+                    document.getElementById('dash-hpp').innerText = 'Rp ' + (stat.total_hpp || 0).toLocaleString();
+                    document.getElementById('dash-laba').innerText = 'Rp ' + laba.toLocaleString();
+                    document.getElementById('dash-qty').innerText = stat.total_qty || 0;
+                    renderGrafik(stat.bulanan || {});
+                    const dataAroma = stat.terjual_aroma || {};
+                    renderTopAroma(dataAroma);
+                    renderBottomAroma(dataAroma);
+                }
+            }, error => console.error("Gagal memuat analitik:", error));
+
+            // 5. Tarik CRM & Follow Up
+            db.collection("crm").orderBy("total_spent", "desc").onSnapshot(snap => {
+                let crmList = []; let followupList = []; let now = new Date();
+                snap.forEach(doc => {
+                    let d = doc.data();
+                    d.aromas = new Set(d.aromas || []); 
+                    crmList.push(d);
+                    if (d.terakhir_order && d.no_wa) {
+                        let lastOrder = d.terakhir_order.toDate();
+                        let diffDays = Math.floor((now - lastOrder) / (1000 * 60 * 60 * 24));
+                        if (diffDays >= 7) { 
+                            followupList.push({ nama: d.nama, no_wa: d.no_wa, hari_lalu: diffDays, aroma: Array.from(d.aromas).join(', ') });
+                        }
+                    }
+                });
+                renderCRM(crmList.slice(0, 50)); // Tampilkan top 50 di CRM
+                renderFollowUp(followupList);
             });
         }
     </script>
