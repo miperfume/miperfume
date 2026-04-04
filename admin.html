@@ -18,22 +18,21 @@
         .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
         .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* --- KODE BARU UNTUK PRINTER THERMAL --- */
+        /* KODE BARU: Sembunyikan wadah print di layar normal */
+        #print-section { display: none; }
+        
         @media print {
             body * { visibility: hidden; }
-            #print-section, #print-section * { visibility: visible; }
-            #print-section {
-                position: absolute;
-                left: 0;
-                top: 0;
-                width: 58mm; /* Ukuran Kertas Thermal Standar */
-                margin: 0;
-                padding: 0;
-                color: #000;
-                background: #fff;
-                font-family: monospace;
-                font-size: 12px;
+            #print-section { 
+                display: block; 
+                position: absolute; 
+                left: 0; top: 0; 
+                width: 58mm; 
+                margin: 0; padding: 0; 
+                color: #000; background: #fff; 
+                font-family: monospace; font-size: 12px; 
             }
+            #print-section * { visibility: visible; }
             @page { margin: 0; size: 58mm auto; }
         }
     </style>
@@ -369,68 +368,15 @@ db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap =>
             if (alasan && alasan.trim() !== "") { db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: escapeHTML(alasan.trim()) }).then(() => alert("🚫 Pesanan ditolak.")).catch(e => alert(e.message)); } 
         }
 
-        // 3. SELESAIKAN PESANAN (KODE YANG DIPERBAIKI)
+       // 3. SELESAIKAN PESANAN (MURNI HANYA UBAH STATUS)
         function selesaikanPesanan(id, dataStr) { 
-            if(!confirm("Tandai selesai? Omset akan masuk ke Buku Analitik dan Data Pelanggan akan tersimpan di CRM.")) return;
+            if(!confirm("Tandai selesai? Omset akan masuk ke Buku Analitik via Server.")) return;
             
-            const data = JSON.parse(decodeURIComponent(dataStr));
-            const batch = db.batch();
-
-            // A. Update Status Pesanan
-            batch.update(db.collection("pesanan").doc(id), { status: "Selesai" });
-
-            // B. Tulis ke Buku Rekap Statistik Global (Format Struktur Berlapis yang benar)
-            const stRef = db.collection("statistik").doc("global");
-            let omset = Number(data.total) || 0;
-            let hpp = Number(data.total_hpp) || 0;
-            let totalQty = (data.items || []).reduce((sum, i)=>sum+Number(i.qty), 0);
-            
-            // Ambil waktu yang benar dari timestamp firebase hasil stringify
-            let waktuSecs = data.waktu && data.waktu.seconds ? data.waktu.seconds * 1000 : Date.now();
-            let bln = new Date(waktuSecs).toLocaleDateString('id-ID', {month:'short', year:'numeric'});
-
-            // Susun data yang mau ditambahkan dengan Nested Object
-            let updateStat = {
-                omset: firebase.firestore.FieldValue.increment(omset),
-                hpp: firebase.firestore.FieldValue.increment(hpp),
-                qty: firebase.firestore.FieldValue.increment(totalQty),
-                bulanan: {},
-                terjual_aroma: {}
-            };
-            
-            // Menambah nilai di dalam objek bulanan dan terjual_aroma
-            updateStat.bulanan[bln] = firebase.firestore.FieldValue.increment(omset);
-
-            let uniqueAromas = [];
-            (data.items || []).forEach(item => {
-                let a = (item.aroma || "Unknown").toUpperCase();
-                a = a.replace(/\./g, ''); // Hapus titik dari nama aroma agar aman di database
-                
-                updateStat.terjual_aroma[a] = firebase.firestore.FieldValue.increment(item.qty);
-                if(!uniqueAromas.includes(item.aroma)) uniqueAromas.push(item.aroma);
-            });
-            
-            // Simpan format yang benar!
-            batch.set(stRef, updateStat, {merge: true});
-
-            // C. Tulis ke Buku Rekap CRM
-            let wa = data.no_wa ? data.no_wa.trim() : "";
-            let nama = data.nama ? data.nama.trim() : "Tanpa Nama";
-            let custKey = wa ? wa.replace(/\D/g, '') : nama.toLowerCase().replace(/\s/g, '_'); 
-
-            if (custKey) {
-                const crmRef = db.collection("crm").doc(custKey);
-                batch.set(crmRef, {
-                    nama: nama,
-                    no_wa: wa,
-                    total_spent: firebase.firestore.FieldValue.increment(omset),
-                    order_count: firebase.firestore.FieldValue.increment(1),
-                    aromas: firebase.firestore.FieldValue.arrayUnion(...uniqueAromas),
-                    terakhir_order: firebase.firestore.FieldValue.serverTimestamp()
-                }, {merge: true});
-            }
-
-            batch.commit().then(() => alert("🎉 Pesanan Selesai! Data rekap telah diperbarui.")).catch(e => alert(e.message));
+            // Web hanya mengubah status pesanan. Sisa perhitungan omset & CRM 
+            // dilakukan sepenuhnya oleh Server Firebase (Cloud Functions)
+            db.collection("pesanan").doc(id).update({ status: "Selesai" })
+              .then(() => alert("🎉 Pesanan Selesai! Data rekap akan diperbarui oleh Server."))
+              .catch(e => alert(e.message));
         }
 
         // ==========================================
