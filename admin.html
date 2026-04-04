@@ -465,9 +465,11 @@ db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap =>
                 </tr>
             `).join(''); 
             
-            // Desain struk thermal
+            // Desain struk thermal DENGAN LOGO
             const printHtml = `
                 <div style="text-align:center; margin-bottom:10px;">
+                    <img src="logo.jpeg" style="width:50px; height:auto; margin-bottom:5px; filter:grayscale(100%);"><br>
+                    
                     <b style="font-size:16px;">MI PERFUME</b><br>
                     <span style="font-size:10px;">Nota Pembelian</span>
                 </div>
@@ -491,7 +493,7 @@ db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap =>
             const printSec = document.getElementById('print-section');
             printSec.innerHTML = printHtml;
             
-            // Jeda 300ms agar browser merender struk dengan sempurna sebelum mencetak
+            // Jeda 300ms agar browser merender struk (termasuk memuat logo) dengan sempurna sebelum mencetak
             setTimeout(() => { 
                 window.print(); 
             }, 300); 
