@@ -316,11 +316,20 @@
         
         function renderBottomAroma(d) { const c = document.getElementById('daftar-aroma-bawah'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${escapeHTML(i[0])}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
         
-        function cetakStruk(id) { 
+                function cetakStruk(id) { 
             const data = pesananAktif[id]; 
             if (!data) return alert("Data pesanan tidak ditemukan.");
             
-            let itemHtml = (data.items||[]).map(i => `
+            // PERBAIKAN 1: Dukungan untuk format pesanan lama maupun baru
+            const items = Array.isArray(data.items) ? data.items : [{ 
+                qty: 1, 
+                aroma: data.aroma || "Belum ada nama", 
+                kelas: data.kelas || "", 
+                ukuran: data.ukuran || "", 
+                subtotal: data.total || 0 
+            }];
+            
+            let itemHtml = items.map(i => `
                 <tr>
                     <td style="vertical-align:top; width:15%;">${i.qty}x</td>
                     <td style="vertical-align:top; width:55%;">${escapeHTML(i.aroma)}<br><small style="font-size:10px;">${escapeHTML(i.kelas)} ${i.ukuran}ml</small></td>
@@ -330,7 +339,6 @@
             
             const printHtml = `
                 <div style="text-align:center; margin-bottom:10px;">
-                    <img src="logo.jpeg" style="width:50px; height:auto; margin-bottom:5px; filter:grayscale(100%);"><br>
                     <b style="font-size:16px;">MI PERFUME</b><br>
                     <span style="font-size:10px;">Nota Pembelian</span>
                 </div>
@@ -352,8 +360,11 @@
             
             const printSec = document.getElementById('print-section');
             printSec.innerHTML = printHtml;
-            setTimeout(() => { window.print(); }, 300); 
+            
+            // PERBAIKAN 2: Panggil print seketika (tanpa delay) agar tidak diblokir HP
+            window.print(); 
         }
+
 
         function exportExcel() { if(dataPesananExport.length===0) return alert("Hanya mengekspor pesanan 3 hari terakhir yang tampil di layar."); let csv = "Tanggal,Nama Pemesan,WhatsApp,Omset,HPP Modal,Laba Bersih,Status\n"; dataPesananExport.forEach(row => { csv += `"${row.Tanggal}","${row.Nama}","${row.WA}",${row.Omset},${row.HPP},${row.Laba},"${row.Status}"\n`; }); let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); let url = window.URL.createObjectURL(blob); let a = document.createElement("a"); a.href = url; a.download = "Laporan_Terbaru_MI_Perfume.csv"; a.click(); }
 
