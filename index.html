@@ -112,6 +112,19 @@
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
+        const functions = firebase.app().functions('asia-southeast2');
+
+        // 1. KEAMANAN: LOGIN ANONIM OTOMATIS
+    let buyerId = "";
+    firebase.auth().signInAnonymously().then(() => {
+        firebase.auth().onAuthStateChanged(user => {
+            if(user) {
+                buyerId = user.uid;
+                // Load data riwayat...
+                loadRiwayat();
+            }
+        });
+    });
 
         let keranjang = []; let dataStok = {}; let dataBahan = {}; let rawAromas = [];
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
