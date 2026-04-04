@@ -284,16 +284,29 @@
         // AGREGASI: ANALITIK DAN CRM GLOBAL
         // ==========================================
 
-        // A. Listener Analitik Global (Super Hemat Kuota)
-        db.collection("statistik").doc("global").onSnapshot(doc => {
+        // A. Listener Analitik Global (Memanggil Grafik & List)
+db.collection("statistik").doc("global").onSnapshot(doc => {
     if (doc.exists) {
         const stat = doc.data();
-        const laba = stat.total_omset - stat.total_hpp;
+        const laba = (stat.total_omset || 0) - (stat.total_hpp || 0);
+        
+        // 1. Update Kartu Angka di Atas
         document.getElementById('dash-omset').innerText = 'Rp ' + (stat.total_omset || 0).toLocaleString();
         document.getElementById('dash-hpp').innerText = 'Rp ' + (stat.total_hpp || 0).toLocaleString();
         document.getElementById('dash-laba').innerText = 'Rp ' + laba.toLocaleString();
         document.getElementById('dash-qty').innerText = stat.total_qty || 0;
+
+        // 2. PANGGIL FUNGSI RENDER (PENTING!)
+        // Render Grafik Bulanan
+        renderGrafik(stat.bulanan || {});
+        
+        // Render Daftar Aroma Terlaris & Kurang Laris
+        const dataAroma = stat.terjual_aroma || {};
+        renderTopAroma(dataAroma);
+        renderBottomAroma(dataAroma);
     }
+}, error => {
+    console.error("Gagal memuat analitik:", error);
 });
 
 // Render CRM langsung dari koleksi Server (Bukan direkap di browser)
