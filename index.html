@@ -10,196 +10,229 @@
     <script>tailwind.config = { darkMode: 'class' }</script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <style>
-        .text-gold { color: #a38d58; }
-        .bg-gold { background-color: #a38d58; }
-        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
-    </style>
+    <style> .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } </style>
 </head>
-<body class="bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-100 font-sans pb-24">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
-    <div class="p-6 bg-white dark:bg-gray-800 shadow-sm flex justify-between items-center sticky top-0 z-40">
-        <div>
-            <h1 class="text-xl font-black tracking-tighter uppercase">MI <span class="text-gold">Perfume</span></h1>
-            <p id="user-display" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Guest User</p>
+    <div id="splash" class="fixed inset-0 z-[100] bg-black flex flex-col items-center justify-center transition-opacity duration-700">
+        <video src="video.mp4" autoplay muted playsinline onended="closeSplash()" class="w-full max-w-sm object-cover rounded-xl mb-4" onerror="closeSplash()"></video>
+        <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin"></div>
+        <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest">MEMUAT TOKO...</p>
+    </div>
+
+    <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
+        <div class="flex items-center gap-3"><img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md"><div class="flex flex-col"><h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1><h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2></div></div>
+        <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg">🌓</button>
+    </header>
+
+    <div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 sticky top-[73px] z-10">
+        <button id="tab-pesan" class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
+        <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm" onclick="switchTab('riwayat')">Riwayat</button>
+    </div>
+
+    <div id="page-pesan" class="p-4 max-w-md mx-auto">
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
+            <div class="mb-3"><label class="block text-sm font-bold mb-1">Nama Pemesan</label><input type="text" id="nama" required class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="Nama Anda"></div>
+            <div><label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label><input type="tel" id="no-wa" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="0812..."></div>
         </div>
-        <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full">🌓</button>
-    </div>
 
-    <div class="flex border-b dark:border-gray-700 bg-white dark:bg-gray-800 sticky top-[76px] z-40">
-        <button onclick="switchTab('pesan')" id="tab-pesan" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest tab-active">Beli</button>
-        <button onclick="switchTab('riwayat')" id="tab-riwayat" class="flex-1 py-4 text-xs font-bold uppercase tracking-widest text-gray-400">Riwayat</button>
-    </div>
+        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
+            <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
+            <form id="form-item" onsubmit="tambahKeKeranjang(event)">
+                
+                <div class="mb-3">
+                    <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
+                    <div class="mb-2 relative">
+                        <input type="text" id="search-aroma" oninput="filterAroma()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm pr-8 bg-white dark:bg-gray-700" placeholder="🔍 Ketik untuk mencari aroma...">
+                    </div>
+                    <select id="aroma" required onchange="updateKelasOptions()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm bg-gray-50 dark:bg-gray-700">
+                        <option value="" disabled selected>Memuat ketersediaan...</option>
+                    </select>
+                </div>
 
-    <div id="content-pesan" class="p-4 space-y-6">
-        <div id="list-bibit" class="grid grid-cols-2 gap-4">
-            </div>
-    </div>
+                <div class="mb-3"><label class="block text-xs font-medium mb-1">Kelas</label><select id="kelas" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih aroma dulu</option></select></div>
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div><label class="block text-xs font-medium mb-1">Ukuran</label><select id="ukuran" required onchange="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm"><option value="" disabled selected>Pilih...</option><option value="35">35 ml</option><option value="50">50 ml</option><option value="100">100 ml</option></select></div>
+                    <div><label class="block text-xs font-medium mb-1">Jumlah</label><input type="number" id="qty" required min="1" value="1" oninput="hitungSubTotal()" class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm text-center"></div>
+                </div>
+                <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600"><span class="text-xs">Subtotal:</span><span id="subtotal-item" class="font-bold text-gold">Rp 0</span></div>
+                <button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">Masukkan Keranjang</button>
+            </form>
+        </div>
 
-    <div id="content-riwayat" class="p-4 hidden space-y-4">
-        <div id="list-riwayat" class="space-y-4">
-            <p class="text-center text-gray-400 text-xs py-10 font-bold uppercase tracking-widest">Belum ada pesanan</p>
+        <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
+            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between"><span>🛒 Keranjang</span><span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span></h2>
+            <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto"><p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p></div>
+            <div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4"><span class="text-sm font-bold">Total:</span><span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span></div>
+            <button id="btn-submit" onclick="kirimPesananAkhir()" class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>Kirim Pesanan Sekarang</button>
         </div>
     </div>
 
-    <div id="modal-qris" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-6 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 p-6 rounded-3xl w-full max-w-sm text-center">
-            <h3 class="font-black uppercase tracking-widest mb-4">Scan QRIS</h3>
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=ContohPembayaran" class="w-full rounded-2xl mb-6 shadow-xl" alt="QRIS">
-            <button onclick="tutupQris()" class="w-full bg-gold text-white py-4 rounded-2xl font-bold uppercase text-xs tracking-widest">Tutup</button>
-        </div>
-    </div>
+    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden"><div id="daftar-riwayat" class="space-y-3"></div></div>
 
-    <div id="cart-bar" class="fixed bottom-6 left-6 right-6 bg-gray-900 dark:bg-gold text-white p-4 rounded-3xl shadow-2xl flex justify-between items-center z-50 hidden transition-all">
-        <div>
-            <p id="cart-count" class="text-[10px] font-bold uppercase tracking-widest opacity-70">0 Item</p>
-            <p id="cart-total" class="font-black text-lg">Rp 0</p>
+    <div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden flex-col items-center justify-center p-4 transition-opacity backdrop-blur-sm">
+        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
+            <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none">&times;</button>
+            
+            <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
+            <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600" onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
+            
+            <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
+            <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
         </div>
-        <button onclick="checkout()" class="bg-white text-gray-900 px-8 py-3 rounded-2xl font-black uppercase text-[11px] tracking-tighter">Pesan Sekarang</button>
     </div>
 
     <script>
-        // FIREBASE CONFIG
+        function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
+        setTimeout(closeSplash, 5000); 
+
+        let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)); localStorage.setItem('mi_buyer_id', buyerId);
+
+        // --- MASUKKAN KODE FIREBASE DI SINI ---
         const firebaseConfig = {
-            apiKey: "AIzaSy...", // Ganti dengan config asli Anda
-            authDomain: "mi-perfume.firebaseapp.com",
-            projectId: "mi-perfume",
-            storageBucket: "mi-perfume.appspot.com",
-            messagingSenderId: "...",
-            appId: "..."
+            apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
+            authDomain: "mi-perfume-1989.firebaseapp.com",
+            databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "mi-perfume-1989",
+            storageBucket: "mi-perfume-1989.firebasestorage.app",
+            messagingSenderId: "894897183896",
+            appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
+            measurementId: "G-H2KG1X9KVN"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        const auth = firebase.auth();
 
-        let cart = [];
-        let currentUid = "";
+        let keranjang = []; let dataStok = {}; let dataBahan = {}; let rawAromas = [];
+        const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
 
-        // AUTH & LOAD
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                currentUid = user.uid;
-                document.getElementById('user-display').innerText = user.email;
-                loadBibit();
-                tampilRiwayat();
-            } else {
-                auth.signInAnonymously();
-            }
+        function switchTab(t) { ['pesan','riwayat'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); }); document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active'); }
+
+        db.collection("bahan").onSnapshot(snap => { snap.forEach(doc => { dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 }; }); });
+
+        // LOGIKA PENCARIAN AROMA
+        db.collection("stok").orderBy("nama").onSnapshot(snap => {
+            rawAromas = []; dataStok = {}; 
+            snap.forEach(doc => {
+                const data = doc.data();
+                dataStok[data.nama] = { sisa_ml: data.sisa_ml || 0, modal: data.modal || {}, kelas_tersedia: data.kelas_tersedia || ["Standar"] };
+                rawAromas.push(data);
+            });
+            renderAromaOptions("");
         });
 
-        function loadBibit() {
-            db.collection("stok").onSnapshot(snap => {
-                const list = document.getElementById('list-bibit');
-                list.innerHTML = '';
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    const id = doc.id;
-                    // Tampilkan hanya jika ada stok di salah satu kelas
-                    list.innerHTML += `
-                        <div class="bg-white dark:bg-gray-800 p-4 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                            <h3 class="font-bold text-sm mb-1">${d.nama}</h3>
-                            <select id="kelas-${id}" class="w-full text-[10px] font-bold uppercase bg-gray-50 dark:bg-gray-700 p-2 rounded-xl border-none outline-none mb-3">
-                                <option value="Standar">Standar</option>
-                                <option value="Premium">Premium</option>
-                                <option value="Super Premium">Super Premium</option>
-                                <option value="Diamond">Diamond</option>
-                            </select>
-                            <button onclick="addToCart('${id}', '${d.nama}')" class="w-full bg-gray-100 dark:bg-gray-700 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-gold hover:text-white transition-colors">+</button>
-                        </div>
-                    `;
-                });
-            });
-        }
+        function renderAromaOptions(filterText) {
+            const selectAroma = document.getElementById('aroma');
+            const oldVal = selectAroma.value;
+            let html = '<option value="" disabled selected>Pilih Aroma...</option>';
+            const query = filterText.toLowerCase();
 
-        function addToCart(id, nama) {
-            const kelas = document.getElementById(`kelas-${id}`).value;
-            // Fetch harga dari Firestore stok
-            db.collection("stok").doc(id).get().then(doc => {
-                const harga = doc.data().harga_kelas[kelas] || 0;
-                cart.push({ id, nama, kelas, harga, qty: 1 });
-                updateCartUI();
-            });
-        }
-
-        function updateCartUI() {
-            const bar = document.getElementById('cart-bar');
-            if(cart.length > 0) {
-                bar.classList.remove('hidden');
-                const total = cart.reduce((sum, item) => sum + item.harga, 0);
-                document.getElementById('cart-count').innerText = `${cart.length} Item`;
-                document.getElementById('cart-total').innerText = `Rp ${total.toLocaleString()}`;
-            } else {
-                bar.classList.add('hidden');
-            }
-        }
-
-        async function checkout() {
-            if(cart.length === 0) return;
-            const total = cart.reduce((sum, item) => sum + item.harga, 0);
-            const orderData = {
-                uid: currentUid,
-                items: cart.map(i => ({ aroma: i.nama, qty: i.qty, kelas: i.kelas, bibitId: i.id })),
-                total: total,
-                status: "Menunggu di proses",
-                createdAt: firebase.firestore.FieldValue.serverTimestamp()
-            };
-
-            await db.collection("pesanan").add(orderData);
-            alert("Pesanan berhasil dibuat!");
-            cart = [];
-            updateCartUI();
-            switchTab('riwayat');
-        }
-
-        function tampilRiwayat() {
-            db.collection("pesanan").where("uid", "==", currentUid).orderBy("createdAt", "desc").onSnapshot(snap => {
-                const list = document.getElementById('list-riwayat');
-                list.innerHTML = '';
-                if(snap.empty) {
-                    list.innerHTML = '<p class="text-center text-gray-400 text-xs py-10 font-bold uppercase tracking-widest">Belum ada pesanan</p>';
-                    return;
+            rawAromas.forEach(data => {
+                if (data.nama.toLowerCase().includes(query)) {
+                    if (data.sisa_ml >= 17.5) html += `<option value="${data.nama}">${data.nama} (Tersedia)</option>`;
+                    else html += `<option value="${data.nama}" disabled class="text-red-400">${data.nama} (Kosong)</option>`;
                 }
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    let sColor = "bg-gray-100 text-gray-400";
-                    if(d.status === "Sedang di proses") sColor = "bg-blue-100 text-blue-500";
-                    if(d.status === "Selesai") sColor = "bg-green-100 text-green-500";
-                    
-                    let qrisBtn = (d.status === "Selesai") ? `<button onclick="bukaQris()" class="w-full mt-3 bg-gray-900 text-white py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest">Bayar dengan QRIS</button>` : '';
-
-                    list.innerHTML += `
-                        <div class="bg-white dark:bg-gray-800 p-5 rounded-3xl shadow-sm border border-gray-100 dark:border-gray-700">
-                            <div class="flex justify-between items-center mb-3">
-                                <span class="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Order ID: ...${doc.id.slice(-5)}</span>
-                                <span class="text-[9px] font-bold px-3 py-1 rounded-full uppercase tracking-tighter ${sColor}">${d.status}</span>
-                            </div>
-                            <div class="space-y-1 mb-3">
-                                ${d.items.map(i => `<p class="text-xs font-medium">${i.qty}x <span class="text-gray-400">${i.aroma} (${i.kelas})</span></p>`).join('')}
-                            </div>
-                            <div class="flex justify-between items-center pt-3 border-t dark:border-gray-700">
-                                <span class="text-[10px] font-bold text-gray-400 uppercase">Total</span>
-                                <span class="text-sm font-bold text-gold">Rp ${d.total.toLocaleString()}</span>
-                            </div>
-                            ${qrisBtn}
-                        </div>`;
-                });
             });
+            selectAroma.innerHTML = html;
+            if(oldVal && html.includes(`value="${oldVal}"`)) selectAroma.value = oldVal;
         }
 
-        function switchTab(t) {
-            document.getElementById('content-pesan').classList.add('hidden');
-            document.getElementById('content-riwayat').classList.add('hidden');
-            document.getElementById('tab-pesan').classList.remove('tab-active');
-            document.getElementById('tab-riwayat').classList.remove('tab-active');
+        function filterAroma() {
+            const searchTxt = document.getElementById('search-aroma').value;
+            renderAromaOptions(searchTxt);
+        }
+
+        function updateKelasOptions() {
+            const aroma = document.getElementById('aroma').value; const selectKelas = document.getElementById('kelas');
+            selectKelas.innerHTML = '<option value="" disabled selected>Pilih Kelas...</option>';
+            if (aroma && dataStok[aroma]) {
+                dataStok[aroma].kelas_tersedia.forEach(k => {
+                    let labelPromo = `Rp ${hargaPerMl[k].toLocaleString()}/ml`;
+                    if (k === "Super Premium") labelPromo = "Harga Khusus Promo";
+                    selectKelas.innerHTML += `<option value="${k}">${k} (${labelPromo})</option>`;
+                });
+            }
+            hitungSubTotal();
+        }
+
+        function hitungSubTotal() {
+            const kelas = document.getElementById('kelas').value; const ukuran = document.getElementById('ukuran').value; const qty = parseInt(document.getElementById('qty').value) || 0;
+            if (kelas && ukuran && qty) { 
+                let total = 0; let hargaSatuan = hargaPerMl[kelas] * parseInt(ukuran); 
+                if (kelas === "Super Premium") { if (ukuran === "35") hargaSatuan = 100000; else if (ukuran === "100") hargaSatuan = 280000; total = hargaSatuan * qty; } 
+                else if (kelas === "Standar" && ukuran === "35") { total = hargaSatuan * qty; const kelipatanTiga = Math.floor(qty / 3); total -= (kelipatanTiga * 5000); } 
+                else { total = hargaSatuan * qty; }
+                document.getElementById('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID'); return total; 
+            }
+            document.getElementById('subtotal-item').innerText = 'Rp 0'; return 0;
+        }
+
+        function tambahKeKeranjang(e) {
+            e.preventDefault(); const aroma = document.getElementById('aroma').value; const kelas = document.getElementById('kelas').value; const ukuran = parseInt(document.getElementById('ukuran').value); const qty = parseInt(document.getElementById('qty').value);
+            const butuhBibit = (ukuran * 0.5) * qty; const idBotol = 'botol_' + ukuran; const butuhBotol = qty; const idAbs = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar'; const butuhAbs = (ukuran * 0.5) * qty;
+            const cartBibit = keranjang.filter(i => i.aroma === aroma).reduce((sum, i) => sum + i.bibit, 0); const cartBotol = keranjang.filter(i => i.id_botol === idBotol).reduce((sum, i) => sum + i.qty, 0); const cartAbs = keranjang.filter(i => i.id_absolute === idAbs).reduce((sum, i) => sum + i.absolute_ml, 0);
+            if ((butuhBibit + cartBibit) > (dataStok[aroma]?.sisa_ml || 0)) return alert(`❌ Bibit aroma ${aroma} tidak mencukupi.`);
+            if ((butuhBotol + cartBotol) > (dataBahan[idBotol]?.sisa || 0)) return alert(`❌ Stok Botol ${ukuran}ml kurang.`);
+            if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0)) return alert(`❌ Stok Absolute kelas ini kurang.`);
+            const hppBibitPerMl = dataStok[aroma]?.modal[kelas] || 0; const hppBibit = butuhBibit * hppBibitPerMl; const hppBotol = butuhBotol * (dataBahan[idBotol]?.harga_satuan || 0); const hppAbs = butuhAbs * (dataBahan[idAbs]?.harga_satuan || 0); const totalHppItem = hppBibit + hppBotol + hppAbs;
+            keranjang.push({ aroma: aroma, kelas: kelas, ukuran: ukuran, qty: qty, subtotal: hitungSubTotal(), bibit: butuhBibit, id_botol: idBotol, id_absolute: idAbs, absolute_ml: butuhAbs, hpp_total: totalHppItem });
+            renderKeranjang(); document.getElementById('qty').value = 1; document.getElementById('subtotal-item').innerText = 'Rp 0'; document.getElementById('kelas').value = ""; document.getElementById('ukuran').value = ""; document.getElementById('search-aroma').value = ""; filterAroma();
+        }
+
+        function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
+        
+        function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${i.aroma} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${i.kelas} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
+
+        function kirimPesananAkhir() { const nama = document.getElementById('nama').value.trim(); const noWa = document.getElementById('no-wa').value.trim(); if (!nama) return alert("Harap isi Nama Pemesan!"); const btn = document.getElementById('btn-submit'); btn.innerText = "Memproses..."; btn.disabled = true; const batch = db.batch(); const refPesanan = db.collection("pesanan").doc(); batch.set(refPesanan, { buyer_id: buyerId, nama: nama, no_wa: noWa, items: keranjang, total: keranjang.reduce((s, i) => s + i.subtotal, 0), total_hpp: keranjang.reduce((s, i) => s + (i.hpp_total || 0), 0), status: "Menunggu Diproses", waktu: firebase.firestore.FieldValue.serverTimestamp() }); keranjang.forEach(item => { batch.update(db.collection("stok").doc(item.aroma), { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) }); batch.update(db.collection("bahan").doc(item.id_botol), { sisa: firebase.firestore.FieldValue.increment(-item.qty) }); batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) }); }); batch.commit().then(() => { alert("✅ Pesanan Terkirim!"); keranjang = []; renderKeranjang(); document.getElementById('nama').value = ''; document.getElementById('no-wa').value = ''; btn.innerText = "Kirim Pesanan Sekarang"; switchTab('riwayat'); }).catch(err => { alert("Gagal: " + err); btn.disabled = false; }); }
+
+        // FUNGSI UNTUK MEMBUKA DAN MENUTUP MODAL QRIS
+        function bukaQris() {
+            const modal = document.getElementById('modal-qris');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function tutupQris() {
+            const modal = document.getElementById('modal-qris');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        // BAGIAN RIWAYAT
+        db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { 
+            const container = document.getElementById('daftar-riwayat'); 
+            container.innerHTML = ''; 
             
-            document.getElementById('content-' + t).classList.remove('hidden');
-            document.getElementById('tab-' + t).classList.add('tab-active');
-        }
+            if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; 
+            
+            let rData = []; 
+            snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); 
+            
+            rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { 
+                let sColor = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Ditolak"?"bg-red-100 text-red-700":"bg-yellow-100 text-yellow-700"; 
+                let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; 
+                let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${i.aroma} (${i.kelas})</p>`).join(''):''; 
+                
+                // Cek apakah status sudah "Selesai" untuk menampilkan tombol bayar
+                let tombolBayarHtml = '';
+                if(d.status === "Selesai") {
+                    tombolBayarHtml = `<button onclick="bukaQris()" class="mt-3 w-full bg-[#a38d58] hover:bg-[#8c794a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">📱 Bayar dengan QRIS</button>`;
+                }
 
-        function toggleDarkMode() { document.documentElement.classList.toggle('dark'); }
-        function bukaQris() { document.getElementById('modal-qris').classList.remove('hidden'); document.getElementById('modal-qris').classList.add('flex'); }
-        function tutupQris() { document.getElementById('modal-qris').classList.add('hidden'); document.getElementById('modal-qris').classList.remove('flex'); }
+                container.innerHTML += `
+                    <div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm">
+                        <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
+                            <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
+                        </div>
+                        <div class="mb-2">${itemsStr}</div>
+                        <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
+                            <span>Total</span>
+                            <span class="text-gold">Rp ${d.total.toLocaleString('id-ID')}</span>
+                        </div>
+                        ${tombolBayarHtml}
+                    </div>`; 
+            }); 
+        });
     </script>
 </body>
 </html>
