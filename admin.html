@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin MI Perfume - Fixed Console</title>
+    <title>Admin Dashboard - MI Perfume</title>
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
     
@@ -18,8 +18,8 @@
         .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
         .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
         .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .animate-fade { animation: fadeIn 0.3s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .animate-fade { animation: fadeIn 0.2s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-24 font-sans selection:bg-gold/30">
@@ -29,16 +29,16 @@
     <div id="login-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-100 px-4">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full border-t-8 border-[#a38d58] text-center">
             <img src="logo.jpeg" class="h-20 mx-auto mb-4 rounded-xl shadow-md">
-            <h1 class="text-2xl font-black text-[#a38d58] mb-6 tracking-tighter uppercase">Admin System</h1>
+            <h1 class="text-2xl font-black text-[#a38d58] mb-6 tracking-tighter uppercase">Admin Console</h1>
             <form id="form-login" onsubmit="prosesLogin(event)">
                 <input type="email" id="input-user" required class="w-full border p-4 rounded-xl mb-3 outline-none" placeholder="Email Admin">
                 <input type="password" id="input-pass" required class="w-full border p-4 rounded-xl mb-8 outline-none" placeholder="Password">
-                <button type="submit" id="btn-login" class="w-full bg-gold text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest">Login</button>
+                <button type="submit" id="btn-login" class="w-full bg-gold text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase">Login</button>
             </form>
         </div>
     </div>
 
-    <div id="admin-content" class="hidden animate-fade">
+    <div id="admin-content" class="hidden">
         <header class="bg-gray-900 text-white p-4 sticky top-0 z-20 flex justify-between items-center shadow-lg">
             <div class="flex items-center gap-3">
                 <img src="logo.jpeg" class="h-8 w-8 rounded">
@@ -56,113 +56,99 @@
             <button id="tab-followup" class="py-4 px-6 text-gray-400 text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('followup')">Follow Up 💬</button>
         </nav>
 
-        <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4">
-            <div class="bg-blue-600 text-white p-4 rounded-2xl shadow-lg flex justify-between items-center">
-                <p class="text-[10px] font-black uppercase">🔔 Notifikasi Suara</p>
-                <button onclick="aktifkanNotif()" class="bg-white text-blue-600 px-4 py-1.5 rounded-full text-[9px] font-black uppercase shadow-sm">Aktifkan</button>
-            </div>
+        <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4 animate-fade">
             <div id="daftar-pesanan" class="space-y-4"></div>
         </div>
 
         <div id="page-stok" class="p-4 max-w-md mx-auto hidden animate-fade">
             <div class="bg-white p-6 rounded-3xl shadow-sm border-t-8 border-gold mb-6">
-                <h2 class="font-black text-gray-700 mb-4 text-xs uppercase tracking-widest">💧 Kelola Bibit Aroma</h2>
+                <h2 class="font-black text-gray-700 mb-4 text-xs uppercase">💧 Update Bibit Aroma</h2>
                 <form onsubmit="simpanBibit(event)" class="space-y-3">
                     <select id="bibit-pilih" class="w-full border p-4 rounded-2xl text-sm bg-gray-50 font-bold outline-none" onchange="toggleBibitBaru()">
                         <option value="_NEW_">➕ BUAT AROMA BARU...</option>
                     </select>
                     <input type="text" id="bibit-nama" class="w-full border p-4 rounded-2xl text-sm uppercase hidden outline-none focus:ring-2 focus:ring-gold/30" placeholder="Ketik nama parfum...">
                     <div class="bg-gray-50 p-4 rounded-2xl space-y-4 border border-dashed border-gray-300">
-                        <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Setting Modal (Rp) & Stok (+ml)</p>
                         <div class="grid grid-cols-3 gap-2 items-center text-[10px] font-bold">
                             <span>STANDAR</span><input type="number" id="m-standar" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-standar" class="border p-2 rounded-lg" placeholder="+ml">
                             <span>PREMIUM</span><input type="number" id="m-premium" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-premium" class="border p-2 rounded-lg" placeholder="+ml">
                             <span>SUPER</span><input type="number" id="m-super" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-super" class="border p-2 rounded-lg" placeholder="+ml">
-                            <span>DIAMOND</span><input type="number" id="m-diamond" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-diamond" class="border p-2 rounded-lg" placeholder="+ml">
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">Simpan Bibit</button>
+                    <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-lg">Simpan Bibit</button>
                 </form>
             </div>
 
             <div class="bg-white p-6 rounded-3xl shadow-sm border-t-8 border-blue-600 mb-6">
-                <h2 class="font-black text-gray-700 mb-4 text-xs uppercase tracking-widest">📦 Kelola Botol & Pelarut</h2>
+                <h2 class="font-black text-gray-700 mb-4 text-xs uppercase">📦 Kelola Botol & Pelarut</h2>
                 <form onsubmit="simpanBahanBaku(event)" class="space-y-3">
                     <select id="bahan-pilih" class="w-full border p-4 rounded-2xl text-sm bg-gray-50 font-bold outline-none">
-                        <option value="abs_standar">PELARUT STANDAR (ml)</option>
-                        <option value="abs_khusus">PELARUT KHUSUS (ml)</option>
-                        <option value="botol_35">BOTOL 35ML (pcs)</option>
-                        <option value="botol_50">BOTOL 50ML (pcs)</option>
-                        <option value="botol_100">BOTOL 100ML (pcs)</option>
+                        <option value="abs_standar">Absolute Standar (ml)</option>
+                        <option value="abs_khusus">Absolute Khusus (ml)</option>
+                        <option value="botol_35">Botol 35ml (pcs)</option>
+                        <option value="botol_50">Botol 50ml (pcs)</option>
+                        <option value="botol_100">Botol 100ml (pcs)</option>
                     </select>
                     <div class="flex gap-2">
-                        <input type="number" id="bahan-modal" class="flex-1 border p-4 rounded-2xl text-sm outline-none" placeholder="Modal/Unit">
-                        <input type="number" id="bahan-jumlah" class="flex-1 border p-4 rounded-2xl text-sm outline-none" placeholder="+Jumlah">
+                        <input type="number" id="bahan-modal" class="flex-1 border p-4 rounded-2xl text-sm" placeholder="Harga/Unit">
+                        <input type="number" id="bahan-jumlah" step="0.1" class="flex-1 border p-4 rounded-2xl text-sm" placeholder="+Jumlah">
                     </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">Update Bahan</button>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-lg">Update Stok Bahan</button>
                 </form>
             </div>
 
             <div class="flex justify-between items-center mb-4 px-2">
-                <h2 class="font-black text-gray-400 text-[10px] uppercase tracking-widest">Inventory List</h2>
-                <button onclick="loadInventory()" id="btn-sync-stok" class="bg-gray-200 text-gray-600 text-[9px] font-black px-4 py-1.5 rounded-full uppercase transition-all">🔄 Sync Data</button>
+                <h2 class="font-black text-gray-400 text-[10px] uppercase">Daftar Bahan Baku</h2>
+                <button onclick="loadInventory()" class="text-blue-500 font-bold text-[10px] uppercase">🔄 Sync</button>
             </div>
             <div id="daftar-bahan" class="grid grid-cols-2 gap-2 mb-6"></div>
+            
+            <h2 class="font-black text-gray-400 text-[10px] uppercase mb-4 px-2">Daftar Bibit Aroma</h2>
             <div id="daftar-bibit" class="space-y-3"></div>
         </div>
 
         <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-8 border-gold">
-                    <p class="text-[9px] text-gray-400 font-black uppercase mb-1">Omset</p>
-                    <p id="dash-omset" class="text-lg font-black tracking-tighter text-gray-800">Rp 0</p>
+            <div class="grid grid-cols-3 gap-2 mb-4">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-gold">
+                    <p class="text-[8px] text-gray-400 font-black uppercase">Omset</p>
+                    <p id="dash-omset" class="text-xs font-black">Rp 0</p>
                 </div>
-                <div class="bg-white p-5 rounded-3xl shadow-sm border-l-8 border-red-500">
-                    <p class="text-[9px] text-gray-400 font-black uppercase mb-1">HPP</p>
-                    <p id="dash-hpp" class="text-lg font-black tracking-tighter text-red-500">Rp 0</p>
+                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-red-500">
+                    <p class="text-[8px] text-gray-400 font-black uppercase">HPP</p>
+                    <p id="dash-hpp" class="text-xs font-black">Rp 0</p>
+                </div>
+                <div class="bg-gray-900 text-green-400 p-3 rounded-2xl shadow-sm border-l-4 border-green-500">
+                    <p class="text-[8px] opacity-50 font-black uppercase">Profit</p>
+                    <p id="dash-profit" class="text-xs font-black">Rp 0</p>
                 </div>
             </div>
-            <div class="bg-gray-900 text-white p-5 rounded-3xl shadow-xl border-l-8 border-green-500 mb-6">
-                <p class="text-[9px] font-black uppercase opacity-50 mb-1 tracking-widest">Laba Bersih (Net Profit)</p>
-                <p id="dash-profit" class="text-3xl font-black text-green-400 tracking-tighter">Rp 0</p>
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 h-64"><canvas id="grafikOmset"></canvas></div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-t-4 border-gold mb-6">
+                <h2 class="text-[9px] font-black mb-4 uppercase text-gray-400">🚀 Top 20 Best Sellers</h2>
+                <div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2 hide-scrollbar"></div>
             </div>
-            <div class="bg-white p-5 rounded-3xl shadow-sm mb-6 h-72">
-                <canvas id="grafikOmset"></canvas>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-t-4 border-red-400">
+                <h2 class="text-[9px] font-black mb-4 uppercase text-red-400">📉 20 Underperforming</h2>
+                <div id="daftar-aroma-buruk" class="space-y-2 max-h-60 overflow-y-auto pr-2 hide-scrollbar"></div>
             </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border-t-8 border-gold mb-6">
-                <h2 class="text-[10px] font-black mb-6 uppercase tracking-widest text-gold">🚀 TOP 20 BEST SELLERS</h2>
-                <div id="daftar-aroma" class="space-y-2 max-h-80 overflow-y-auto pr-2 hide-scrollbar"></div>
-            </div>
-            <div class="bg-white p-6 rounded-3xl shadow-sm border-t-8 border-red-400">
-                <h2 class="text-[10px] font-black mb-6 uppercase tracking-widest text-red-400">📉 20 UNDERPERFORMING AROMAS</h2>
-                <div id="daftar-aroma-buruk" class="space-y-2 max-h-80 overflow-y-auto pr-2 hide-scrollbar"></div>
-            </div>
-        </div>
-
-        <div id="page-crm" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <h2 class="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-4 px-2 text-center">Data Loyal Customer</h2>
-            <div id="daftar-crm" class="space-y-3"></div>
         </div>
 
         <div id="page-restock" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <div class="bg-red-600 text-white p-6 rounded-3xl shadow-lg mb-6">
-                <h2 class="font-black text-sm uppercase tracking-tighter">🚨 LOW STOCK ALERTS</h2>
-                <p class="text-[10px] opacity-80 mt-1 italic">Daftar bibit di bawah 50ml.</p>
+            <div class="bg-red-600 text-white p-6 rounded-3xl shadow-lg mb-4">
+                <h2 class="font-black text-xs uppercase">🚨 LOW STOCK ALERTS</h2>
+                <p class="text-[10px] opacity-70 italic">Stok Bibit < 50ml</p>
             </div>
             <div id="restock-bibit" class="space-y-3"></div>
         </div>
 
-        <div id="page-followup" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <div class="bg-green-600 text-white p-5 rounded-3xl shadow-lg mb-6 text-center">
-                <h2 class="text-xs font-black uppercase tracking-widest">Pelanggan Pasif (>7 Hari)</h2>
-            </div>
-            <div id="daftar-followup" class="space-y-3"></div>
-        </div>
+        <div id="page-crm" class="p-4 max-w-md mx-auto hidden animate-fade"><div id="daftar-crm" class="space-y-3"></div></div>
+
+        <div id="page-followup" class="p-4 max-w-md mx-auto hidden animate-fade"><div id="daftar-followup" class="space-y-3"></div></div>
     </div>
 
     <div id="modal-edit" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-6 backdrop-blur-md">
         <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full border-t-8 border-gold animate-fade">
-            <h2 class="font-black text-gray-800 text-sm mb-1 uppercase tracking-tighter">Edit Stok</h2>
+            <h2 class="font-black text-gray-800 text-sm mb-1 uppercase">Edit Stok</h2>
             <p id="edit-nama-bibit" class="text-[10px] font-bold text-gold mb-6 uppercase tracking-widest"></p>
             <form id="form-edit-bibit" onsubmit="simpanEditBibit(event)">
                 <input type="hidden" id="edit-id-bibit">
@@ -176,7 +162,7 @@
     </div>
 
     <script>
-        // --- CONFIG & INITIALIZE ---
+        // --- 1. FIREBASE CONFIG ---
         const firebaseConfig = {
             apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
             authDomain: "mi-perfume-1989.firebaseapp.com",
@@ -190,12 +176,13 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
+        db.enablePersistence().catch(() => {});
 
         let chartInstance = null;
         let globalBibit = [];
         let isInitialLoad = true;
 
-        // --- AUTH CONTROL ---
+        // --- 2. AUTH ---
         auth.onAuthStateChanged(user => {
             if (user && !user.isAnonymous) {
                 document.getElementById('login-screen').classList.add('hidden');
@@ -211,11 +198,11 @@
         function prosesLogin(e) {
             e.preventDefault();
             auth.signInWithEmailAndPassword(document.getElementById('input-user').value, document.getElementById('input-pass').value)
-                .catch(err => alert("Gagal Login: " + err.message));
+                .catch(err => alert("Gagal: " + err.message));
         }
         function logoutAdmin() { if(confirm("Logout?")) auth.signOut(); }
 
-        // --- REALTIME LISTENERS ---
+        // --- 3. SINKRONISASI REALTIME ---
         function startRealtimeListeners() {
             const batas = new Date(); batas.setDate(batas.getDate() - 3);
 
@@ -230,61 +217,56 @@
                     const d = doc.data(); const id = doc.id;
                     let color = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Diproses"?"bg-blue-100 text-blue-700":"bg-yellow-100 text-yellow-700";
                     let items = (d.items||[]).map(i => `<p class="text-[10px] mb-1"><b>${i.qty}x</b> ${i.aroma} (${i.kelas})</p>`).join('');
-                    let btn = d.status==="Menunggu Diproses" ? `<button onclick="terimaPesanan('${id}','${encodeURIComponent(JSON.stringify(d.items))}')" class="flex-1 bg-blue-600 text-white text-[9px] font-black py-4 rounded-2xl uppercase shadow-md">Terima</button>` : d.status==="Diproses" ? `<button onclick="selesaikanPesanan('${id}','${encodeURIComponent(JSON.stringify(d))}')" class="flex-1 bg-green-600 text-white text-[9px] font-black py-4 rounded-2xl uppercase shadow-md">Selesaikan</button>` : '';
-                    wadah.innerHTML += `
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-gold animate-fade">
-                            <div class="flex justify-between items-start mb-4 border-b pb-2">
-                                <div><h3 class="font-black text-sm uppercase">${d.nama}</h3><p class="text-[9px] font-bold text-gray-400 tracking-tighter italic">${d.no_wa||'No WA'}</p></div>
-                                <span class="text-[8px] font-black px-2 py-1 rounded-full uppercase tracking-tighter ${color}">${d.status}</span>
-                            </div>
-                            <div class="mb-4">${items}</div>
-                            <div class="flex justify-between items-center font-black text-gold text-sm pt-2 border-t border-gray-50"><span>TOTAL</span><span>Rp ${(d.total||0).toLocaleString()}</span></div>
-                            <div class="mt-5 flex gap-2">${btn}</div>
-                        </div>`;
+                    let btn = d.status==="Menunggu Diproses" ? `<button onclick="terimaPesanan('${id}','${encodeURIComponent(JSON.stringify(d.items))}')" class="flex-1 bg-blue-600 text-white text-[9px] font-black py-4 rounded-2xl uppercase">Terima</button>` : d.status==="Diproses" ? `<button onclick="selesaikanPesanan('${id}','${encodeURIComponent(JSON.stringify(d))}')" class="flex-1 bg-green-600 text-white text-[9px] font-black py-4 rounded-2xl uppercase">Selesaikan</button>` : '';
+                    wadah.innerHTML += `<div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-gold">
+                        <div class="flex justify-between mb-2"><b>${d.nama}</b> <span class="px-2 py-1 rounded text-[8px] font-black uppercase ${color}">${d.status}</span></div>
+                        ${items} <div class="mt-4 font-black text-gold text-xs">Rp ${d.total.toLocaleString()}</div>
+                        <div class="mt-4 flex gap-2">${btn}</div></div>`;
                 });
             });
 
-            // Analitik & Statistik
+            // Statistik
             db.collection("statistik").doc("global").onSnapshot(doc => {
                 if(!doc.exists) return;
                 const d = doc.data();
-                const profit = (d.omset||0) - (d.hpp||0);
                 document.getElementById('dash-omset').innerText = 'Rp ' + (d.omset||0).toLocaleString();
                 document.getElementById('dash-hpp').innerText = 'Rp ' + (d.hpp||0).toLocaleString();
-                document.getElementById('dash-profit').innerText = 'Rp ' + profit.toLocaleString();
+                document.getElementById('dash-profit').innerText = 'Rp ' + ((d.omset||0)-(d.hpp||0)).toLocaleString();
                 renderGrafik(d.bulanan||{});
                 renderTopAroma(d.terjual_aroma||{});
             });
 
-            // CRM & Follow-up
+            // Bahan Baku (PENTING: Memakai field 'sisa' sesuai screenshot)
+            db.collection("bahan").onSnapshot(snap => {
+                const wadahBahan = document.getElementById('daftar-bahan'); wadahBahan.innerHTML = '';
+                snap.forEach(doc => {
+                    const b = doc.data();
+                    const nama = b.nama || doc.id;
+                    wadahBahan.innerHTML += `
+                        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex flex-col items-center shadow-sm">
+                            <p class="text-[8px] font-black text-blue-400 uppercase">${nama.replace(/_/g, ' ')}</p>
+                            <p class="text-sm font-black text-blue-700 mt-1">${b.sisa || 0}<span class="text-[8px] ml-1 opacity-50">${nama.includes('botol') ? 'pcs' : 'ml'}</span></p>
+                        </div>`;
+                });
+            });
+
+            // CRM & Follow Up
             db.collection("crm").orderBy("total_spent", "desc").onSnapshot(snap => {
                 const wCrm = document.getElementById('daftar-crm'); wCrm.innerHTML = '';
                 const wFollow = document.getElementById('daftar-followup'); wFollow.innerHTML = '';
                 const now = new Date();
                 snap.forEach(doc => {
                     const d = doc.data();
-                    wCrm.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-sm border flex justify-between items-center"><div><p class="font-black text-xs uppercase">${d.nama}</p><p class="text-[9px] font-bold text-gray-400 italic">${d.no_wa}</p></div><b class="text-gold text-xs">Rp ${d.total_spent.toLocaleString()}</b></div>`;
+                    wCrm.innerHTML += `<div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center"><div><p class="font-black text-xs uppercase">${d.nama}</p><p class="text-[9px] font-bold text-gray-400 italic">${d.no_wa}</p></div><b class="text-gold text-xs">Rp ${d.total_spent.toLocaleString()}</b></div>`;
                     if(d.terakhir_order && d.no_wa) {
                         let diff = Math.floor((now - d.terakhir_order.toDate()) / (1000*60*60*24));
-                        if(diff >= 7) {
-                            wFollow.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-sm border-l-8 border-green-500 flex justify-between items-center"><div><p class="font-black text-xs uppercase">${d.nama}</p><p class="text-[9px] text-gray-500 italic">${diff} hari pasif</p></div><a href="https://wa.me/${d.no_wa.replace(/\D/g,'')}" target="_blank" class="bg-green-500 text-white text-[9px] font-black px-4 py-2 rounded-xl uppercase">Chat WA</a></div>`;
-                        }
+                        if(diff >= 7) wFollow.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-sm border-l-8 border-green-500 flex justify-between items-center text-[10px]"><div><b>${d.nama}</b> (${diff} hari pasif)</div><a href="https://wa.me/${d.no_wa.replace(/\D/g,'')}" target="_blank" class="bg-green-500 text-white px-3 py-1 rounded-lg font-black uppercase">Chat</a></div>`;
                     }
-                });
-            });
-
-            // Realtime Bahan Baku (Sync Data Lama)
-            db.collection("bahan").onSnapshot(snap => {
-                const wadahBahan = document.getElementById('daftar-bahan');
-                if(!wadahBahan) return; wadahBahan.innerHTML = '';
-                snap.forEach(doc => {
-                    const b = doc.data(); const nama = b.nama || doc.id;
-                    wadahBahan.innerHTML += `<div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex flex-col items-center justify-center text-center shadow-sm"><p class="text-[8px] font-black text-blue-400 uppercase tracking-widest">${nama.replace(/_/g, ' ')}</p><p class="text-sm font-black text-blue-700 mt-1">${b.sisa || 0}<span class="text-[8px] ml-1 opacity-50">${nama.includes('botol') ? 'pcs' : 'ml'}</span></p></div>`;
                 });
             });
         }
 
-        // INVENTORY LOGIC
+        // --- 4. LOGIKA INVENTARIS ---
         function loadInventory() {
             db.collection("stok").orderBy("nama").get().then(snap => {
                 const wadahBibit = document.getElementById('daftar-bibit'); wadahBibit.innerHTML = '';
@@ -296,11 +278,9 @@
                     sel.innerHTML += `<option value="${data.nama}">${data.nama}</option>`;
                     let infoM = data.modal ? Object.entries(data.modal).map(([k,v]) => `${k}:Rp${v.toLocaleString()}`).join(' | ') : 'Modal: -';
                     let infoS = data.stok_kelas ? Object.entries(data.stok_kelas).map(([k,v]) => `${k}:${v}ml`).join(' | ') : `${data.sisa_ml}ml`;
-                    wadahBibit.innerHTML += `
-                        <div class="bg-white p-5 rounded-2xl border flex justify-between items-center shadow-sm">
-                            <div class="flex-1"><p class="font-black text-xs uppercase">💧 ${data.nama}</p><p class="text-[8px] text-gray-400 mt-1 font-bold uppercase tracking-tighter">${infoS}</p><p class="text-[8px] text-blue-400 font-bold uppercase mt-0.5 tracking-tighter">${infoM}</p></div>
-                            <button onclick="bukaModalEdit('${doc.id}')" class="bg-blue-50 text-blue-600 p-2.5 rounded-xl text-xs">✏️</button>
-                        </div>`;
+                    wadahBibit.innerHTML += `<div class="bg-white p-5 rounded-2xl border flex justify-between items-center shadow-sm">
+                        <div class="flex-1"><p class="font-black text-xs uppercase">💧 ${data.nama}</p><p class="text-[8px] text-gray-400 uppercase mt-1">${infoS}</p><p class="text-[8px] text-blue-400 font-bold mt-0.5">${infoM}</p></div>
+                        <button onclick="bukaModalEdit('${doc.id}')" class="bg-blue-50 text-blue-600 p-2.5 rounded-xl text-xs">✏️</button></div>`;
                     if(data.sisa_ml < 50) wRestock.innerHTML += `<div class="bg-white p-4 rounded-2xl border-l-8 border-red-500 text-[10px] font-black flex justify-between uppercase"><span>${data.nama}</span><b class="text-red-600">${data.sisa_ml} ml</b></div>`;
                 });
             });
@@ -309,10 +289,17 @@
         function simpanBahanBaku(e) {
             e.preventDefault();
             const id = document.getElementById('bahan-pilih').value;
-            const modal = parseInt(document.getElementById('bahan-modal').value) || 0;
-            const jumlah = parseInt(document.getElementById('bahan-jumlah').value) || 0;
-            db.collection("bahan").doc(id).set({ nama: id, modal: modal, sisa: firebase.firestore.FieldValue.increment(jumlah) }, {merge:true})
-                .then(() => { alert("Bahan Terupdate!"); e.target.reset(); });
+            const selectEl = document.getElementById('bahan-pilih');
+            const nama = selectEl.options[selectEl.selectedIndex].text.split('(')[0].trim();
+            const harga = parseInt(document.getElementById('bahan-modal').value) || 0;
+            const jumlah = parseFloat(document.getElementById('bahan-jumlah').value) || 0;
+            
+            db.collection("bahan").doc(id).set({ 
+                id: id, 
+                nama: nama, 
+                harga_satuan: harga, 
+                sisa: firebase.firestore.FieldValue.increment(jumlah) 
+            }, {merge:true}).then(() => { alert("Update Berhasil!"); e.target.reset(); });
         }
 
         function simpanBibit(e) {
@@ -321,8 +308,8 @@
             const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value;
             if(!nama) return alert("Pilih aroma!");
             let stokAdd = {}; let modObj = {};
-            ['standar','premium','super','diamond'].forEach((pid, idx) => {
-                const k = ['Standar', 'Premium', 'Super Premium', 'Diamond'][idx];
+            ['standar','premium','super'].forEach((pid, idx) => {
+                const k = ['Standar', 'Premium', 'Super Premium'][idx];
                 let mVal = document.getElementById('m-'+pid).value;
                 let mlVal = document.getElementById('ml-'+pid).value;
                 if(mVal !== "") modObj[k] = parseInt(mVal);
@@ -333,10 +320,23 @@
                 let current = (doc.exists && doc.data().stok_kelas) ? doc.data().stok_kelas : {};
                 let finalStok = { ...current };
                 Object.keys(stokAdd).forEach(k => { finalStok[k] = (finalStok[k]||0) + stokAdd[k]; });
-                let totalMl = Object.values(finalStok).reduce((a,b)=>a+b, 0);
-                docRef.set({ nama, sisa_ml: totalMl, stok_kelas: finalStok, modal: modObj, kelas_tersedia: Object.keys(finalStok) }, {merge:true})
-                .then(() => { alert("Aroma Disimpan!"); e.target.reset(); loadInventory(); });
+                docRef.set({ nama, sisa_ml: Object.values(finalStok).reduce((a,b)=>a+b, 0), stok_kelas: finalStok, modal: modObj, kelas_tersedia: Object.keys(finalStok) }, {merge:true})
+                .then(() => { alert("Berhasil!"); e.target.reset(); loadInventory(); });
             });
+        }
+
+        // --- 5. UI & TAB SYSTEM ---
+        function switchTab(t) {
+            ['pesanan','stok','dashboard','crm','restock','followup'].forEach(id => {
+                const page = document.getElementById('page-'+id);
+                const btn = document.getElementById('tab-'+id);
+                if(page) page.classList.add('hidden');
+                if(btn) btn.classList.remove('tab-active', 'text-gray-900');
+            });
+            const activePage = document.getElementById('page-'+t);
+            const activeBtn = document.getElementById('tab-'+t);
+            if(activePage) activePage.classList.remove('hidden');
+            if(activeBtn) activeBtn.classList.add('tab-active', 'text-gray-900');
         }
 
         function terimaPesanan(id, itemsJSON) {
@@ -358,29 +358,9 @@
             batch.update(db.collection("pesanan").doc(id), { status: "Selesai" });
             let omset = Number(data.total)||0; 
             let hpp = (data.items||[]).reduce((s, i) => s + (Number(i.hpp_total)||0), 0);
-            let updateObj = { omset: firebase.firestore.FieldValue.increment(omset), hpp: firebase.firestore.FieldValue.increment(hpp) };
-            (data.items||[]).forEach(i => { updateObj[`terjual_aroma.${i.aroma.toUpperCase()}`] = firebase.firestore.FieldValue.increment(i.qty); });
-            batch.set(db.collection("statistik").doc("global"), updateObj, {merge:true});
-            if(data.no_wa) {
-                batch.set(db.collection("crm").doc(data.no_wa.replace(/\D/g,'')), { nama: data.nama, no_wa: data.no_wa, total_spent: firebase.firestore.FieldValue.increment(omset), order_count: firebase.firestore.FieldValue.increment(1), terakhir_order: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
-            }
+            batch.set(db.collection("statistik").doc("global"), { omset: firebase.firestore.FieldValue.increment(omset), hpp: firebase.firestore.FieldValue.increment(hpp) }, {merge:true});
+            if(data.no_wa) batch.set(db.collection("crm").doc(data.no_wa.replace(/\D/g,'')), { nama: data.nama, no_wa: data.no_wa, total_spent: firebase.firestore.FieldValue.increment(omset), order_count: firebase.firestore.FieldValue.increment(1), terakhir_order: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
             batch.commit().then(() => alert("Selesai!"));
-        }
-
-        // UI HELPERS
-        function switchTab(t) {
-            const tabs = ['pesanan','stok','dashboard','crm','restock','followup'];
-            tabs.forEach(id => {
-                const page = document.getElementById('page-'+id);
-                const btn = document.getElementById('tab-'+id);
-                if(page) page.classList.add('hidden');
-                if(btn) btn.classList.remove('tab-active', 'text-gray-900');
-                if(btn) btn.classList.add('text-gray-400');
-            });
-            const activePage = document.getElementById('page-'+t);
-            const activeBtn = document.getElementById('tab-'+t);
-            if(activePage) activePage.classList.remove('hidden');
-            if(activeBtn) activeBtn.classList.add('tab-active', 'text-gray-900');
         }
 
         function renderGrafik(d) {
@@ -389,17 +369,16 @@
             chartInstance = new Chart(ctx.getContext('2d'), {
                 type: 'line',
                 data: { labels: Object.keys(d), datasets: [{ label: 'Omset', data: Object.values(d), borderColor: '#a38d58', tension: 0.4, fill: true, backgroundColor: 'rgba(163, 141, 88, 0.05)' }] },
-                options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
             });
         }
 
         function renderTopAroma(d) {
-            const bestW = document.getElementById('daftar-aroma');
-            const worstW = document.getElementById('daftar-aroma-buruk');
-            if(!bestW || !worstW) return; bestW.innerHTML = ''; worstW.innerHTML = '';
+            const bestW = document.getElementById('daftar-aroma'); const worstW = document.getElementById('daftar-aroma-buruk');
+            if(!bestW) return; bestW.innerHTML = ''; worstW.innerHTML = '';
             const sorted = Object.entries(d).sort((a,b)=>b[1]-a[1]);
-            sorted.slice(0, 20).forEach((i, x) => { bestW.innerHTML += `<div class="flex justify-between text-[10px] border-b pb-2 uppercase font-bold"><span>${x+1}. ${i[0]}</span><b class="text-gold">${i[1]} Unit</b></div>`; });
-            [...sorted].reverse().slice(0, 20).forEach((i, x) => { worstW.innerHTML += `<div class="flex justify-between text-[10px] border-b pb-2 uppercase font-bold"><span>${x+1}. ${i[0]}</span><b class="text-red-400">${i[1]} Unit</b></div>`; });
+            sorted.slice(0, 20).forEach((i, x) => { bestW.innerHTML += `<div class="flex justify-between text-[9px] border-b pb-2 uppercase font-bold"><span>${x+1}. ${i[0]}</span><b class="text-gold">${i[1]} Unit</b></div>`; });
+            [...sorted].reverse().slice(0, 20).forEach((i, x) => { worstW.innerHTML += `<div class="flex justify-between text-[9px] border-b pb-2 uppercase font-bold"><span>${x+1}. ${i[0]}</span><b class="text-red-400">${i[1]} Unit</b></div>`; });
         }
 
         function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').classList.toggle('hidden', v !== '_NEW_'); }
@@ -409,7 +388,7 @@
             const item = globalBibit.find(i => i.doc_id === id); if(!item) return;
             document.getElementById('edit-nama-bibit').innerText = item.nama; document.getElementById('edit-id-bibit').value = id;
             const cont = document.getElementById('edit-container-kelas'); cont.innerHTML = '';
-            ['Standar', 'Premium', 'Super Premium', 'Diamond'].forEach(k => {
+            ['Standar', 'Premium', 'Super Premium'].forEach(k => {
                 let val = (item.stok_kelas && item.stok_kelas[k]) ? item.stok_kelas[k] : 0;
                 cont.innerHTML += `<div><label class="block text-[10px] font-black uppercase text-gray-400 mb-1">${k} (ml)</label><input type="number" name="${k}" value="${val}" class="w-full border p-4 rounded-2xl text-sm font-bold"></div>`;
             });
