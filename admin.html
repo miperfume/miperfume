@@ -17,6 +17,25 @@
         .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
         .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
         .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* --- KODE BARU UNTUK PRINTER THERMAL --- */
+        @media print {
+            body * { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm; /* Ukuran Kertas Thermal Standar */
+                margin: 0;
+                padding: 0;
+                color: #000;
+                background: #fff;
+                font-family: monospace;
+                font-size: 12px;
+            }
+            @page { margin: 0; size: 58mm auto; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 pb-20">
@@ -125,7 +144,7 @@
         </div>
     </div>
 
-    <iframe id="print-frame" style="position: absolute; width: 0; height: 0; border: none; visibility: hidden;"></iframe>
+    <div id="print-section"></div>
 
     <script>
         // Fungsi Sanitasi (Anti-XSS)
@@ -434,7 +453,49 @@ db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap =>
 
         function renderTopAroma(d) { const c = document.getElementById('daftar-aroma'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => b[1]-a[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x<3?['🥇','🥈','🥉'][x]:x+1+'.'} ${escapeHTML(i[0])}</span><span class="bg-gold text-white px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
         function renderBottomAroma(d) { const c = document.getElementById('daftar-aroma-bawah'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${escapeHTML(i[0])}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
-        function cetakStruk(dataStr) { const data = JSON.parse(decodeURIComponent(dataStr)); let itemHtml = (data.items||[]).map(i => `<tr><td>${i.qty}x</td><td>${escapeHTML(i.aroma)} ${i.ukuran}ml</td><td style="text-align:right">${(i.subtotal||0).toLocaleString()}</td></tr>`).join(''); const iframe = document.getElementById('print-frame'); const doc = iframe.contentWindow.document; doc.open(); doc.write(`<html><head><title>Struk</title><style>body{font-family:monospace;width:58mm;margin:0 auto;padding:5px;font-size:12px;color:#000;} .c{text-align:center;} .b{border-bottom:1px dashed #000;margin:5px 0;padding-bottom:5px;} table{width:100%;font-size:11px;} td{vertical-align:top;}</style></head><body><div class="c"><img src="logo.jpeg" style="width:40px;filter:grayscale(100%);"><br><b>MI PERFUME</b><br></div><div class="b"></div>Nama: ${escapeHTML(data.nama)}<br>Status: LUNAS<div class="b"></div><table>${itemHtml}</table><div class="b"></div><div style="text-align:right"><b>Total: Rp ${data.total.toLocaleString()}</b></div><div class="c" style="margin-top:10px">Terima Kasih</div></body></html>`); doc.close(); setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 500); }
+        function cetakStruk(dataStr) { 
+            const data = JSON.parse(decodeURIComponent(dataStr)); 
+            
+            // Format daftar belanjaan
+            let itemHtml = (data.items||[]).map(i => `
+                <tr>
+                    <td style="vertical-align:top; width:15%;">${i.qty}x</td>
+                    <td style="vertical-align:top; width:55%;">${escapeHTML(i.aroma)}<br><small style="font-size:10px;">${escapeHTML(i.kelas)} ${i.ukuran}ml</small></td>
+                    <td style="vertical-align:top; width:30%; text-align:right;">${(i.subtotal||0).toLocaleString('id-ID')}</td>
+                </tr>
+            `).join(''); 
+            
+            // Desain struk thermal
+            const printHtml = `
+                <div style="text-align:center; margin-bottom:10px;">
+                    <b style="font-size:16px;">MI PERFUME</b><br>
+                    <span style="font-size:10px;">Nota Pembelian</span>
+                </div>
+                <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
+                Nama : ${escapeHTML(data.nama)}<br>
+                Status: <b>LUNAS</b>
+                <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
+                <table style="width:100%; font-size:11px; margin-bottom:5px;">
+                    ${itemHtml}
+                </table>
+                <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
+                <div style="text-align:right; font-size:13px; margin-top:5px;">
+                    <b>Total: Rp ${data.total.toLocaleString('id-ID')}</b>
+                </div>
+                <div style="text-align:center; margin-top:15px; font-size:11px;">
+                    Terima Kasih 🙏
+                </div>
+            `;
+            
+            // Masukkan struk ke wadah print, lalu jalankan perintah cetak browser
+            const printSec = document.getElementById('print-section');
+            printSec.innerHTML = printHtml;
+            
+            // Jeda 300ms agar browser merender struk dengan sempurna sebelum mencetak
+            setTimeout(() => { 
+                window.print(); 
+            }, 300); 
+        }
         function exportExcel() { if(dataPesananExport.length===0) return alert("Hanya mengekspor pesanan 3 hari terakhir yang tampil di layar."); let csv = "Tanggal,Nama Pemesan,WhatsApp,Omset,HPP Modal,Laba Bersih,Status\n"; dataPesananExport.forEach(row => { csv += `"${row.Tanggal}","${row.Nama}","${row.WA}",${row.Omset},${row.HPP},${row.Laba},"${row.Status}"\n`; }); let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' }); let url = window.URL.createObjectURL(blob); let a = document.createElement("a"); a.href = url; a.download = "Laporan_Terbaru_MI_Perfume.csv"; a.click(); }
     </script>
 </body>
