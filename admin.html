@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Admin - MI Perfume</title>
+    <title>Admin Dashboard - MI Perfume</title>
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
@@ -17,112 +18,132 @@
         .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
         .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
         .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .animate-fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-20">
+<body class="bg-gray-100 text-gray-800 pb-20 font-sans">
 
     <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" style="display:none;"></audio>
 
     <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 px-4">
-        <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
-            <img src="logo.jpeg" class="h-16 w-auto mx-auto mb-2 rounded"><h1 class="text-2xl font-bold text-center text-[#a38d58] mb-4">Admin System</h1>
+        <div class="bg-white p-8 rounded-2xl shadow-xl max-w-sm w-full border-t-8 border-[#a38d58]">
+            <img src="logo.jpeg" class="h-20 w-auto mx-auto mb-4 rounded-lg shadow-md">
+            <h1 class="text-2xl font-black text-center text-[#a38d58] mb-1">MI PERFUME</h1>
+            <p class="text-[10px] text-center text-gray-400 mb-6 tracking-widest uppercase font-bold">Encrypted Admin System</p>
             <form id="form-login" onsubmit="prosesLogin(event)">
-                <div class="mb-4"><input type="email" id="input-user" required class="w-full border p-3 rounded" placeholder="Email Admin"></div>
-                <div class="mb-6 relative"><input type="password" id="input-pass" required class="w-full border p-3 rounded" placeholder="Password"><button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3">👁️</button></div>
-                <button type="submit" id="btn-login" class="w-full bg-gold text-white font-bold py-3 rounded shadow-md">Masuk Terenkripsi</button>
+                <div class="mb-4">
+                    <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Admin Email</label>
+                    <input type="email" id="input-user" required class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-gold/50 transition-all" placeholder="admin@miperfume.com">
+                </div>
+                <div class="mb-6 relative">
+                    <label class="block text-[10px] font-bold text-gray-400 mb-1 uppercase">Access Key</label>
+                    <input type="password" id="input-pass" required class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-gold/50 transition-all" placeholder="••••••••">
+                    <button type="button" onclick="togglePassword()" class="absolute right-3 top-8 text-lg">👁️</button>
+                </div>
+                <button type="submit" id="btn-login" class="w-full bg-gold text-white font-bold py-4 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all">MASUK SISTEM</button>
             </form>
         </div>
     </div>
 
-    <div id="admin-content" class="hidden">
-        <header class="bg-gray-800 text-white p-3 sticky top-0 z-20 flex justify-between items-center">
-            <div class="flex items-center gap-2"><img src="logo.jpeg" class="h-8 w-8 rounded"><h1 class="font-bold text-[#a38d58]">MI Perfume</h1></div>
-            <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
+    <div id="admin-content" class="hidden animate-fade-in">
+        <header class="bg-gray-800 text-white p-4 sticky top-0 z-20 flex justify-between items-center shadow-md">
+            <div class="flex items-center gap-3">
+                <img src="logo.jpeg" class="h-8 w-8 rounded shadow-sm">
+                <h1 class="font-black text-[#a38d58] tracking-tighter">MI PERFUME <span class="text-white font-light text-xs ml-1">ADMIN</span></h1>
+            </div>
+            <button onclick="logoutAdmin()" class="text-[10px] font-bold bg-red-500/20 text-red-400 border border-red-500/50 px-3 py-1.5 rounded-lg hover:bg-red-500 hover:text-white transition-all uppercase">Logout</button>
         </header>
 
-        <div class="flex bg-white shadow-sm mb-4 sticky top-[56px] z-10 overflow-x-auto hide-scrollbar">
-            <button id="tab-pesanan" class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap" onclick="switchTab('pesanan')">Pesanan</button>
-            <button id="tab-stok" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok</button>
-            <button id="tab-crm" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap text-[#a38d58]" onclick="switchTab('crm')">CRM 👥</button>
-            <button id="tab-dashboard" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('dashboard')">Analitik</button>
-            <button id="tab-restock" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('restock')">Restock 🛒</button>
-            <button id="tab-followup" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('followup')">Follow-Up 💬</button>
+        <div class="flex bg-white shadow-sm mb-4 sticky top-[64px] z-10 overflow-x-auto hide-scrollbar border-b">
+            <button id="tab-pesanan" class="py-4 px-6 tab-active text-xs font-bold whitespace-nowrap" onclick="switchTab('pesanan')">PESANAN</button>
+            <button id="tab-stok" class="py-4 px-6 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">STOK</button>
+            <button id="tab-crm" class="py-4 px-6 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('crm')">PELANGGAN</button>
+            <button id="tab-dashboard" class="py-4 px-6 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('dashboard')">ANALITIK</button>
+            <button id="tab-restock" class="py-4 px-6 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('restock')">RESTOCK 🚨</button>
         </div>
 
         <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4">
-            <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 text-center mb-2"><p class="text-xs text-blue-700 mb-1">Agar notifikasi berbunyi saat ditutup:</p><button onclick="aktifkanNotif()" class="text-xs bg-blue-600 text-white px-3 py-1 rounded shadow">🔔 Aktifkan Izin Notifikasi</button></div>
-            <div id="daftar-pesanan"></div>
+            <div class="bg-blue-600 text-white p-4 rounded-xl shadow-lg flex justify-between items-center">
+                <p class="text-xs font-bold">🔔 Aktifkan Notifikasi Suara</p>
+                <button onclick="aktifkanNotif()" class="bg-white text-blue-600 px-3 py-1 rounded-lg text-[10px] font-black uppercase">Aktifkan</button>
+            </div>
+            <div id="daftar-pesanan" class="space-y-3"></div>
         </div>
 
         <div id="page-stok" class="p-4 max-w-md mx-auto hidden">
-            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
-                <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Restock / Tambah Bibit</h2>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-t-4 border-[#a38d58] mb-6">
+                <h2 class="font-bold text-gray-700 mb-4 text-sm flex items-center gap-2">💧 Update / Tambah Bibit</h2>
                 <form onsubmit="simpanBibit(event)">
-                    <div class="mb-3">
-                        <select id="bibit-pilih" class="w-full border p-2 rounded text-sm bg-gray-50 mb-1" onchange="toggleBibitBaru()">
+                    <div class="mb-4">
+                        <select id="bibit-pilih" class="w-full border p-3 rounded-xl text-sm bg-gray-50 font-medium outline-none focus:ring-2 focus:ring-gold/30" onchange="toggleBibitBaru()">
                             <option value="_NEW_">➕ BUAT AROMA BARU...</option>
                         </select>
-                        <input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mt-2" placeholder="Ketik nama baru...">
+                        <input type="text" id="bibit-nama" class="w-full border p-3 rounded-xl text-sm uppercase mt-2 hidden outline-none focus:ring-2 focus:ring-gold/30" placeholder="Ketik nama aroma baru...">
                     </div>
-                    <div class="mb-3 bg-gray-50 p-2 rounded border">
-                        <label class="block text-xs font-bold text-gray-600 mb-2">Pilih Kelas, Modal, & Tambah/Kurang Stok (ml):</label>
-                        <div class="grid grid-cols-1 gap-2 text-xs">
-                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-standar" checked onchange="toggleModalInput('standar')"> Standar</label><input type="number" id="m-standar" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-standar" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
-                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-premium" checked onchange="toggleModalInput('premium')"> Premium</label><input type="number" id="m-premium" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-premium" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
-                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-super" checked onchange="toggleModalInput('super')"> Super Prm</label><input type="number" id="m-super" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-super" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
-                            <div class="flex items-center gap-2"><label class="w-1/3"><input type="checkbox" id="cb-diamond" checked onchange="toggleModalInput('diamond')"> Diamond</label><input type="number" id="m-diamond" class="w-1/3 border p-1 rounded" placeholder="Modal Rp"><input type="number" id="ml-diamond" class="w-1/3 border p-1 rounded" placeholder="+/- Stok ml"></div>
+                    <div class="mb-4 bg-gray-50 p-4 rounded-xl border border-dashed border-gray-300">
+                        <label class="block text-[10px] font-black text-gray-400 mb-3 uppercase tracking-widest">Detail Per Kelas</label>
+                        <div class="space-y-3 text-xs">
+                            <div class="flex items-center gap-2"><label class="w-1/3 font-bold">Standar</label><input type="number" id="m-standar" class="w-1/3 border p-2 rounded-lg" placeholder="Modal Rp"><input type="number" id="ml-standar" class="w-1/3 border p-2 rounded-lg" placeholder="+/- ml"></div>
+                            <div class="flex items-center gap-2"><label class="w-1/3 font-bold">Premium</label><input type="number" id="m-premium" class="w-1/3 border p-2 rounded-lg" placeholder="Modal Rp"><input type="number" id="ml-premium" class="w-1/3 border p-2 rounded-lg" placeholder="+/- ml"></div>
+                            <div class="flex items-center gap-2"><label class="w-1/3 font-bold">Super Prm</label><input type="number" id="m-super" class="w-1/3 border p-2 rounded-lg" placeholder="Modal Rp"><input type="number" id="ml-super" class="w-1/3 border p-2 rounded-lg" placeholder="+/- ml"></div>
+                            <div class="flex items-center gap-2"><label class="w-1/3 font-bold">Diamond</label><input type="number" id="m-diamond" class="w-1/3 border p-2 rounded-lg" placeholder="Modal Rp"><input type="number" id="ml-diamond" class="w-1/3 border p-2 rounded-lg" placeholder="+/- ml"></div>
                         </div>
                     </div>
-                    <button type="submit" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit</button>
+                    <button type="submit" class="w-full bg-gray-800 text-white py-3 rounded-xl text-xs font-black shadow-md uppercase active:scale-95 transition-all">Simpan Data Bibit</button>
                 </form>
             </div>
-            <div id="daftar-bahan" class="mb-4 space-y-2"></div>
+
+            <div class="flex justify-between items-center mb-4 px-1">
+                <h2 class="font-black text-gray-400 text-[10px] uppercase tracking-widest">Daftar Stok Real-time</h2>
+                <button onclick="loadInventory()" id="btn-sync-stok" class="bg-blue-600 text-white text-[9px] font-black px-3 py-1.5 rounded-full shadow-sm active:scale-90 transition-all uppercase">🔄 Sync Data</button>
+            </div>
+            
+            <div id="daftar-bahan" class="mb-4 grid grid-cols-2 gap-2"></div>
             <div id="daftar-bibit" class="space-y-2"></div>
         </div>
 
-        <div id="page-crm" class="p-4 max-w-md mx-auto hidden"><div id="daftar-crm" class="space-y-3"></div></div>
-        
+        <div id="page-crm" class="p-4 max-w-md mx-auto hidden">
+            <div id="daftar-crm" class="space-y-3"></div>
+        </div>
+
         <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
             <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]"><p class="text-[10px] text-gray-500">OMSET</p><p id="dash-omset" class="text-md font-bold">Rp 0</p></div>
-                <div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-400"><p class="text-[10px] text-gray-500">HPP</p><p id="dash-hpp" class="text-md font-bold text-red-600">Rp 0</p></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-gold"><p class="text-[10px] text-gray-400 font-bold uppercase">Omset</p><p id="dash-omset" class="text-lg font-black text-gray-800">Rp 0</p></div>
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-red-400"><p class="text-[10px] text-gray-400 font-bold uppercase">HPP</p><p id="dash-hpp" class="text-lg font-black text-red-500">Rp 0</p></div>
             </div>
-            <div class="bg-white p-4 rounded-xl shadow mb-6 relative h-64"><canvas id="grafikOmset"></canvas></div>
-            <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto"></div></div>
-        </div>
-        
-        <div id="page-restock" class="p-4 max-w-md mx-auto hidden">
-            <div class="bg-red-50 p-4 rounded-xl shadow border-t-4 border-red-600 mb-6">
-                <h2 class="font-bold red-700 text-md">🚨 Peringatan Restock</h2>
-                <div id="restock-bibit" class="space-y-2 mt-3"></div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 h-64"><canvas id="grafikOmset"></canvas></div>
+            <div class="bg-white p-5 rounded-2xl shadow-sm border-t-4 border-gold">
+                <h2 class="text-xs font-black mb-4 uppercase tracking-widest text-gray-400">🔥 Top 20 Best Seller</h2>
+                <div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2 hide-scrollbar"></div>
             </div>
         </div>
 
-        <div id="page-followup" class="p-4 max-w-md mx-auto hidden">
-            <div class="bg-green-50 p-4 rounded-xl shadow border-t-4 border-green-500 mb-6">
-                <h2 class="font-bold text-green-700 text-md">💬 Follow-Up WA (≥ 7 Hari)</h2>
-                <div id="daftar-followup" class="space-y-3 mt-3"></div>
+        <div id="page-restock" class="p-4 max-w-md mx-auto hidden">
+            <div class="bg-red-50 p-6 rounded-2xl shadow-sm border-t-8 border-red-600">
+                <h2 class="font-black text-red-700 text-sm mb-4 uppercase">🚨 Bibit Hampir Habis (< 50ml)</h2>
+                <div id="restock-bibit" class="space-y-2"></div>
             </div>
         </div>
     </div>
 
-    <div id="modal-edit" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div class="bg-white p-5 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
-            <h2 class="font-bold text-gray-800 mb-4">✏️ Edit Stok (Timpa)</h2>
-            <p id="edit-nama-bibit" class="text-sm font-bold text-[#a38d58] mb-3"></p>
+    <div id="modal-edit" class="fixed inset-0 z-50 hidden bg-black/60 flex items-center justify-center p-4 backdrop-blur-sm">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl max-w-sm w-full border-t-8 border-gold animate-fade-in">
+            <h2 class="font-black text-gray-800 text-sm mb-1 uppercase">Edit Stok</h2>
+            <p id="edit-nama-bibit" class="text-xs font-bold text-gold mb-5 uppercase tracking-wider"></p>
             <form id="form-edit-bibit" onsubmit="simpanEditBibit(event)">
                 <input type="hidden" id="edit-id-bibit">
-                <div id="edit-container-kelas" class="space-y-3 mb-4"></div>
-                <div class="flex gap-2">
-                    <button type="button" onclick="tutupModalEdit()" class="flex-1 bg-gray-200 py-2 rounded text-sm">Batal</button>
-                    <button type="submit" class="flex-1 bg-gold text-white py-2 rounded text-sm font-bold">Simpan</button>
+                <div id="edit-container-kelas" class="space-y-4 mb-6"></div>
+                <div class="flex gap-3">
+                    <button type="button" onclick="tutupModalEdit()" class="flex-1 bg-gray-100 text-gray-500 py-3 rounded-xl text-xs font-bold uppercase">Batal</button>
+                    <button type="submit" class="flex-1 bg-gold text-white py-3 rounded-xl text-xs font-black shadow-lg uppercase">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        // 1. INITIALIZE FIREBASE
+        // --- 1. FIREBASE CONFIG & INIT ---
         const firebaseConfig = {
             apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
             authDomain: "mi-perfume-1989.firebaseapp.com",
@@ -133,70 +154,77 @@
             appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
             measurementId: "G-H2KG1X9KVN"
         };
+
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
-        firebase.firestore().enablePersistence().catch(() => {});
+        const auth = firebase.auth();
+        db.enablePersistence().catch(() => {});
 
-        function escapeHTML(str) {
-            if (!str) return '';
-            return str.toString().replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]));
-        }
-
-        let chartInstance = null;
-        let globalBibit = [];
-        let isInitialLoad = true;
-
-        // 2. AUTH STATE
-        firebase.auth().onAuthStateChanged(user => {
+        // --- 2. AUTH STATE ---
+        auth.onAuthStateChanged(user => {
             if (user && !user.isAnonymous) {
-                document.getElementById('login-screen').classList.add('hidden'); 
-                document.getElementById('admin-content').classList.remove('hidden'); 
-                loadInventory(); 
-                startListeners();
-            } else { 
-                document.getElementById('login-screen').classList.remove('hidden'); 
-                document.getElementById('admin-content').classList.add('hidden'); 
+                document.getElementById('login-screen').classList.add('hidden');
+                document.getElementById('admin-content').classList.remove('hidden');
+                loadInventory();
+                startRealtimeListeners();
+            } else {
+                document.getElementById('login-screen').classList.remove('hidden');
+                document.getElementById('admin-content').classList.add('hidden');
             }
         });
 
+        // --- 3. LOGIN & LOGOUT ---
         function prosesLogin(e) {
             e.preventDefault();
             const email = document.getElementById('input-user').value.trim();
             const pass = document.getElementById('input-pass').value;
             const btn = document.getElementById('btn-login');
-            btn.innerText = "Memeriksa..."; btn.disabled = true;
-            firebase.auth().signInWithEmailAndPassword(email, pass)
-                .catch(err => { alert(err.message); btn.innerText = "Masuk Terenkripsi"; btn.disabled = false; });
+            btn.innerText = "⏳ MEMERIKSA..."; btn.disabled = true;
+            auth.signInWithEmailAndPassword(email, pass).catch(err => {
+                alert("Gagal: " + err.message);
+                btn.innerText = "MASUK SISTEM"; btn.disabled = false;
+            });
         }
+        function logoutAdmin() { if(confirm("Keluar dari dashboard?")) auth.signOut(); }
+        function togglePassword() { const p = document.getElementById('input-pass'); p.type = p.type === 'password' ? 'text' : 'password'; }
 
-        function logoutAdmin() { if(confirm("Keluar?")) firebase.auth().signOut(); }
-        function togglePassword() { const p=document.getElementById('input-pass'); p.type=p.type==='password'?'text':'password'; }
+        // --- 4. REALTIME LISTENERS (PESANAN, STATS, CRM) ---
+        let chartInstance = null;
+        let globalBibit = [];
+        let isInitialLoad = true;
 
-        // 3. LISTENERS (PESANAN, ANALITIK, CRM)
-        function startListeners() {
+        function startRealtimeListeners() {
             const batas = new Date(); batas.setDate(batas.getDate() - 3);
 
-            // Listener Pesanan
+            // Pesanan Listener
             db.collection("pesanan").where("waktu", ">=", batas).orderBy("waktu", "desc").onSnapshot(snap => {
                 const wadah = document.getElementById('daftar-pesanan'); wadah.innerHTML = '';
                 if (!isInitialLoad) {
                     snap.docChanges().forEach(c => { if(c.type==='added' && c.doc.data().status==='Menunggu Diproses') document.getElementById('notif-sound').play().catch(()=>{}); });
                 }
                 isInitialLoad = false;
+                if(snap.empty) { wadah.innerHTML = '<p class="text-center text-gray-400 italic py-10 text-xs">Belum ada pesanan masuk...</p>'; return; }
+
                 snap.forEach(doc => {
                     const d = doc.data(); const id = doc.id;
                     let color = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Diproses"?"bg-blue-100 text-blue-700":"bg-yellow-100 text-yellow-700";
-                    let items = (d.items||[]).map(i => `<p class="text-xs"><b>${i.qty}x</b> ${escapeHTML(i.aroma)} (${i.kelas})</p>`).join('');
-                    let btn = d.status==="Menunggu Diproses" ? `<button onclick="terimaPesanan('${id}','${encodeURIComponent(JSON.stringify(d.items))}')" class="flex-1 bg-blue-600 text-white text-xs py-2 rounded">Terima</button>` : d.status==="Diproses" ? `<button onclick="selesaikanPesanan('${id}','${encodeURIComponent(JSON.stringify(d))}')" class="flex-1 bg-green-600 text-white text-xs py-2 rounded">Selesaikan</button>` : '';
+                    let items = (d.items||[]).map(i => `<p class="text-[11px] mb-1"><b>${i.qty}x</b> ${escapeHTML(i.aroma)} <span class="text-gray-400 text-[10px]">(${i.kelas})</span></p>`).join('');
+                    let btn = d.status==="Menunggu Diproses" ? `<button onclick="terimaPesanan('${id}','${encodeURIComponent(JSON.stringify(d.items))}')" class="flex-1 bg-blue-600 text-white text-[10px] py-3 rounded-xl font-black uppercase shadow-md">Terima</button>` : d.status==="Diproses" ? `<button onclick="selesaikanPesanan('${id}','${encodeURIComponent(JSON.stringify(d))}')" class="flex-1 bg-green-600 text-white text-[10px] py-3 rounded-xl font-black uppercase shadow-md">Selesaikan</button>` : '';
                     
-                    wadah.innerHTML += `<div class="bg-white p-4 rounded-xl shadow-sm border-l-4 border-[#a38d58] mb-3">
-                        <div class="flex justify-between mb-2"><b>${escapeHTML(d.nama)}</b> <span class="text-[9px] font-bold px-2 py-1 rounded ${color}">${d.status}</span></div>
-                        ${items} <div class="mt-2 flex gap-2">${btn}</div>
-                    </div>`;
+                    wadah.innerHTML += `
+                        <div class="bg-white p-5 rounded-2xl shadow-sm border-l-4 border-gold animate-fade-in">
+                            <div class="flex justify-between items-start mb-3 border-b pb-2">
+                                <div><h3 class="font-black text-sm uppercase">${escapeHTML(d.nama)}</h3><p class="text-[9px] text-gray-400 font-bold tracking-widest">${d.no_wa||'-'}</p></div>
+                                <span class="text-[8px] font-black px-2 py-1 rounded-lg uppercase tracking-tighter ${color}">${d.status}</span>
+                            </div>
+                            <div class="mb-4">${items}</div>
+                            <div class="flex justify-between items-center font-black text-gold text-sm"><span>TOTAL</span><span>Rp ${(d.total||0).toLocaleString()}</span></div>
+                            <div class="mt-4 flex gap-2">${btn}</div>
+                        </div>`;
                 });
             });
 
-            // Listener Statistik
+            // Statistik Listener
             db.collection("statistik").doc("global").onSnapshot(doc => {
                 if(!doc.exists) return;
                 const d = doc.data();
@@ -206,95 +234,148 @@
                 renderTopAroma(d.terjual_aroma||{});
             });
 
-            // Listener CRM & Follow-Up
-            db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap => {
-                const wCrm = document.getElementById('daftar-crm'); wCrm.innerHTML = '<h2 class="font-bold text-sm mb-3">Database Pelanggan</h2>';
-                const wFollow = document.getElementById('daftar-followup'); wFollow.innerHTML = '';
-                const now = new Date();
+            // CRM Listener
+            db.collection("crm").orderBy("total_spent", "desc").limit(20).onSnapshot(snap => {
+                const wadah = document.getElementById('daftar-crm'); 
+                wadah.innerHTML = '<h2 class="font-black text-gray-400 text-[10px] uppercase tracking-widest mb-4">🏆 TOP 20 LOYAL CUSTOMERS</h2>';
                 snap.forEach(doc => {
                     const d = doc.data();
-                    wCrm.innerHTML += `<div class="bg-white p-3 rounded shadow-sm border mb-2"><p class="font-bold text-sm">${escapeHTML(d.nama)}</p><p class="text-[10px] text-gold">Spent: Rp ${d.total_spent.toLocaleString()}</p></div>`;
-                    if(d.terakhir_order && d.no_wa) {
-                        let diff = Math.floor((now - d.terakhir_order.toDate()) / (1000*60*60*24));
-                        if(diff >= 7) {
-                            wFollow.innerHTML += `<div class="bg-white p-3 rounded border-l-4 border-green-500 text-xs flex justify-between items-center"><div><b>${escapeHTML(d.nama)}</b><br>${diff} hari lalu</div><a href="https://wa.me/${d.no_wa.replace(/\D/g,'')}" class="bg-green-500 text-white px-2 py-1 rounded">Chat</a></div>`;
-                        }
-                    }
+                    wadah.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-gray-100">
+                            <div><p class="font-black text-xs uppercase">${escapeHTML(d.nama)}</p><p class="text-[9px] text-gray-400 font-bold tracking-widest">${d.no_wa}</p></div>
+                            <div class="text-right"><p class="text-[10px] font-black text-gold">Rp ${d.total_spent.toLocaleString()}</p><p class="text-[8px] font-bold text-gray-400 uppercase tracking-tighter">${d.order_count} ORDER</p></div>
+                        </div>`;
                 });
             });
         }
 
-        // 4. INVENTORY LOGIC
+        // --- 5. LOGIKA STOK (SYNC) ---
         function loadInventory() {
+            const btn = document.getElementById('btn-sync-stok');
+            if(btn) btn.innerText = "⏳ SYNCING...";
+            
+            const wadahBibit = document.getElementById('daftar-bibit');
+            const wadahBahan = document.getElementById('daftar-bahan');
+            const sel = document.getElementById('bibit-pilih');
+            const wRestock = document.getElementById('restock-bibit');
+
             db.collection("stok").orderBy("nama").get().then(snap => {
-                const wadah = document.getElementById('daftar-bibit'); wadah.innerHTML = '';
-                const sel = document.getElementById('bibit-pilih'); sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>';
-                const wRestock = document.getElementById('restock-bibit'); wRestock.innerHTML = '';
+                wadahBibit.innerHTML = '';
+                sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>';
+                wRestock.innerHTML = '';
                 globalBibit = [];
                 snap.forEach(doc => {
                     const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data);
                     sel.innerHTML += `<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`;
                     let info = data.stok_kelas ? Object.entries(data.stok_kelas).map(([k,v]) => `${k}:${v}ml`).join(' | ') : `${data.sisa_ml}ml`;
-                    wadah.innerHTML += `<div class="bg-white p-3 rounded border flex justify-between items-center mb-2"><div><p class="font-bold text-xs">💧 ${escapeHTML(data.nama)}</p><p class="text-[9px] text-gray-500">${info}</p></div><button onclick="bukaModalEdit('${doc.id}')" class="text-blue-500 bg-blue-50 p-2 rounded text-xs">✏️</button></div>`;
-                    if(data.sisa_ml < 50) wRestock.innerHTML += `<div class="bg-white p-2 rounded border-l-4 border-red-500 text-xs flex justify-between"><span>${escapeHTML(data.nama)}</span><b class="text-red-600">${data.sisa_ml} ml</b></div>`;
+                    wadahBibit.innerHTML += `<div class="bg-white p-4 rounded-xl border flex justify-between items-center shadow-sm"><div><p class="font-black text-xs uppercase">💧 ${escapeHTML(data.nama)}</p><p class="text-[9px] font-bold text-gray-400 mt-1 uppercase tracking-tighter">${info}</p></div><button onclick="bukaModalEdit('${doc.id}')" class="bg-blue-50 text-blue-500 p-2 rounded-lg text-xs hover:bg-blue-500 hover:text-white transition-all">✏️</button></div>`;
+                    if(data.sisa_ml < 50) wRestock.innerHTML += `<div class="bg-white p-3 rounded-xl border-l-4 border-red-500 text-[10px] font-bold flex justify-between uppercase"><span>${escapeHTML(data.nama)}</span><b class="text-red-600">${data.sisa_ml} ml</b></div>`;
+                });
+                if(btn) btn.innerText = "🔄 SYNC DATA";
+            });
+
+            db.collection("bahan").get().then(snap => {
+                wadahBahan.innerHTML = '';
+                snap.forEach(doc => {
+                    const b = doc.data();
+                    wadahBahan.innerHTML += `<div class="bg-blue-50 p-3 rounded-xl border border-blue-100 flex flex-col items-center justify-center text-center"><p class="text-[8px] font-black text-blue-400 uppercase tracking-widest">${escapeHTML(b.nama || doc.id)}</p><p class="text-xs font-black text-blue-700 mt-1">${b.sisa || 0} unit</p></div>`;
                 });
             });
         }
 
+        // --- 6. TRANSAKSI DB ---
+        function simpanBibit(e) {
+            e.preventDefault();
+            const isNew = document.getElementById('bibit-pilih').value === '_NEW_';
+            const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value;
+            if(!nama) return alert("Pilih aroma!");
+
+            let stokAdd = {}; let modObj = {};
+            ['standar','premium','super','diamond'].forEach((pid, idx) => {
+                const k = ['Standar', 'Premium', 'Super Premium', 'Diamond'][idx];
+                let mVal = document.getElementById('m-'+pid).value;
+                let mlVal = document.getElementById('ml-'+pid).value;
+                if(mVal !== "") modObj[k] = parseInt(mVal);
+                if(mlVal !== "") stokAdd[k] = parseInt(mlVal);
+            });
+
+            const docRef = db.collection("stok").doc(nama);
+            docRef.get().then(doc => {
+                let current = (doc.exists && doc.data().stok_kelas) ? doc.data().stok_kelas : {};
+                let finalStok = { ...current };
+                Object.keys(stokAdd).forEach(k => { finalStok[k] = (finalStok[k]||0) + stokAdd[k]; });
+                let totalMl = Object.values(finalStok).reduce((a,b)=>a+b, 0);
+                
+                docRef.set({ nama, sisa_ml: totalMl, stok_kelas: finalStok, modal: modObj, kelas_tersedia: Object.keys(finalStok) }, {merge:true})
+                .then(() => { alert("Berhasil!"); e.target.reset(); loadInventory(); });
+            });
+        }
+
         function terimaPesanan(id, itemsJSON) {
+            if(!confirm("Terima & potong stok?")) return;
             const items = JSON.parse(decodeURIComponent(itemsJSON));
-            if(confirm("Terima & potong stok?")) {
-                db.collection("pesanan").doc(id).update({ status: "Diproses" }).then(() => {
-                    items.forEach(item => {
-                        let up = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
-                        if(item.kelas) up[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
-                        db.collection("stok").doc(item.aroma).update(up);
-                        if(item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(-item.qty) });
-                        if(item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
-                    });
-                    loadInventory();
+            db.collection("pesanan").doc(id).update({ status: "Diproses" }).then(() => {
+                items.forEach(item => {
+                    let up = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
+                    if(item.kelas) up[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
+                    db.collection("stok").doc(item.aroma).update(up);
+                    if(item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(-item.qty) });
+                    if(item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
                 });
-            }
+                alert("Pesanan masuk ke tab 'Diproses'!");
+            });
         }
 
         function selesaikanPesanan(id, dataStr) {
+            if(!confirm("Pesanan sudah selesai?")) return;
             const data = JSON.parse(decodeURIComponent(dataStr));
-            if(!confirm("Selesaikan pesanan?")) return;
             const batch = db.batch();
-            const stRef = db.collection("statistik").doc("global");
             batch.update(db.collection("pesanan").doc(id), { status: "Selesai" });
             
-            let omset = Number(data.total)||0; let hpp = Number(data.total_hpp)||0;
+            let omset = Number(data.total)||0; 
+            let hpp = (data.items||[]).reduce((s, i) => s + (Number(i.hpp_total)||0), 0);
+            
             let updateObj = { omset: firebase.firestore.FieldValue.increment(omset), hpp: firebase.firestore.FieldValue.increment(hpp), qty: firebase.firestore.FieldValue.increment((data.items||[]).reduce((s,i)=>s+Number(i.qty),0)) };
             (data.items||[]).forEach(i => { updateObj[`terjual_aroma.${i.aroma.toUpperCase()}`] = firebase.firestore.FieldValue.increment(i.qty); });
-            batch.set(stRef, updateObj, {merge:true});
             
+            batch.set(db.collection("statistik").doc("global"), updateObj, {merge:true});
             if(data.no_wa) {
-                batch.set(db.collection("crm").doc(data.no_wa.replace(/\D/g,'')), { nama: data.nama, no_wa: data.no_wa, total_spent: firebase.firestore.FieldValue.increment(omset), terakhir_order: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
+                batch.set(db.collection("crm").doc(data.no_wa.replace(/\D/g,'')), { nama: data.nama, no_wa: data.no_wa, total_spent: firebase.firestore.FieldValue.increment(omset), order_count: firebase.firestore.FieldValue.increment(1), terakhir_order: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
             }
-            batch.commit().then(() => alert("Selesai!"));
+            batch.commit().then(() => alert("🎉 PESANAN SELESAI!"));
         }
 
-        // UI HELPERS
+        // --- 7. UI HELPERS ---
         function switchTab(t) {
-            ['pesanan','stok','crm','dashboard','restock','followup'].forEach(id => { document.getElementById('page-'+id).classList.add('hidden'); document.getElementById('tab-'+id).classList.replace('tab-active','text-gray-500'); });
-            document.getElementById('page-'+t).classList.remove('hidden'); document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
+            ['pesanan','stok','crm','dashboard','restock'].forEach(id => { 
+                document.getElementById('page-'+id).classList.add('hidden'); 
+                document.getElementById('tab-'+id).classList.remove('tab-active');
+                document.getElementById('tab-'+id).classList.add('text-gray-500');
+            });
+            document.getElementById('page-'+t).classList.remove('hidden'); 
+            document.getElementById('tab-'+t).classList.add('tab-active');
+            document.getElementById('tab-'+t).classList.remove('text-gray-500');
         }
-        function toggleModalInput(id) { const cb = document.getElementById('cb-'+id); document.getElementById('m-'+id).disabled = !cb.checked; document.getElementById('ml-'+id).disabled = !cb.checked; }
-        function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').style.display = v === '_NEW_' ? 'block' : 'none'; }
+        function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').classList.toggle('hidden', v !== '_NEW_'); }
+        function escapeHTML(str) { if (!str) return ''; return str.toString().replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t])); }
         function renderGrafik(d) {
             const ctx = document.getElementById('grafikOmset').getContext('2d'); if(chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(d), datasets: [{ label: 'Omset', data: Object.values(d), backgroundColor: '#a38d58' }] }, options: { maintainAspectRatio: false } });
+            chartInstance = new Chart(ctx, { type: 'bar', data: { labels: Object.keys(d), datasets: [{ label: 'Omset', data: Object.values(d), backgroundColor: '#a38d58', borderRadius: 8 }] }, options: { maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
         }
         function renderTopAroma(d) {
             const c = document.getElementById('daftar-aroma'); c.innerHTML = '';
-            Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,20).forEach((i, x) => { c.innerHTML += `<div class="flex justify-between text-xs border-b pb-1"><span>${x+1}. ${i[0]}</span><b>${i[1]}</b></div>` });
+            Object.entries(d).sort((a,b)=>b[1]-a[1]).slice(0,20).forEach((i, x) => { c.innerHTML += `<div class="flex justify-between text-xs border-b border-gray-50 py-2"><span><b>${x+1}.</b> ${i[0]}</span><b class="text-gold">${i[1]} Unit</b></div>` });
         }
+        function aktifkanNotif() { if ("Notification" in window) Notification.requestPermission(); const audio = document.getElementById('notif-sound'); audio.volume = 0; audio.play().then(() => { audio.pause(); audio.volume = 1; }).catch(()=>{}); }
         function bukaModalEdit(id) {
             const item = globalBibit.find(i => i.doc_id === id); if(!item) return;
             document.getElementById('edit-nama-bibit').innerText = item.nama; document.getElementById('edit-id-bibit').value = id;
             const cont = document.getElementById('edit-container-kelas'); cont.innerHTML = '';
-            if(item.stok_kelas) Object.entries(item.stok_kelas).forEach(([k,v]) => { cont.innerHTML += `<div><label class="block text-[10px] font-bold">${k} (ml)</label><input type="number" name="${k}" value="${v}" class="w-full border p-2 rounded text-sm"></div>`; });
+            const kelasList = ['Standar', 'Premium', 'Super Premium', 'Diamond'];
+            kelasList.forEach(k => {
+                let currentVal = (item.stok_kelas && item.stok_kelas[k]) ? item.stok_kelas[k] : 0;
+                cont.innerHTML += `<div><label class="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">${k} (ml)</label><input type="number" name="${k}" value="${currentVal}" class="w-full border p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-gold/30"></div>`;
+            });
             document.getElementById('modal-edit').classList.remove('hidden');
         }
         function tutupModalEdit() { document.getElementById('modal-edit').classList.add('hidden'); }
@@ -304,7 +385,6 @@
             let total = Object.values(newStok).reduce((a,b)=>a+b, 0);
             db.collection("stok").doc(id).update({ stok_kelas: newStok, sisa_ml: total }).then(() => { alert("Updated!"); tutupModalEdit(); loadInventory(); });
         }
-        function aktifkanNotif() { if ("Notification" in window) Notification.requestPermission(); const audio = document.getElementById('notif-sound'); audio.volume = 0; audio.play().then(() => { audio.pause(); audio.volume = 1; }).catch(()=>{}); }
     </script>
 </body>
 </html>
