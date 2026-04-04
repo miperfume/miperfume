@@ -8,21 +8,23 @@
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script>tailwind.config = { darkMode: 'class' }</script>
+    
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
+    
     <style> .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
-            <div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
+    <div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
         <img src="loading.PNG" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
-        
         <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
             <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
             <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
         </div>
     </div>
-
 
     <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
         <div class="flex items-center gap-3"><img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md"><div class="flex flex-col"><h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1><h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2></div></div>
@@ -43,7 +45,6 @@
         <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
             <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
             <form id="form-item" onsubmit="tambahKeKeranjang(event)">
-                
                 <div class="mb-3">
                     <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
                     <div class="mb-2 relative">
@@ -85,7 +86,6 @@
     </div>
 
     <script>
-        // Fungsi Sanitasi (Anti-XSS) agar aplikasi lebih aman
         function escapeHTML(str) {
             if (!str) return '';
             return str.toString().replace(/[&<>'"]/g, function(tag) {
@@ -95,10 +95,11 @@
         }
 
         function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
-        // Mengubah durasi loading menjadi 2.5 detik (2500ms)
         setTimeout(closeSplash, 2500); 
 
-        let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)); localStorage.setItem('mi_buyer_id', buyerId);
+        // Inisialisasi buyerId awal sebagai fallback
+        let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)); 
+        localStorage.setItem('mi_buyer_id', buyerId);
 
         const firebaseConfig = {
             apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
@@ -114,17 +115,14 @@
         const db = firebase.firestore();
         const functions = firebase.app().functions('asia-southeast2');
 
-        // 1. KEAMANAN: LOGIN ANONIM OTOMATIS
-    let buyerId = "";
-    firebase.auth().signInAnonymously().then(() => {
-        firebase.auth().onAuthStateChanged(user => {
-            if(user) {
-                buyerId = user.uid;
-                // Load data riwayat...
-                loadRiwayat();
-            }
-        });
-    });
+        // LOGIN ANONIM OTOMATIS (Mendapatkan ID KTP Virtual untuk Security Rules)
+        firebase.auth().signInAnonymously().then(() => {
+            firebase.auth().onAuthStateChanged(user => {
+                if(user) {
+                    buyerId = user.uid; // Timpa buyerId lokal dengan UID resmi Google
+                }
+            });
+        }).catch(error => console.error("Gagal Auth Anonim:", error));
 
         let keranjang = []; let dataStok = {}; let dataBahan = {}; let rawAromas = [];
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
@@ -242,6 +240,7 @@
         function bukaQris() { document.getElementById('modal-qris').classList.remove('hidden'); document.getElementById('modal-qris').classList.add('flex'); }
         function tutupQris() { document.getElementById('modal-qris').classList.add('hidden'); document.getElementById('modal-qris').classList.remove('flex'); }
 
+        // MENGAMBIL RIWAYAT PESANAN (Akan otomatis berjalan karena Reactive)
         db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { 
             const container = document.getElementById('daftar-riwayat'); 
             container.innerHTML = ''; 
