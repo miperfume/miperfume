@@ -193,20 +193,28 @@
         function hapusDokumen(col, id) { if(confirm("Hapus?")) db.collection(col).doc(id).delete(); }
         function cekRestock() { const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; let adaBibitKritis = false; globalBibit.forEach(b => { if (b.stok_kelas) { Object.entries(b.stok_kelas).forEach(([k, v]) => { if (v <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)} <span class="text-[10px] text-gray-500">(${escapeHTML(k)})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`; } }); } else if (b.sisa_ml <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; } }); if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama || id)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; }
 
-        // TAMPILAN PESANAN (MURNI HANYA MENAMPILKAN 3 HARI TERAKHIR)
-        const batasWaktu = new Date();
-        batasWaktu.setDate(batasWaktu.getDate() - 3);
-
+        // TAMPILAN PESANAN (MURNI HANYA MENAMPILKAN 100 TERBARU - LEBIH STABIL)
         let isInitialLoad = true;
+        
         db.collection("pesanan")
-          .where("waktu", ">=", batasWaktu)
           .orderBy("waktu", "desc")
+          .limit(30) // Ambil 30 pesanan terakhir (jauh lebih aman dari error Tanggal)
           .onSnapshot(snapshot => {
-            const containerPesanan = document.getElementById('daftar-pesanan'); containerPesanan.innerHTML = ''; 
+            const containerPesanan = document.getElementById('daftar-pesanan'); 
+            containerPesanan.innerHTML = ''; 
             dataPesananExport = [];
 
-            snapshot.docChanges().forEach(change => { if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") { document.getElementById('notif-sound').play().catch(e=>{}); if ("Notification" in window && Notification.permission === "granted") { new Notification("Pesanan Baru!", { body: `Dari ${change.doc.data().nama}`, icon: 'logo.jpeg' }); } } }); isInitialLoad = false;
-            if (snapshot.empty) return containerPesanan.innerHTML = '<p class="text-center text-gray-500 italic mt-4">Belum ada pesanan dalam 3 hari terakhir.</p>';
+            snapshot.docChanges().forEach(change => { 
+                if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") { 
+                    document.getElementById('notif-sound').play().catch(e=>{}); 
+                    if ("Notification" in window && Notification.permission === "granted") { 
+                        new Notification("Pesanan Baru!", { body: `Dari ${change.doc.data().nama}`, icon: 'logo.jpeg' }); 
+                    } 
+                } 
+            }); 
+            isInitialLoad = false;
+            
+            if (snapshot.empty) return containerPesanan.innerHTML = '<p class="text-center text-gray-500 italic mt-4">Belum ada pesanan terbaru.</p>';
 
             snapshot.forEach((doc) => {
                 const data = doc.data(); const id = doc.id; 
@@ -248,7 +256,11 @@
                     dataPesananExport.push({ Tanggal: data.waktu ? data.waktu.toDate().toLocaleString('id-ID') : '-', Nama: safeNama, WA: safeWA, Omset: data.total, HPP: data.total_hpp||0, Laba: data.total-(data.total_hpp||0), Status: data.status });
                 }
             });
-        });
+          }, error => {
+              // Menangkap error jika akses ditolak (misal gara-gara tertimpa akun anonim)
+              console.error(error);
+              alert("Gagal memuat pesanan: " + error.message + "\n\n(Pastikan Anda tidak membuka Web Pembeli di jendela browser yang sama agar akun Admin tidak ter-logout otomatis).");
+          });
 
         // ==========================================
         // AGREGASI: ANALITIK DAN CRM GLOBAL
