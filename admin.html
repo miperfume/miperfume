@@ -6,399 +6,245 @@
     <title>Admin Dashboard - MI Perfume</title>
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
-    
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    
-    <style> 
-        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; } 
-        .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
-        .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .animate-fade { animation: fadeIn 0.2s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+    <style>
+        .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
+        .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
     </style>
 </head>
-<body class="bg-gray-100 text-gray-800 pb-24 font-sans selection:bg-gold/30">
+<body class="bg-gray-50 font-sans pb-10">
 
-    <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" style="display:none;"></audio>
-
-    <div id="login-screen" class="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-gray-100 px-4">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full border-t-8 border-[#a38d58] text-center">
-            <img src="logo.jpeg" class="h-20 mx-auto mb-4 rounded-xl shadow-md">
-            <h1 class="text-2xl font-black text-[#a38d58] mb-6 tracking-tighter uppercase">Admin Console</h1>
-            <form id="form-login" onsubmit="prosesLogin(event)">
-                <input type="email" id="input-user" required class="w-full border p-4 rounded-xl mb-3 outline-none" placeholder="Email Admin">
-                <input type="password" id="input-pass" required class="w-full border p-4 rounded-xl mb-8 outline-none" placeholder="Password">
-                <button type="submit" id="btn-login" class="w-full bg-gold text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase">Login</button>
-            </form>
-        </div>
+    <div class="p-6 bg-white shadow-sm flex justify-between items-center sticky top-0 z-40">
+        <h1 class="font-black tracking-tighter uppercase text-xl">Admin <span class="text-gold">Panel</span></h1>
+        <div id="admin-info" class="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Loading...</div>
     </div>
 
-    <div id="admin-content" class="hidden">
-        <header class="bg-gray-900 text-white p-4 sticky top-0 z-20 flex justify-between items-center shadow-lg">
-            <div class="flex items-center gap-3">
-                <img src="logo.jpeg" class="h-8 w-8 rounded">
-                <h1 class="font-black text-[#a38d58] tracking-tighter">MI PERFUME <span class="text-white font-light text-[10px] ml-1 uppercase opacity-50 italic">Admin</span></h1>
+    <div class="flex border-b bg-white sticky top-[76px] z-40">
+        <button onclick="switchTab('pesanan')" id="t-pesanan" class="flex-1 py-4 text-[10px] font-black uppercase tracking-widest tab-active">Pesanan</button>
+        <button onclick="switchTab('stok')" id="t-stok" class="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Stok Bibit</button>
+        <button onclick="switchTab('analitik')" id="t-analitik" class="flex-1 py-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Analitik</button>
+    </div>
+
+    <div id="sec-pesanan" class="p-4 space-y-4">
+        <h2 class="text-xs font-black uppercase tracking-widest text-gray-400 mb-2">Perlu Diproses</h2>
+        <div id="list-admin-pesanan" class="space-y-4">
             </div>
-            <button onclick="logoutAdmin()" class="text-[9px] font-black bg-red-600/20 text-red-500 border border-red-500/50 px-3 py-1.5 rounded-lg uppercase">Logout</button>
-        </header>
+    </div>
 
-        <nav class="flex bg-white shadow-sm sticky top-[64px] z-10 overflow-x-auto hide-scrollbar border-b">
-            <button id="tab-pesanan" class="py-4 px-6 tab-active text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('pesanan')">Pesanan</button>
-            <button id="tab-stok" class="py-4 px-6 text-gray-400 text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('stok')">Stok & Bahan</button>
-            <button id="tab-dashboard" class="py-4 px-6 text-gray-400 text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('dashboard')">Analitik</button>
-            <button id="tab-crm" class="py-4 px-6 text-gray-400 text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('crm')">Pelanggan</button>
-            <button id="tab-restock" class="py-4 px-6 text-gray-400 text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('restock')">Restock 🚨</button>
-            <button id="tab-followup" class="py-4 px-6 text-gray-400 text-[10px] font-black whitespace-nowrap uppercase" onclick="switchTab('followup')">Follow Up 💬</button>
-        </nav>
-
-        <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4 animate-fade">
-            <div id="daftar-pesanan" class="space-y-4"></div>
-        </div>
-
-        <div id="page-stok" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <div class="bg-white p-6 rounded-3xl shadow-sm border-t-8 border-gold mb-6">
-                <h2 class="font-black text-gray-700 mb-4 text-xs uppercase">💧 Update Bibit Aroma</h2>
-                <form onsubmit="simpanBibit(event)" class="space-y-3">
-                    <select id="bibit-pilih" class="w-full border p-4 rounded-2xl text-sm bg-gray-50 font-bold outline-none" onchange="toggleBibitBaru()">
-                        <option value="_NEW_">➕ BUAT AROMA BARU...</option>
-                    </select>
-                    <input type="text" id="bibit-nama" class="w-full border p-4 rounded-2xl text-sm uppercase hidden outline-none focus:ring-2 focus:ring-gold/30" placeholder="Ketik nama parfum...">
-                    <div class="bg-gray-50 p-4 rounded-2xl space-y-4 border border-dashed border-gray-300">
-                        <div class="grid grid-cols-3 gap-2 items-center text-[10px] font-bold">
-                            <span>STANDAR</span><input type="number" id="m-standar" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-standar" class="border p-2 rounded-lg" placeholder="+ml">
-                            <span>PREMIUM</span><input type="number" id="m-premium" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-premium" class="border p-2 rounded-lg" placeholder="+ml">
-                            <span>SUPER</span><input type="number" id="m-super" class="border p-2 rounded-lg" placeholder="Modal"><input type="number" id="ml-super" class="border p-2 rounded-lg" placeholder="+ml">
-                        </div>
-                    </div>
-                    <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-lg">Simpan Bibit</button>
-                </form>
-            </div>
-
-            <div class="bg-white p-6 rounded-3xl shadow-sm border-t-8 border-blue-600 mb-6">
-                <h2 class="font-black text-gray-700 mb-4 text-xs uppercase">📦 Kelola Botol & Pelarut</h2>
-                <form onsubmit="simpanBahanBaku(event)" class="space-y-3">
-                    <select id="bahan-pilih" class="w-full border p-4 rounded-2xl text-sm bg-gray-50 font-bold outline-none">
-                        <option value="abs_standar">Absolute Standar (ml)</option>
-                        <option value="abs_khusus">Absolute Khusus (ml)</option>
-                        <option value="botol_35">Botol 35ml (pcs)</option>
-                        <option value="botol_50">Botol 50ml (pcs)</option>
-                        <option value="botol_100">Botol 100ml (pcs)</option>
-                    </select>
-                    <div class="flex gap-2">
-                        <input type="number" id="bahan-modal" class="flex-1 border p-4 rounded-2xl text-sm" placeholder="Harga/Unit">
-                        <input type="number" id="bahan-jumlah" step="0.1" class="flex-1 border p-4 rounded-2xl text-sm" placeholder="+Jumlah">
-                    </div>
-                    <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl text-[10px] font-black uppercase shadow-lg">Update Stok Bahan</button>
-                </form>
-            </div>
-
-            <div class="flex justify-between items-center mb-4 px-2">
-                <h2 class="font-black text-gray-400 text-[10px] uppercase">Daftar Bahan Baku</h2>
-                <button onclick="loadInventory()" class="text-blue-500 font-bold text-[10px] uppercase">🔄 Sync</button>
-            </div>
-            <div id="daftar-bahan" class="grid grid-cols-2 gap-2 mb-6"></div>
+    <div id="sec-stok" class="p-4 hidden space-y-6">
+        <form onsubmit="handleSimpanBibit(event)" class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-4">
+            <h3 class="text-xs font-black uppercase tracking-widest text-gold">Input/Update Bibit</h3>
+            <input type="text" id="nama-bibit" placeholder="NAMA BIBIT" class="w-full border p-4 rounded-2xl text-sm font-bold uppercase outline-none" required>
             
-            <h2 class="font-black text-gray-400 text-[10px] uppercase mb-4 px-2">Daftar Bibit Aroma</h2>
-            <div id="daftar-bibit" class="space-y-3"></div>
-        </div>
-
-        <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <div class="grid grid-cols-3 gap-2 mb-4">
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-gold">
-                    <p class="text-[8px] text-gray-400 font-black uppercase">Omset</p>
-                    <p id="dash-omset" class="text-xs font-black">Rp 0</p>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="space-y-3">
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Harga /ml</p>
+                    <input type="number" id="h-Standar" placeholder="Standar" class="w-full border p-3 rounded-xl text-xs font-bold">
+                    <input type="number" id="h-Premium" placeholder="Premium" class="w-full border p-3 rounded-xl text-xs font-bold">
+                    <input type="number" id="h-Super-Premium" placeholder="Super Premium" class="w-full border p-3 rounded-xl text-xs font-bold">
+                    <input type="number" id="h-Diamond" placeholder="Diamond" class="w-full border p-3 rounded-xl text-xs font-bold">
                 </div>
-                <div class="bg-white p-3 rounded-2xl shadow-sm border-l-4 border-red-500">
-                    <p class="text-[8px] text-gray-400 font-black uppercase">HPP</p>
-                    <p id="dash-hpp" class="text-xs font-black">Rp 0</p>
-                </div>
-                <div class="bg-gray-900 text-green-400 p-3 rounded-2xl shadow-sm border-l-4 border-green-500">
-                    <p class="text-[8px] opacity-50 font-black uppercase">Profit</p>
-                    <p id="dash-profit" class="text-xs font-black">Rp 0</p>
+                <div class="space-y-3">
+                    <p class="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tambah Stok (ml)</p>
+                    <input type="number" id="s-Standar" placeholder="ml" class="w-full border p-3 rounded-xl text-xs font-bold">
+                    <input type="number" id="s-Premium" placeholder="ml" class="w-full border p-3 rounded-xl text-xs font-bold">
+                    <input type="number" id="s-Super-Premium" placeholder="ml" class="w-full border p-3 rounded-xl text-xs font-bold">
+                    <input type="number" id="s-Diamond" placeholder="ml" class="w-full border p-3 rounded-xl text-xs font-bold">
                 </div>
             </div>
-            <div class="bg-white p-4 rounded-2xl shadow-sm mb-6 h-64"><canvas id="grafikOmset"></canvas></div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-t-4 border-gold mb-6">
-                <h2 class="text-[9px] font-black mb-4 uppercase text-gray-400">🚀 Top 20 Best Sellers</h2>
-                <div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2 hide-scrollbar"></div>
-            </div>
-            <div class="bg-white p-5 rounded-2xl shadow-sm border-t-4 border-red-400">
-                <h2 class="text-[9px] font-black mb-4 uppercase text-red-400">📉 20 Underperforming</h2>
-                <div id="daftar-aroma-buruk" class="space-y-2 max-h-60 overflow-y-auto pr-2 hide-scrollbar"></div>
-            </div>
-        </div>
+            <button type="submit" class="w-full bg-gray-900 text-white py-4 rounded-2xl font-black uppercase text-xs tracking-widest">Simpan Bibit</button>
+        </form>
 
-        <div id="page-restock" class="p-4 max-w-md mx-auto hidden animate-fade">
-            <div class="bg-red-600 text-white p-6 rounded-3xl shadow-lg mb-4">
-                <h2 class="font-black text-xs uppercase">🚨 LOW STOCK ALERTS</h2>
-                <p class="text-[10px] opacity-70 italic">Stok Bibit < 50ml</p>
+        <div id="list-stok-bibit" class="grid grid-cols-1 gap-4">
             </div>
-            <div id="restock-bibit" class="space-y-3"></div>
-        </div>
-
-        <div id="page-crm" class="p-4 max-w-md mx-auto hidden animate-fade"><div id="daftar-crm" class="space-y-3"></div></div>
-
-        <div id="page-followup" class="p-4 max-w-md mx-auto hidden animate-fade"><div id="daftar-followup" class="space-y-3"></div></div>
     </div>
 
-    <div id="modal-edit" class="fixed inset-0 z-[110] hidden bg-black/80 flex items-center justify-center p-6 backdrop-blur-md">
-        <div class="bg-white p-8 rounded-3xl shadow-2xl max-w-sm w-full border-t-8 border-gold animate-fade">
-            <h2 class="font-black text-gray-800 text-sm mb-1 uppercase">Edit Stok</h2>
-            <p id="edit-nama-bibit" class="text-[10px] font-bold text-gold mb-6 uppercase tracking-widest"></p>
-            <form id="form-edit-bibit" onsubmit="simpanEditBibit(event)">
-                <input type="hidden" id="edit-id-bibit">
-                <div id="edit-container-kelas" class="space-y-4 mb-8"></div>
-                <div class="flex gap-3">
-                    <button type="button" onclick="tutupModalEdit()" class="flex-1 bg-gray-100 text-gray-400 py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest">Batal</button>
-                    <button type="submit" class="flex-1 bg-gold text-white py-4 rounded-2xl text-[10px] font-black uppercase tracking-widest shadow-lg">Simpan</button>
-                </div>
-            </form>
+    <div id="sec-analitik" class="p-4 hidden">
+        <div class="bg-gold p-8 rounded-[40px] text-white shadow-2xl relative overflow-hidden mb-6">
+            <p class="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80 mb-2">Total Omzet (Selesai)</p>
+            <h2 id="total-omzet" class="text-4xl font-black tracking-tighter">Rp 0</h2>
         </div>
     </div>
 
     <script>
-        // --- 1. FIREBASE CONFIG ---
         const firebaseConfig = {
-            apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
-            authDomain: "mi-perfume-1989.firebaseapp.com",
-            databaseURL: "https://mi-perfume-1989-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "mi-perfume-1989",
-            storageBucket: "mi-perfume-1989.firebasestorage.app",
-            messagingSenderId: "894897183896",
-            appId: "1:894897183896:web:71372dc8cbb9056c7144ed",
-            measurementId: "G-H2KG1X9KVN"
+            apiKey: "AIzaSy...", // Ganti dengan config asli Anda
+            authDomain: "mi-perfume.firebaseapp.com",
+            projectId: "mi-perfume",
+            storageBucket: "mi-perfume.appspot.com",
+            messagingSenderId: "...",
+            appId: "..."
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
         const auth = firebase.auth();
-        db.enablePersistence().catch(() => {});
 
-        let chartInstance = null;
         let globalBibit = [];
-        let isInitialLoad = true;
 
-        // --- 2. AUTH ---
         auth.onAuthStateChanged(user => {
-            if (user && !user.isAnonymous) {
-                document.getElementById('login-screen').classList.add('hidden');
-                document.getElementById('admin-content').classList.remove('hidden');
-                loadInventory();
-                startRealtimeListeners();
+            if(user) {
+                document.getElementById('admin-info').innerText = user.email;
+                loadAdminData();
             } else {
-                document.getElementById('login-screen').classList.remove('hidden');
-                document.getElementById('admin-content').classList.add('hidden');
+                window.location.href = "index.html"; 
             }
         });
 
-        function prosesLogin(e) {
-            e.preventDefault();
-            auth.signInWithEmailAndPassword(document.getElementById('input-user').value, document.getElementById('input-pass').value)
-                .catch(err => alert("Gagal: " + err.message));
-        }
-        function logoutAdmin() { if(confirm("Logout?")) auth.signOut(); }
-
-        // --- 3. SINKRONISASI REALTIME ---
-        function startRealtimeListeners() {
-            const batas = new Date(); batas.setDate(batas.getDate() - 3);
-
-            // Pesanan
-            db.collection("pesanan").where("waktu", ">=", batas).orderBy("waktu", "desc").onSnapshot(snap => {
-                const wadah = document.getElementById('daftar-pesanan'); wadah.innerHTML = '';
-                if (!isInitialLoad) {
-                    snap.docChanges().forEach(c => { if(c.type==='added' && c.doc.data().status==='Menunggu Diproses') document.getElementById('notif-sound').play().catch(()=>{}); });
-                }
-                isInitialLoad = false;
-                snap.forEach(doc => {
-                    const d = doc.data(); const id = doc.id;
-                    let color = d.status==="Selesai"?"bg-green-100 text-green-700":d.status==="Diproses"?"bg-blue-100 text-blue-700":"bg-yellow-100 text-yellow-700";
-                    let items = (d.items||[]).map(i => `<p class="text-[10px] mb-1"><b>${i.qty}x</b> ${i.aroma} (${i.kelas})</p>`).join('');
-                    let btn = d.status==="Menunggu Diproses" ? `<button onclick="terimaPesanan('${id}','${encodeURIComponent(JSON.stringify(d.items))}')" class="flex-1 bg-blue-600 text-white text-[9px] font-black py-4 rounded-2xl uppercase">Terima</button>` : d.status==="Diproses" ? `<button onclick="selesaikanPesanan('${id}','${encodeURIComponent(JSON.stringify(d))}')" class="flex-1 bg-green-600 text-white text-[9px] font-black py-4 rounded-2xl uppercase">Selesaikan</button>` : '';
-                    wadah.innerHTML += `<div class="bg-white p-6 rounded-3xl shadow-sm border-l-8 border-gold">
-                        <div class="flex justify-between mb-2"><b>${d.nama}</b> <span class="px-2 py-1 rounded text-[8px] font-black uppercase ${color}">${d.status}</span></div>
-                        ${items} <div class="mt-4 font-black text-gold text-xs">Rp ${d.total.toLocaleString()}</div>
-                        <div class="mt-4 flex gap-2">${btn}</div></div>`;
-                });
-            });
-
-            // Statistik
-            db.collection("statistik").doc("global").onSnapshot(doc => {
-                if(!doc.exists) return;
-                const d = doc.data();
-                document.getElementById('dash-omset').innerText = 'Rp ' + (d.omset||0).toLocaleString();
-                document.getElementById('dash-hpp').innerText = 'Rp ' + (d.hpp||0).toLocaleString();
-                document.getElementById('dash-profit').innerText = 'Rp ' + ((d.omset||0)-(d.hpp||0)).toLocaleString();
-                renderGrafik(d.bulanan||{});
-                renderTopAroma(d.terjual_aroma||{});
-            });
-
-            // Bahan Baku (PENTING: Memakai field 'sisa' sesuai screenshot)
-            db.collection("bahan").onSnapshot(snap => {
-                const wadahBahan = document.getElementById('daftar-bahan'); wadahBahan.innerHTML = '';
-                snap.forEach(doc => {
-                    const b = doc.data();
-                    const nama = b.nama || doc.id;
-                    wadahBahan.innerHTML += `
-                        <div class="bg-blue-50 p-4 rounded-2xl border border-blue-100 flex flex-col items-center shadow-sm">
-                            <p class="text-[8px] font-black text-blue-400 uppercase">${nama.replace(/_/g, ' ')}</p>
-                            <p class="text-sm font-black text-blue-700 mt-1">${b.sisa || 0}<span class="text-[8px] ml-1 opacity-50">${nama.includes('botol') ? 'pcs' : 'ml'}</span></p>
-                        </div>`;
-                });
-            });
-
-            // CRM & Follow Up
-            db.collection("crm").orderBy("total_spent", "desc").onSnapshot(snap => {
-                const wCrm = document.getElementById('daftar-crm'); wCrm.innerHTML = '';
-                const wFollow = document.getElementById('daftar-followup'); wFollow.innerHTML = '';
-                const now = new Date();
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    wCrm.innerHTML += `<div class="bg-white p-4 rounded-xl shadow-sm border flex justify-between items-center"><div><p class="font-black text-xs uppercase">${d.nama}</p><p class="text-[9px] font-bold text-gray-400 italic">${d.no_wa}</p></div><b class="text-gold text-xs">Rp ${d.total_spent.toLocaleString()}</b></div>`;
-                    if(d.terakhir_order && d.no_wa) {
-                        let diff = Math.floor((now - d.terakhir_order.toDate()) / (1000*60*60*24));
-                        if(diff >= 7) wFollow.innerHTML += `<div class="bg-white p-4 rounded-2xl shadow-sm border-l-8 border-green-500 flex justify-between items-center text-[10px]"><div><b>${d.nama}</b> (${diff} hari pasif)</div><a href="https://wa.me/${d.no_wa.replace(/\D/g,'')}" target="_blank" class="bg-green-500 text-white px-3 py-1 rounded-lg font-black uppercase">Chat</a></div>`;
-                    }
-                });
-            });
-        }
-
-        // --- 4. LOGIKA INVENTARIS ---
-        function loadInventory() {
-            db.collection("stok").orderBy("nama").get().then(snap => {
-                const wadahBibit = document.getElementById('daftar-bibit'); wadahBibit.innerHTML = '';
-                const sel = document.getElementById('bibit-pilih'); sel.innerHTML = '<option value="_NEW_">➕ BUAT AROMA BARU...</option>';
-                const wRestock = document.getElementById('restock-bibit'); wRestock.innerHTML = '';
+        function loadAdminData() {
+            // Load Bibit
+            db.collection("stok").onSnapshot(snap => {
+                const list = document.getElementById('list-stok-bibit');
+                list.innerHTML = '';
                 globalBibit = [];
                 snap.forEach(doc => {
-                    const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data);
-                    sel.innerHTML += `<option value="${data.nama}">${data.nama}</option>`;
-                    let infoM = data.modal ? Object.entries(data.modal).map(([k,v]) => `${k}:Rp${v.toLocaleString()}`).join(' | ') : 'Modal: -';
-                    let infoS = data.stok_kelas ? Object.entries(data.stok_kelas).map(([k,v]) => `${k}:${v}ml`).join(' | ') : `${data.sisa_ml}ml`;
-                    wadahBibit.innerHTML += `<div class="bg-white p-5 rounded-2xl border flex justify-between items-center shadow-sm">
-                        <div class="flex-1"><p class="font-black text-xs uppercase">💧 ${data.nama}</p><p class="text-[8px] text-gray-400 uppercase mt-1">${infoS}</p><p class="text-[8px] text-blue-400 font-bold mt-0.5">${infoM}</p></div>
-                        <button onclick="bukaModalEdit('${doc.id}')" class="bg-blue-50 text-blue-600 p-2.5 rounded-xl text-xs">✏️</button></div>`;
-                    if(data.sisa_ml < 50) wRestock.innerHTML += `<div class="bg-white p-4 rounded-2xl border-l-8 border-red-500 text-[10px] font-black flex justify-between uppercase"><span>${data.nama}</span><b class="text-red-600">${data.sisa_ml} ml</b></div>`;
+                    const d = doc.data();
+                    globalBibit.push({ id: doc.id, ...d });
+                    list.innerHTML += `
+                        <div class="bg-white p-5 rounded-3xl shadow-sm border border-gray-100">
+                            <div class="flex justify-between items-start mb-4">
+                                <h4 class="font-black text-sm uppercase">${d.nama}</h4>
+                                <button onclick="deleteBibit('${doc.id}')" class="text-red-500 text-xs font-bold">Hapus</button>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4 text-[10px] font-bold uppercase">
+                                <div>
+                                    <p class="text-gray-400 mb-1">Stok:</p>
+                                    <p>STD: ${d.stok_kelas.Standar || 0}ml</p>
+                                    <p>PRE: ${d.stok_kelas.Premium || 0}ml</p>
+                                    <p>SPR: ${d.stok_kelas['Super Premium'] || 0}ml</p>
+                                    <p>DIA: ${d.stok_kelas.Diamond || 0}ml</p>
+                                </div>
+                                <div>
+                                    <p class="text-gray-400 mb-1">Harga:</p>
+                                    <p>STD: ${d.harga_kelas.Standar || 0}</p>
+                                    <p>PRE: ${d.harga_kelas.Premium || 0}</p>
+                                    <p>SPR: ${d.harga_kelas['Super Premium'] || 0}</p>
+                                    <p>DIA: ${d.harga_kelas.Diamond || 0}</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 });
+            });
+
+            // Load Pesanan
+            db.collection("pesanan").orderBy("createdAt", "desc").onSnapshot(snap => {
+                const list = document.getElementById('list-admin-pesanan');
+                const omzetEl = document.getElementById('total-omzet');
+                let omzet = 0;
+                list.innerHTML = '';
+
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    if(d.status === "Selesai") omzet += d.total;
+
+                    // Tampilkan hanya yang belum selesai di list pesanan
+                    if(d.status !== "Selesai") {
+                        let actionBtn = "";
+                        if(d.status === "Menunggu di proses") {
+                            actionBtn = `<button onclick="prosesPesanan('${doc.id}', true)" class="flex-1 bg-gold text-white py-3 rounded-2xl font-bold text-[10px] uppercase">Terima & Potong Stok</button>`;
+                        } else if(d.status === "Sedang di proses") {
+                            actionBtn = `<button onclick="prosesPesanan('${doc.id}', false)" class="flex-1 bg-gray-900 text-white py-3 rounded-2xl font-bold text-[10px] uppercase">Selesaikan</button>`;
+                        }
+
+                        list.innerHTML += `
+                            <div class="bg-white p-5 rounded-3xl shadow-sm border-2 ${d.status === 'Sedang di proses' ? 'border-blue-200' : 'border-transparent'}">
+                                <div class="flex justify-between items-center mb-3">
+                                    <span class="text-[10px] font-black uppercase text-gray-400">${d.status}</span>
+                                </div>
+                                <div class="mb-4">
+                                    ${d.items.map(i => `<p class="text-xs font-bold">${i.qty}x ${i.aroma} <span class="text-gray-400">(${i.kelas})</span></p>`).join('')}
+                                </div>
+                                <div class="flex gap-2">${actionBtn}</div>
+                            </div>
+                        `;
+                    }
+                });
+                omzetEl.innerText = `Rp ${omzet.toLocaleString()}`;
             });
         }
 
-        function simpanBahanBaku(e) {
+        async function handleSimpanBibit(e) {
             e.preventDefault();
-            const id = document.getElementById('bahan-pilih').value;
-            const selectEl = document.getElementById('bahan-pilih');
-            const nama = selectEl.options[selectEl.selectedIndex].text.split('(')[0].trim();
-            const harga = parseInt(document.getElementById('bahan-modal').value) || 0;
-            const jumlah = parseFloat(document.getElementById('bahan-jumlah').value) || 0;
+            const nama = document.getElementById('nama-bibit').value.trim();
+            const qualities = ['Standar', 'Premium', 'Super Premium', 'Diamond'];
             
-            db.collection("bahan").doc(id).set({ 
-                id: id, 
-                nama: nama, 
-                harga_satuan: harga, 
-                sisa: firebase.firestore.FieldValue.increment(jumlah) 
-            }, {merge:true}).then(() => { alert("Update Berhasil!"); e.target.reset(); });
-        }
+            let newStok = {};
+            let newHarga = {};
 
-        function simpanBibit(e) {
-            e.preventDefault();
-            const isNew = document.getElementById('bibit-pilih').value === '_NEW_';
-            const nama = isNew ? document.getElementById('bibit-nama').value.trim().toUpperCase() : document.getElementById('bibit-pilih').value;
-            if(!nama) return alert("Pilih aroma!");
-            let stokAdd = {}; let modObj = {};
-            ['standar','premium','super'].forEach((pid, idx) => {
-                const k = ['Standar', 'Premium', 'Super Premium'][idx];
-                let mVal = document.getElementById('m-'+pid).value;
-                let mlVal = document.getElementById('ml-'+pid).value;
-                if(mVal !== "") modObj[k] = parseInt(mVal);
-                if(mlVal !== "") stokAdd[k] = parseInt(mlVal);
+            qualities.forEach(q => {
+                const qId = q.replace(' ', '-');
+                newStok[q] = parseInt(document.getElementById(`s-${qId}`).value) || 0;
+                newHarga[q] = parseInt(document.getElementById(`h-${qId}`).value) || 0;
             });
-            const docRef = db.collection("stok").doc(nama);
-            docRef.get().then(doc => {
-                let current = (doc.exists && doc.data().stok_kelas) ? doc.data().stok_kelas : {};
-                let finalStok = { ...current };
-                Object.keys(stokAdd).forEach(k => { finalStok[k] = (finalStok[k]||0) + stokAdd[k]; });
-                docRef.set({ nama, sisa_ml: Object.values(finalStok).reduce((a,b)=>a+b, 0), stok_kelas: finalStok, modal: modObj, kelas_tersedia: Object.keys(finalStok) }, {merge:true})
-                .then(() => { alert("Berhasil!"); e.target.reset(); loadInventory(); });
-            });
-        }
 
-        // --- 5. UI & TAB SYSTEM ---
-        function switchTab(t) {
-            ['pesanan','stok','dashboard','crm','restock','followup'].forEach(id => {
-                const page = document.getElementById('page-'+id);
-                const btn = document.getElementById('tab-'+id);
-                if(page) page.classList.add('hidden');
-                if(btn) btn.classList.remove('tab-active', 'text-gray-900');
-            });
-            const activePage = document.getElementById('page-'+t);
-            const activeBtn = document.getElementById('tab-'+t);
-            if(activePage) activePage.classList.remove('hidden');
-            if(activeBtn) activeBtn.classList.add('tab-active', 'text-gray-900');
-        }
+            // Cek apakah bibit sudah ada
+            const existing = globalBibit.find(b => b.nama.toLowerCase() === nama.toLowerCase());
 
-        function terimaPesanan(id, itemsJSON) {
-            const items = JSON.parse(decodeURIComponent(itemsJSON));
-            db.collection("pesanan").doc(id).update({ status: "Diproses" }).then(() => {
-                items.forEach(item => {
-                    let up = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
-                    if(item.kelas) up[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
-                    db.collection("stok").doc(item.aroma).update(up);
-                    if(item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(-item.qty) });
-                    if(item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
+            if(existing) {
+                // Update: Jumlahkan stok, Replace harga
+                let updatedStok = { ...existing.stok_kelas };
+                let updatedHarga = { ...existing.harga_kelas };
+                
+                qualities.forEach(q => {
+                    updatedStok[q] = (updatedStok[q] || 0) + newStok[q];
+                    // Jika admin menginput harga baru (tidak 0), maka replace. Jika 0, tetap harga lama.
+                    if(newHarga[q] > 0) updatedHarga[q] = newHarga[q];
                 });
+
+                await db.collection("stok").doc(existing.id).update({
+                    stok_kelas: updatedStok,
+                    harga_kelas: updatedHarga
+                });
+                alert("Stok bibit berhasil ditambahkan!");
+            } else {
+                // Create baru
+                await db.collection("stok").add({
+                    nama: nama,
+                    stok_kelas: newStok,
+                    harga_kelas: newHarga
+                });
+                alert("Bibit baru berhasil didaftarkan!");
+            }
+            e.target.reset();
+        }
+
+        async function prosesPesanan(id, isTerima) {
+            if(isTerima) {
+                // Flow Terima: Potong stok & ubah status ke "Sedang di proses"
+                const res = await db.collection("pesanan").doc(id).get();
+                const items = res.data().items;
+
+                // Loop potong stok
+                for(let item of items) {
+                    const bibitRef = db.collection("stok").doc(item.bibitId);
+                    const bDoc = await bibitRef.get();
+                    if(bDoc.exists) {
+                        let stokSekarang = bDoc.data().stok_kelas;
+                        // Kurangi 1 qty (asumsi per botol 1 unit atau sesuaikan logic Anda)
+                        stokSekarang[item.kelas] = (stokSekarang[item.kelas] || 0) - item.qty;
+                        await bibitRef.update({ stok_kelas: stokSekarang });
+                    }
+                }
+                await db.collection("pesanan").doc(id).update({ status: "Sedang di proses" });
+            } else {
+                // Flow Selesaikan: Ubah status ke "Selesai"
+                await db.collection("pesanan").doc(id).update({ status: "Selesai" });
+            }
+        }
+
+        function deleteBibit(id) { if(confirm('Hapus bibit?')) db.collection("stok").doc(id).delete(); }
+
+        function switchTab(t) {
+            ['pesanan', 'stok', 'analitik'].forEach(s => {
+                document.getElementById('sec-' + s).classList.add('hidden');
+                document.getElementById('t-' + s).classList.remove('tab-active', 'text-gray-400');
             });
-        }
-
-        function selesaikanPesanan(id, dataStr) {
-            const data = JSON.parse(decodeURIComponent(dataStr));
-            const batch = db.batch();
-            batch.update(db.collection("pesanan").doc(id), { status: "Selesai" });
-            let omset = Number(data.total)||0; 
-            let hpp = (data.items||[]).reduce((s, i) => s + (Number(i.hpp_total)||0), 0);
-            batch.set(db.collection("statistik").doc("global"), { omset: firebase.firestore.FieldValue.increment(omset), hpp: firebase.firestore.FieldValue.increment(hpp) }, {merge:true});
-            if(data.no_wa) batch.set(db.collection("crm").doc(data.no_wa.replace(/\D/g,'')), { nama: data.nama, no_wa: data.no_wa, total_spent: firebase.firestore.FieldValue.increment(omset), order_count: firebase.firestore.FieldValue.increment(1), terakhir_order: firebase.firestore.FieldValue.serverTimestamp() }, {merge:true});
-            batch.commit().then(() => alert("Selesai!"));
-        }
-
-        function renderGrafik(d) {
-            const ctx = document.getElementById('grafikOmset'); if(!ctx) return;
-            if(chartInstance) chartInstance.destroy();
-            chartInstance = new Chart(ctx.getContext('2d'), {
-                type: 'line',
-                data: { labels: Object.keys(d), datasets: [{ label: 'Omset', data: Object.values(d), borderColor: '#a38d58', tension: 0.4, fill: true, backgroundColor: 'rgba(163, 141, 88, 0.05)' }] },
-                options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-            });
-        }
-
-        function renderTopAroma(d) {
-            const bestW = document.getElementById('daftar-aroma'); const worstW = document.getElementById('daftar-aroma-buruk');
-            if(!bestW) return; bestW.innerHTML = ''; worstW.innerHTML = '';
-            const sorted = Object.entries(d).sort((a,b)=>b[1]-a[1]);
-            sorted.slice(0, 20).forEach((i, x) => { bestW.innerHTML += `<div class="flex justify-between text-[9px] border-b pb-2 uppercase font-bold"><span>${x+1}. ${i[0]}</span><b class="text-gold">${i[1]} Unit</b></div>`; });
-            [...sorted].reverse().slice(0, 20).forEach((i, x) => { worstW.innerHTML += `<div class="flex justify-between text-[9px] border-b pb-2 uppercase font-bold"><span>${x+1}. ${i[0]}</span><b class="text-red-400">${i[1]} Unit</b></div>`; });
-        }
-
-        function toggleBibitBaru() { const v = document.getElementById('bibit-pilih').value; document.getElementById('bibit-nama').classList.toggle('hidden', v !== '_NEW_'); }
-        function escapeHTML(str) { if (!str) return ''; return str.toString().replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t])); }
-        function aktifkanNotif() { if ("Notification" in window) Notification.requestPermission(); const audio = document.getElementById('notif-sound'); audio.volume = 0; audio.play().then(() => { audio.pause(); audio.volume = 1; }).catch(()=>{}); }
-        function bukaModalEdit(id) {
-            const item = globalBibit.find(i => i.doc_id === id); if(!item) return;
-            document.getElementById('edit-nama-bibit').innerText = item.nama; document.getElementById('edit-id-bibit').value = id;
-            const cont = document.getElementById('edit-container-kelas'); cont.innerHTML = '';
-            ['Standar', 'Premium', 'Super Premium'].forEach(k => {
-                let val = (item.stok_kelas && item.stok_kelas[k]) ? item.stok_kelas[k] : 0;
-                cont.innerHTML += `<div><label class="block text-[10px] font-black uppercase text-gray-400 mb-1">${k} (ml)</label><input type="number" name="${k}" value="${val}" class="w-full border p-4 rounded-2xl text-sm font-bold"></div>`;
-            });
-            document.getElementById('modal-edit').classList.remove('hidden');
-        }
-        function tutupModalEdit() { document.getElementById('modal-edit').classList.add('hidden'); }
-        function simpanEditBibit(e) {
-            e.preventDefault(); const id = document.getElementById('edit-id-bibit').value; const inputs = document.getElementById('edit-container-kelas').querySelectorAll('input');
-            let newStok = {}; inputs.forEach(inp => { newStok[inp.name] = parseInt(inp.value)||0; });
-            db.collection("stok").doc(id).update({ stok_kelas: newStok, sisa_ml: Object.values(newStok).reduce((a,b)=>a+b, 0) }).then(() => { tutupModalEdit(); loadInventory(); });
+            document.getElementById('sec-' + t).classList.remove('hidden');
+            document.getElementById('t-' + t).classList.add('tab-active');
         }
     </script>
 </body>
