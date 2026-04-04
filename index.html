@@ -97,10 +97,7 @@
         function closeSplash() { document.getElementById('splash').classList.add('opacity-0', 'pointer-events-none'); }
         setTimeout(closeSplash, 2500); 
 
-        // Inisialisasi buyerId awal sebagai fallback
-        let buyerId = localStorage.getItem('mi_buyer_id') || ('buyer_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)); 
-        localStorage.setItem('mi_buyer_id', buyerId);
-
+        // --- KONFIGURASI FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
             authDomain: "mi-perfume-1989.firebaseapp.com",
@@ -115,14 +112,17 @@
         const db = firebase.firestore();
         const functions = firebase.app().functions('asia-southeast2');
 
-        // LOGIN ANONIM OTOMATIS (Mendapatkan ID KTP Virtual untuk Security Rules)
-        firebase.auth().signInAnonymously().then(() => {
-            firebase.auth().onAuthStateChanged(user => {
-                if(user) {
-                    buyerId = user.uid; // Timpa buyerId lokal dengan UID resmi Google
-                }
-            });
-        }).catch(error => console.error("Gagal Auth Anonim:", error));
+        let buyerId = ""; // Kosongkan sejak awal agar pakai UID resmi dari Firebase
+
+        // 1. LOGIN ANONIM & PEMANGGILAN RIWAYAT YANG BENAR
+        firebase.auth().signInAnonymously().catch(error => console.error("Gagal Auth Anonim:", error));
+        
+        firebase.auth().onAuthStateChanged(user => {
+            if(user) {
+                buyerId = user.uid; // Dapatkan UID Resmi Google
+                loadRiwayat();      // BARU panggil riwayat setelah UID resmi didapatkan!
+            }
+        });
 
         let keranjang = []; let dataStok = {}; let dataBahan = {}; let rawAromas = [];
         const hargaPerMl = { "Standar": 1000, "Premium": 2000, "Super Premium": 3000, "Diamond": 4000 };
@@ -204,14 +204,13 @@
         function renderKeranjang() { const wadah = document.getElementById('isi-keranjang'); wadah.innerHTML = ''; let gt = 0, tq = 0; if (!keranjang.length) { wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>'; document.getElementById('btn-submit').disabled = true; } else { document.getElementById('btn-submit').disabled = false; keranjang.forEach((i, x) => { gt += i.subtotal; tq += i.qty; let infoPromo = (i.kelas === "Standar" && i.ukuran === 35 && i.qty >= 3) ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : ''; wadah.innerHTML += `<div class="bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1"><div class="leading-tight"><p class="font-bold">${escapeHTML(i.aroma)} <span class="text-gold">x${i.qty}</span></p><p class="text-xs text-gray-500 dark:text-gray-300">${escapeHTML(i.kelas)} ${i.ukuran}ml</p>${infoPromo}</div><div class="flex items-center gap-2"><p class="font-bold">Rp ${i.subtotal.toLocaleString()}</p><button onclick="hapusItem(${x})" class="text-red-500">🗑️</button></div></div>`; }); } document.getElementById('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID'); document.getElementById('badge-qty').innerText = tq; }
 
         function kirimPesananAkhir() { 
+            if (!buyerId) return alert("Sistem keamanan sedang memuat. Mohon tunggu beberapa detik dan coba lagi.");
             const nama = document.getElementById('nama').value.trim(); 
             const noWa = document.getElementById('no-wa').value.trim(); 
-            
             if (!nama) return alert("Harap isi Nama Pemesan!"); 
             
             const btn = document.getElementById('btn-submit'); 
-            btn.innerText = "Memproses..."; 
-            btn.disabled = true; 
+            btn.innerText = "Memproses..."; btn.disabled = true; 
             
             db.collection("pesanan").add({ 
                 buyer_id: buyerId, 
@@ -224,57 +223,57 @@
                 waktu: firebase.firestore.FieldValue.serverTimestamp() 
             }).then(() => { 
                 alert("✅ Pesanan Terkirim! Menunggu konfirmasi admin."); 
-                keranjang = []; 
-                renderKeranjang(); 
-                document.getElementById('nama').value = ''; 
-                document.getElementById('no-wa').value = ''; 
+                keranjang = []; renderKeranjang(); 
+                document.getElementById('nama').value = ''; document.getElementById('no-wa').value = ''; 
                 btn.innerText = "Kirim Pesanan Sekarang"; 
                 switchTab('riwayat'); 
             }).catch(err => { 
                 alert("Gagal: " + err.message); 
-                btn.disabled = false; 
-                btn.innerText = "Kirim Pesanan Sekarang";
+                btn.disabled = false; btn.innerText = "Kirim Pesanan Sekarang";
             }); 
         }
 
         function bukaQris() { document.getElementById('modal-qris').classList.remove('hidden'); document.getElementById('modal-qris').classList.add('flex'); }
         function tutupQris() { document.getElementById('modal-qris').classList.add('hidden'); document.getElementById('modal-qris').classList.remove('flex'); }
 
-        // MENGAMBIL RIWAYAT PESANAN (Akan otomatis berjalan karena Reactive)
-        db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { 
-            const container = document.getElementById('daftar-riwayat'); 
-            container.innerHTML = ''; 
+        // FUNGSI PENARIK RIWAYAT (DIPANGGIL SETELAH LOGIN ANONIM BERHASIL)
+        let riwayatListener = null;
+        function loadRiwayat() {
+            if (riwayatListener) riwayatListener(); // Hapus listener lama jika ada
             
-            if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; 
-            
-            let rData = []; 
-            snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); 
-            
-            rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { 
-                let sColor = d.status==="Selesai" ? "bg-green-100 text-green-700" : (d.status==="Ditolak" ? "bg-red-100 text-red-700" : (d.status==="Diproses" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700")); 
-                let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; 
-                let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`).join(''):''; 
+            riwayatListener = db.collection("pesanan").where("buyer_id", "==", buyerId).onSnapshot(snap => { 
+                const container = document.getElementById('daftar-riwayat'); container.innerHTML = ''; 
                 
-                let tombolBayarHtml = '';
-                if(d.status === "Selesai") {
-                    tombolBayarHtml = `<button onclick="bukaQris()" class="mt-3 w-full bg-[#a38d58] hover:bg-[#8c794a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">📱 Bayar dengan QRIS</button>`;
-                }
+                if (snap.empty) return container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>'; 
+                
+                let rData = []; snap.forEach(doc => rData.push({ id: doc.id, ...doc.data() })); 
+                
+                rData.sort((a,b) => (b.waktu?.toMillis()||Date.now()) - (a.waktu?.toMillis()||Date.now())).forEach(d => { 
+                    let sColor = d.status==="Selesai" ? "bg-green-100 text-green-700" : (d.status==="Ditolak" ? "bg-red-100 text-red-700" : (d.status==="Diproses" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700")); 
+                    let tgl = d.waktu ? d.waktu.toDate().toLocaleDateString('id-ID', {day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) : 'Baru saja'; 
+                    let itemsStr = d.items ? d.items.map(i=>`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`).join(''):''; 
+                    
+                    let tombolBayarHtml = '';
+                    if(d.status === "Selesai") {
+                        tombolBayarHtml = `<button onclick="bukaQris()" class="mt-3 w-full bg-[#a38d58] hover:bg-[#8c794a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 transition-transform flex items-center justify-center gap-2">📱 Bayar dengan QRIS</button>`;
+                    }
 
-                container.innerHTML += `
-                    <div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm">
-                        <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
-                            <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
-                            <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
-                        </div>
-                        <div class="mb-2">${itemsStr}</div>
-                        <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
-                            <span>Total</span>
-                            <span class="text-gold">Rp ${d.total.toLocaleString('id-ID')}</span>
-                        </div>
-                        ${tombolBayarHtml}
-                    </div>`; 
-            }); 
-        });
+                    container.innerHTML += `
+                        <div class="bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm">
+                            <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
+                                <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
+                                <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
+                            </div>
+                            <div class="mb-2">${itemsStr}</div>
+                            <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
+                                <span>Total</span>
+                                <span class="text-gold">Rp ${d.total.toLocaleString('id-ID')}</span>
+                            </div>
+                            ${tombolBayarHtml}
+                        </div>`; 
+                }); 
+            });
+        }
     </script>
 </body>
 </html>
