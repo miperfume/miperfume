@@ -339,10 +339,12 @@ db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap =>
         // PROSES BISNIS (TOMBOL AKSI)
         // ==========================================
 
-        // 1. TERIMA PESANAN (Memotong Stok)
+ // 1. TERIMA PESANAN (Memotong Stok Secara Atomik / Anti-Gagal)
         function terimaPesanan(id, itemsJSON) { 
             const items = JSON.parse(decodeURIComponent(itemsJSON)); 
             let stokAman = true; let pesanError = "";
+            
+            // Pengecekan Ketersediaan Stok (Tetap Sama)
             for (let item of items) {
                 if (item.bibit) {
                     const dataBibit = globalBibit.find(b => b.nama === item.aroma);
@@ -359,19 +361,38 @@ db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap =>
             }
             if (!stokAman) { alert("⚠️ GAGAL DITERIMA! STOK TIDAK CUKUP:\n\n" + pesanError); return; }
 
+            // PROSES PEMOTONGAN STOK (MENGGUNAKAN BATCH)
             if(confirm("Terima pesanan? Stok akan otomatis dipotong dan status menjadi 'Diproses'.")) { 
-                db.collection("pesanan").doc(id).update({ status: "Diproses" }).then(() => { 
-                    items.forEach(item => { 
-                        if (item.bibit) {
-                            let objPengurangan = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
-                            if(item.kelas) objPengurangan[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
-                            db.collection("stok").doc(item.aroma).update(objPengurangan); 
-                        }
-                        if (item.id_botol) db.collection("bahan").doc(item.id_botol).update({ sisa: firebase.firestore.FieldValue.increment(-item.qty) }); 
-                        if (item.id_absolute) db.collection("bahan").doc(item.id_absolute).update({ sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) }); 
-                    }); 
+                const batch = db.batch(); // ⬅️ Inisialisasi Keranjang Batch
+
+                // A. Masukkan perintah update status pesanan ke Batch
+                const pesananRef = db.collection("pesanan").doc(id);
+                batch.update(pesananRef, { status: "Diproses" });
+
+                // B. Masukkan perintah potong stok bibit dan botol ke Batch
+                items.forEach(item => { 
+                    if (item.bibit) {
+                        let objPengurangan = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
+                        if(item.kelas) objPengurangan[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
+                        const stokRef = db.collection("stok").doc(item.aroma);
+                        batch.update(stokRef, objPengurangan); 
+                    }
+                    if (item.id_botol) {
+                        const botolRef = db.collection("bahan").doc(item.id_botol);
+                        batch.update(botolRef, { sisa: firebase.firestore.FieldValue.increment(-item.qty) }); 
+                    }
+                    if (item.id_absolute) {
+                        const absRef = db.collection("bahan").doc(item.id_absolute);
+                        batch.update(absRef, { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) }); 
+                    }
+                }); 
+
+                // C. Kirim semua perintah sekaligus ke Server!
+                batch.commit().then(() => { 
                     alert("✅ Pesanan diterima & Stok berhasil dipotong!"); 
-                }).catch(e => alert("Gagal memproses: " + e.message)); 
+                }).catch(e => {
+                    alert("Gagal memproses (Cek koneksi internet Anda): " + e.message);
+                }); 
             } 
         }
 
