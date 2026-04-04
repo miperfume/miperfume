@@ -256,18 +256,22 @@
 
         // A. Listener Analitik Global (Super Hemat Kuota)
         db.collection("statistik").doc("global").onSnapshot(doc => {
-            const d = doc.exists ? doc.data() : {};
-            
-            document.getElementById('dash-omset').innerText = 'Rp ' + (d.omset || 0).toLocaleString('id-ID');
-            document.getElementById('dash-hpp').innerText = 'Rp ' + (d.hpp || 0).toLocaleString('id-ID');
-            document.getElementById('dash-laba').innerText = 'Rp ' + ((d.omset || 0) - (d.hpp || 0)).toLocaleString('id-ID');
-            document.getElementById('dash-qty').innerText = d.qty || 0;
+    if (doc.exists) {
+        const stat = doc.data();
+        const laba = stat.total_omset - stat.total_hpp;
+        document.getElementById('dash-omset').innerText = 'Rp ' + (stat.total_omset || 0).toLocaleString();
+        document.getElementById('dash-hpp').innerText = 'Rp ' + (stat.total_hpp || 0).toLocaleString();
+        document.getElementById('dash-laba').innerText = 'Rp ' + laba.toLocaleString();
+        document.getElementById('dash-qty').innerText = stat.total_qty || 0;
+    }
+});
 
-            // Merender grafik dan list meski belum ada data (mencegah error/blank)
-            renderGrafik(d.bulanan || {});
-            renderTopAroma(d.terjual_aroma || {});
-            renderBottomAroma(d.terjual_aroma || {});
-        });
+// Render CRM langsung dari koleksi Server (Bukan direkap di browser)
+db.collection("crm").orderBy("total_spent", "desc").limit(50).onSnapshot(snap => {
+    let crmData = [];
+    snap.forEach(doc => crmData.push(doc.data()));
+    renderCRM(crmData);
+});
 
         // B. Listener CRM Global
         db.collection("crm").orderBy("total_spent", "desc").onSnapshot(snap => {
