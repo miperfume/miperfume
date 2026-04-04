@@ -18,7 +18,7 @@
         .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; } 
         .hide-scrollbar::-webkit-scrollbar { display: none; } .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         
-        /* KODE BARU: Sembunyikan wadah print di layar normal */
+        /* Sembunyikan wadah print di layar normal */
         #print-section { display: none; }
         
         @media print {
@@ -169,6 +169,7 @@
         const db = firebase.firestore();
         
         let chartInstance = null; let globalBibit = []; let globalBahan = []; let dataPesananExport = [];
+        let pesananAktif = {}; // KODE BARU: Buku catatan pesanan aktif agar tombol tidak error
         let dataSudahDimuat = false; // Bendera agar data tidak dobel dimuat
         
         // ==========================================
@@ -233,10 +234,13 @@
         function cekRestock() { const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = ''; const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = ''; let adaBibitKritis = false; globalBibit.forEach(b => { if (b.stok_kelas) { Object.entries(b.stok_kelas).forEach(([k, v]) => { if (v <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)} <span class="text-[10px] text-gray-500">(${escapeHTML(k)})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`; } }); } else if (b.sisa_ml <= 50) { adaBibitKritis = true; wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; } }); if(!adaBibitKritis) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>'; let adaBahanKritis = false; globalBahan.forEach(b => { const id = b.doc_id || ''; const sisa = Number(b.sisa) || 0; let limit = id.includes('botol') ? 20 : 100; let unit = id.includes('botol') ? 'pcs' : 'ml'; if (sisa <= limit) { adaBahanKritis = true; wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama || id)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } }); if(!adaBahanKritis) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>'; }
 
         // ==========================================
-        // PROSES BISNIS (TOMBOL AKSI)
+        // PROSES BISNIS (TOMBOL AKSI) YANG TELAH DIPERBAIKI
         // ==========================================
-        function terimaPesanan(id, itemsJSON) { 
-            const items = JSON.parse(decodeURIComponent(itemsJSON)); 
+        function terimaPesanan(id) { 
+            const data = pesananAktif[id];
+            if (!data) return alert("Data pesanan tidak ditemukan.");
+            const items = Array.isArray(data.items) ? data.items : [{ qty: 1, aroma: data.aroma || "Unknown", kelas: data.kelas || "", ukuran: data.ukuran || "", hpp_total: data.total_hpp || 0 }]; 
+            
             let stokAman = true; let pesanError = "";
             
             // Pengecekan Ketersediaan Stok 
@@ -292,7 +296,7 @@
             if (alasan && alasan.trim() !== "") { db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: escapeHTML(alasan.trim()) }).then(() => alert("🚫 Pesanan ditolak.")).catch(e => alert(e.message)); } 
         }
 
-        function selesaikanPesanan(id, dataStr) { 
+        function selesaikanPesanan(id) { 
             if(!confirm("Tandai selesai? Omset akan masuk ke Buku Analitik via Server.")) return;
             db.collection("pesanan").doc(id).update({ status: "Selesai" })
               .then(() => alert("🎉 Pesanan Selesai! Data rekap akan diperbarui oleh Server."))
@@ -312,8 +316,9 @@
         
         function renderBottomAroma(d) { const c = document.getElementById('daftar-aroma-bawah'); c.innerHTML = ''; const sorted = Object.entries(d).sort((a,b) => a[1]-b[1]).slice(0,20); if(sorted.length===0) return c.innerHTML = '<p class="text-xs text-gray-500 italic">Data kosong.</p>'; sorted.forEach((i, x) => { c.innerHTML += `<div class="flex justify-between border-b pb-1 text-sm"><span class="font-medium">${x===0?'🔻':x+1+'.'} ${escapeHTML(i[0])}</span><span class="bg-red-100 text-red-700 px-2 rounded-full text-xs">${i[1]}</span></div>` }); }
         
-        function cetakStruk(dataStr) { 
-            const data = JSON.parse(decodeURIComponent(dataStr)); 
+        function cetakStruk(id) { 
+            const data = pesananAktif[id]; 
+            if (!data) return alert("Data pesanan tidak ditemukan.");
             
             let itemHtml = (data.items||[]).map(i => `
                 <tr>
@@ -338,7 +343,7 @@
                 </table>
                 <div style="border-bottom:1px dashed #000; margin:5px 0;"></div>
                 <div style="text-align:right; font-size:13px; margin-top:5px;">
-                    <b>Total: Rp ${data.total.toLocaleString('id-ID')}</b>
+                    <b>Total: Rp ${(data.total||0).toLocaleString('id-ID')}</b>
                 </div>
                 <div style="text-align:center; margin-top:15px; font-size:11px;">
                     Terima Kasih 🙏
@@ -380,12 +385,13 @@
                 cekRestock(); 
             });
 
-            // 3. Tarik Pesanan (DIJAMIN CEPAT KARENA KTP ADMIN SUDAH DICEK)
+            // 3. Tarik Pesanan (ANTI DELAY & ANTI ERROR KUTIP)
             let isInitialLoad = true;
             db.collection("pesanan").orderBy("waktu", "desc").limit(30).onSnapshot(snapshot => {
                 const containerPesanan = document.getElementById('daftar-pesanan'); 
-                containerPesanan.innerHTML = ''; 
+                let htmlPesanan = ''; // Wadah teks untuk mencegah delay
                 dataPesananExport = [];
+                pesananAktif = {}; // Kosongkan catatan pesanan setiap kali ada perubahan
 
                 snapshot.docChanges().forEach(change => { 
                     if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") { 
@@ -401,6 +407,8 @@
 
                 snapshot.forEach((doc) => {
                     const data = doc.data(); const id = doc.id; 
+                    pesananAktif[id] = data; // Simpan data ke variabel global agar aman dari error kutip
+                    
                     const safeNama = escapeHTML(data.nama); const safeWA = escapeHTML(data.no_wa || '-'); 
                     let statusColor = "bg-yellow-100 text-yellow-700"; 
                     if(data.status === "Diproses") statusColor = "bg-blue-100 text-blue-700"; 
@@ -408,23 +416,23 @@
                     if(data.status === "Ditolak") statusColor = "bg-red-100 text-red-700";
 
                     const itemsToProcess = Array.isArray(data.items) ? data.items : [{ qty: 1, aroma: data.aroma || "Unknown", kelas: data.kelas || "", ukuran: data.ukuran || "", hpp_total: data.total_hpp || 0 }]; 
-                    const itemsJSON = encodeURIComponent(JSON.stringify(itemsToProcess)); 
                     const pesananHPP = Number(data.total_hpp) || 0;
                     let detHTML = itemsToProcess.map(i => `<p class="text-sm border-b pb-1"><b>${i.qty}x</b> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)} ${i.ukuran}ml)</p>`).join('');
 
                     let actionButtons = '';
                     if (data.status === "Menunggu Diproses") {
-                        actionButtons = `<div class="flex gap-2 mt-2 border-t pt-2"><button onclick="terimaPesanan('${id}','${itemsJSON}')" class="flex-1 bg-blue-600 text-white text-sm py-2 rounded font-bold shadow">Terima (Potong Stok)</button><button onclick="tolakPesanan('${id}')" class="flex-1 text-red-500 bg-red-50 text-sm py-2 rounded border border-red-200">Tolak</button></div>`;
+                        // Cukup kirimkan ID nya saja
+                        actionButtons = `<div class="flex gap-2 mt-2 border-t pt-2"><button onclick="terimaPesanan('${id}')" class="flex-1 bg-blue-600 text-white text-sm py-2 rounded font-bold shadow">Terima (Potong Stok)</button><button onclick="tolakPesanan('${id}')" class="flex-1 text-red-500 bg-red-50 text-sm py-2 rounded border border-red-200">Tolak</button></div>`;
                     } else if (data.status === "Diproses") {
-                        const fulldataJSON = encodeURIComponent(JSON.stringify(data));
-                        actionButtons = `<div class="flex gap-2 mt-2 border-t pt-2"><button onclick="selesaikanPesanan('${id}', '${fulldataJSON}')" class="w-full bg-green-600 text-white text-sm py-2 rounded font-bold shadow">✅ Serahkan Pembeli (Selesai)</button></div>`;
+                        actionButtons = `<div class="flex gap-2 mt-2 border-t pt-2"><button onclick="selesaikanPesanan('${id}')" class="w-full bg-green-600 text-white text-sm py-2 rounded font-bold shadow">✅ Serahkan Pembeli (Selesai)</button></div>`;
                     }
 
-                    containerPesanan.innerHTML += `
+                    // Kumpulkan HTML ke dalam wadah sementara
+                    htmlPesanan += `
                     <div class="bg-white p-4 rounded-xl shadow border-l-4 border-[#a38d58]">
                         <div class="flex justify-between items-start mb-2 border-b pb-2">
                             <div><h3 class="font-bold text-gray-800">${safeNama}</h3><p class="text-xs text-gray-500">📞 ${safeWA}</p></div>
-                            <div class="text-right"><span class="text-[10px] font-bold px-2 py-1 rounded ${statusColor} block mb-1">${data.status}</span><button onclick="cetakStruk('${encodeURIComponent(JSON.stringify(data))}')" class="text-xs bg-gray-200 px-2 py-1 rounded shadow">🖨️ Print</button></div>
+                            <div class="text-right"><span class="text-[10px] font-bold px-2 py-1 rounded ${statusColor} block mb-1">${data.status}</span><button onclick="cetakStruk('${id}')" class="text-xs bg-gray-200 px-2 py-1 rounded shadow">🖨️ Print</button></div>
                         </div>
                         <div class="bg-gray-50 p-2 rounded mb-3 space-y-1">${detHTML}</div>
                         <div class="flex justify-between items-end mb-2">
@@ -438,6 +446,10 @@
                         dataPesananExport.push({ Tanggal: data.waktu ? data.waktu.toDate().toLocaleString('id-ID') : '-', Nama: safeNama, WA: safeWA, Omset: data.total, HPP: data.total_hpp||0, Laba: data.total-(data.total_hpp||0), Status: data.status });
                     }
                 });
+                
+                // Tampilkan semuanya ke layar sekaligus!
+                containerPesanan.innerHTML = htmlPesanan;
+
             }, error => {
                 console.error(error);
                 alert("Gagal memuat pesanan: " + error.message);
