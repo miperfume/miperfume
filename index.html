@@ -114,13 +114,15 @@
 
         let buyerId = ""; // Kosongkan sejak awal agar pakai UID resmi dari Firebase
 
-        // 1. LOGIN ANONIM & PEMANGGILAN RIWAYAT YANG BENAR
-        firebase.auth().signInAnonymously().catch(error => console.error("Gagal Auth Anonim:", error));
-        
+// 1. LOGIN PINTAR (ANTI-TABRAKAN DENGAN ADMIN)
         firebase.auth().onAuthStateChanged(user => {
-            if(user) {
-                buyerId = user.uid; // Dapatkan UID Resmi Google
-                loadRiwayat();      // BARU panggil riwayat setelah UID resmi didapatkan!
+            if (user) {
+                // Jika sudah ada sesi (bisa jadi itu sesi Admin atau sesi Anonim sebelumnya)
+                buyerId = user.uid; 
+                loadRiwayat();
+            } else {
+                // Jika web benar-benar baru dibuka dan belum ada sesi sama sekali
+                firebase.auth().signInAnonymously().catch(error => console.error("Gagal Auth Anonim:", error));
             }
         });
 
