@@ -688,14 +688,27 @@ function pilihTipePembelian(tipe) {
 
 function onPilihBibitPembelian() {
     const val = document.getElementById('pb-bibit-nama').value;
-    document.getElementById('pb-bibit-nama-baru').classList.toggle('hidden', val !== '_NEW_');
-    // Reset kelas
+    const inputNamaBaru = document.getElementById('pb-bibit-nama-baru');
+    const isNew = val === '_NEW_';
+
+    // Tampilkan / sembunyikan input nama aroma baru
+    inputNamaBaru.classList.toggle('hidden', !isNew);
+    if (isNew) {
+        inputNamaBaru.focus();
+        inputNamaBaru.placeholder = 'Ketik nama aroma baru (huruf kapital)...';
+    } else {
+        inputNamaBaru.value = ''; // bersihkan kalau kembali pilih existing
+    }
+
+    // Reset kelas & info modal
     document.getElementById('pb-bibit-kelas').value = '';
+    document.getElementById('pb-bibit-kelas-baru').classList.add('hidden');
     document.getElementById('info-modal-rata').classList.add('hidden');
-    // Jika bibit ada di stok, tampilkan kelas-kelas yang ada
-    if (val !== '_NEW_') {
+
+    const selKelas = document.getElementById('pb-bibit-kelas');
+    if (!isNew) {
+        // Bibit sudah ada: isi kelas dari data stok yang ada
         const dataBibit = globalBibit.find(b => b.nama === val);
-        const selKelas = document.getElementById('pb-bibit-kelas');
         selKelas.innerHTML = '<option value="">-- Pilih Kelas --</option>';
         if (dataBibit && dataBibit.stok_kelas) {
             Object.keys(dataBibit.stok_kelas).forEach(k => {
@@ -704,8 +717,7 @@ function onPilihBibitPembelian() {
         }
         selKelas.innerHTML += '<option value="_NEW_">➕ Tambah Kelas Baru</option>';
     } else {
-        // Aroma baru: reset kelas ke default
-        const selKelas = document.getElementById('pb-bibit-kelas');
+        // Aroma baru: tampilkan semua pilihan kelas standar
         selKelas.innerHTML = `
             <option value="">-- Pilih Kelas --</option>
             <option value="Standar">Standar</option>
@@ -748,13 +760,13 @@ function buatOrderPembelian() {
         const harga     = parseInt(document.getElementById('pb-bibit-harga').value);
         const catatan   = document.getElementById('pb-bibit-catatan').value.trim();
 
-        const namaAkhir = valBibit === '_NEW_' ? namaBaru : valBibit;
-        const kelasAkhir = valKelas === '_NEW_' ? kelasBaru : valKelas;
+        const namaAkhir  = valBibit === '_NEW_' ? namaBaru : valBibit;
+        const kelasAkhir = valKelas === '_NEW_' ? kelasBaru.trim() : valKelas;
 
-        if (!namaAkhir) return alert("Masukkan nama aroma!");
-        if (!kelasAkhir) return alert("Pilih atau masukkan kelas!");
-        if (!qty || qty <= 0) return alert("Masukkan jumlah beli (ml)!");
-        if (!harga || harga <= 0) return alert("Masukkan harga beli/ml!");
+        if (!namaAkhir)   return alert("⚠️ Masukkan nama aroma baru di kolom teks yang muncul di bawah dropdown!");
+        if (!kelasAkhir)  return alert("⚠️ Pilih atau masukkan kelas bibit!");
+        if (!qty || qty <= 0)   return alert("⚠️ Masukkan jumlah beli (ml)!");
+        if (!harga || harga <= 0) return alert("⚠️ Masukkan harga beli/ml!");
 
         const totalHarga = qty * harga;
 
