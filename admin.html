@@ -82,6 +82,7 @@
         <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
     </header>
 
+```
 <!-- TAB BAR -->
 <div class="flex bg-white shadow-sm mb-4 sticky top-[56px] z-10 overflow-x-auto hide-scrollbar">
     <button id="tab-pesanan"   class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap"          onclick="switchTab('pesanan')">Pesanan</button>
@@ -403,6 +404,7 @@
         <div id="daftar-followup" class="space-y-3 mt-3"></div>
     </div>
 </div>
+```
 
 </div>
 
@@ -418,6 +420,32 @@
             <div class="flex gap-2">
                 <button type="button" onclick="tutupModalEdit()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded text-sm font-bold">Batal</button>
                 <button type="submit" class="flex-1 bg-gold text-white py-2 rounded text-sm font-bold">Simpan</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- ==================== MODAL EDIT BAHAN ==================== -->
+
+<div id="modal-edit-bahan" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white p-5 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-blue-500">
+        <h2 class="font-bold text-gray-800 mb-1">✏️ Edit Bahan</h2>
+        <p id="edit-nama-bahan" class="text-sm font-bold text-blue-600 mb-4"></p>
+        <form id="form-edit-bahan" onsubmit="simpanEditBahan(event)">
+            <input type="hidden" id="edit-id-bahan">
+            <div class="space-y-3 mb-4">
+                <div>
+                    <label class="text-xs font-bold text-gray-600 block mb-1">Stok Saat Ini</label>
+                    <input type="number" id="edit-sisa-bahan" class="w-full border p-2 rounded text-sm" placeholder="Jumlah stok">
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-600 block mb-1">Harga Satuan (Rp)</label>
+                    <input type="number" id="edit-harga-bahan" class="w-full border p-2 rounded text-sm" placeholder="Harga per satuan">
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="tutupModalEditBahan()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded text-sm font-bold">Batal</button>
+                <button type="submit" class="flex-1 bg-blue-600 text-white py-2 rounded text-sm font-bold">Simpan</button>
             </div>
         </form>
     </div>
@@ -451,6 +479,12 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// Aktifkan cache offline — data langsung tampil dari cache tanpa tunggu network
+db.enablePersistence({ synchronizeTabs: true }).catch(err => {
+    // Jika tab ganda atau browser tidak support, abaikan — tidak kritis
+    console.warn('Persistence tidak aktif:', err.code);
+});
 
 // ============================================================
 // STATE
@@ -688,6 +722,31 @@ function simpanEditBibit(e) {
     Object.keys(d.stok_kelas).forEach(k=>{ finalStok[k]=parseInt(document.getElementById(`edit-stok-${k}`).value)||0; finalModal[k]=parseInt(document.getElementById(`edit-modal-${k}`).value)||0; });
     let total=Object.values(finalStok).reduce((a,b)=>a+b,0);
     db.collection("stok").doc(id).update({ sisa_ml:total, stok_kelas:finalStok, modal:finalModal }).then(()=>{ alert("Data berhasil dikoreksi!"); tutupModalEdit(); });
+}
+
+// ---- EDIT BAHAN ----
+function bukaModalEditBahan(docId) {
+    const d = globalBahan.find(b => b.doc_id === docId);
+    if (!d) return;
+    document.getElementById('edit-id-bahan').value   = docId;
+    document.getElementById('edit-nama-bahan').innerText = d.nama || docId;
+    document.getElementById('edit-sisa-bahan').value  = d.sisa  || 0;
+    document.getElementById('edit-harga-bahan').value = d.harga_satuan || 0;
+    document.getElementById('modal-edit-bahan').classList.remove('hidden');
+}
+function tutupModalEditBahan() {
+    document.getElementById('modal-edit-bahan').classList.add('hidden');
+}
+function simpanEditBahan(e) {
+    e.preventDefault();
+    const id    = document.getElementById('edit-id-bahan').value;
+    const sisa  = parseInt(document.getElementById('edit-sisa-bahan').value)  || 0;
+    const harga = parseInt(document.getElementById('edit-harga-bahan').value) || 0;
+    if (sisa < 0)  return alert("Stok tidak boleh negatif!");
+    if (harga < 0) return alert("Harga tidak boleh negatif!");
+    db.collection("bahan").doc(id).update({ sisa, harga_satuan: harga })
+        .then(() => { alert("✅ Data bahan berhasil diperbarui!"); tutupModalEditBahan(); })
+        .catch(e  => alert("Gagal: " + e.message));
 }
 
 function simpanBahan(e) {
@@ -1295,31 +1354,32 @@ function cetakStruk(dataStr) {
         ? (typeof data.waktu.toDate === 'function' ? data.waktu.toDate() : new Date(data.waktu.seconds * 1000)).toLocaleString('id-ID')
         : new Date().toLocaleString('id-ID');
 
-    // Tulis ke #print-section lalu print
+    // Tulis struk — tanpa <img> agar iOS Safari tidak perlu tunggu load gambar
+    // Logo diganti teks bold agar print bisa langsung synchronous (iOS wajib ini)
     document.getElementById('print-section').innerHTML = `
-        <div style="text-align:center;margin-bottom:8px;">
-            <img src="logo.jpeg" style="width:40px;height:auto;filter:grayscale(100%);display:block;margin:0 auto 4px;">
-            <b style="font-size:14px;letter-spacing:1px;">MI PERFUME</b><br>
-            <span style="font-size:9px;">Nota Pembelian</span>
+        <div style="text-align:center;margin-bottom:6px;font-family:monospace;">
+            <div style="font-size:17px;font-weight:bold;letter-spacing:2px;">MI PERFUME</div>
+            <div style="font-size:9px;margin-top:1px;">-- Nota Pembelian --</div>
         </div>
-        <div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:3px 0;margin-bottom:6px;font-size:10px;">
+        <div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:3px 0;margin-bottom:5px;font-size:10px;font-family:monospace;">
             Pembeli : <b>${escapeHTML(data.nama)}</b><br>
             Tanggal : ${waktuStr}<br>
             Status  : <b>LUNAS</b>
         </div>
-        <table style="width:100%;font-size:10px;border-collapse:collapse;">
+        <table style="width:100%;font-size:10px;border-collapse:collapse;font-family:monospace;">
             ${itemRows}
         </table>
-        <div style="border-top:1px dashed #000;margin-top:6px;padding-top:6px;text-align:right;font-size:12px;">
+        <div style="border-top:1px dashed #000;margin-top:5px;padding-top:5px;text-align:right;font-size:12px;font-family:monospace;">
             <b>TOTAL: Rp ${totalStr}</b>
         </div>
-        <div style="text-align:center;margin-top:12px;font-size:10px;">
-            Terima kasih telah berbelanja! 🙏<br>
-            <span style="font-size:9px;">Barang yang sudah dibeli tidak dapat ditukar</span>
+        <div style="text-align:center;margin-top:10px;font-size:10px;font-family:monospace;">
+            Terima kasih sudah berbelanja!<br>
+            <span style="font-size:9px;">Barang tidak dapat ditukar</span>
         </div>`;
 
-    // Delay kecil agar DOM sempat render gambar
-    setTimeout(() => window.print(), 350);
+    // PENTING untuk iOS Safari: window.print() HARUS synchronous dalam user gesture.
+    // setTimeout sekecil apapun menyebabkan "website has been blocking you from printing".
+    window.print();
 }
 
 // ============================================================
@@ -1363,7 +1423,18 @@ function initAdminData() {
         snap.forEach(doc=>{
             const data=doc.data(); data.doc_id=doc.id; globalBahan.push(data);
             const unit=doc.id.includes('botol')?'pcs':'ml';
-            wadah.innerHTML+=`<div class="bg-blue-50 p-2 rounded border flex justify-between"><div><p class="font-bold text-xs">${escapeHTML(data.nama)}</p><p class="text-[10px]">Rp${(data.harga_satuan||0).toLocaleString()}/${unit}</p></div><span class="font-bold text-blue-700">${data.sisa} ${unit}</span></div>`;
+            wadah.innerHTML+=`
+            <div class="bg-blue-50 p-2 rounded border flex justify-between items-center">
+                <div>
+                    <p class="font-bold text-xs">${escapeHTML(data.nama)}</p>
+                    <p class="text-[10px] text-gray-500">Rp ${(data.harga_satuan||0).toLocaleString()}/${unit}</p>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-blue-700 text-sm">${data.sisa} ${unit}</span>
+                    <button onclick="bukaModalEditBahan('${doc.id}')" class="text-blue-500 bg-white border border-blue-200 p-1.5 rounded text-xs font-bold shadow-sm">✏️</button>
+                    <button onclick="hapusDokumen('bahan','${doc.id}')" class="text-red-400 bg-white border border-red-100 p-1.5 rounded text-xs shadow-sm">🗑️</button>
+                </div>
+            </div>`;
         });
         cekRestock();
     });
