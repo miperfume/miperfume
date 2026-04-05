@@ -286,22 +286,25 @@
         renderDaftarPesanan(semuaDataPesanan);
     }
 
-    function filterDataPesanan(datalist) {
+        function filterDataPesanan(datalist) {
         if (filterAktif === 'on_proses') {
             // Hanya tampilkan: Menunggu Diproses & Diproses
+            // PERBAIKAN: Gunakan item.data.status, bukan item.status
             return datalist.filter(item => 
-                item.status === 'Menunggu Diproses' || item.status === 'Diproses'
+                item.data.status === 'Menunggu Diproses' || item.data.status === 'Diproses'
             );
         } else if (filterAktif === 'selesai') {
             // Hanya tampilkan: Selesai & Ditolak
+            // PERBAIKAN: Gunakan item.data.status, bukan item.status
             return datalist.filter(item => 
-                item.status === 'Selesai' || item.status === 'Ditolak'
+                item.data.status === 'Selesai' || item.data.status === 'Ditolak'
             );
         } else {
             // Semua pesanan (maks. 30 sudah dihandle oleh query Firestore)
             return datalist;
         }
     }
+
 
     function updateBadgePesanan(jumlah) {
         const badge = document.getElementById('badge-jumlah-pesanan');
