@@ -297,15 +297,90 @@
         <h2 class="font-bold text-gray-700 text-sm">Laporan Keseluruhan (Global)</h2>
         <button onclick="exportExcel()" class="bg-green-600 text-white text-xs px-2 py-1 rounded shadow">📥 Download CSV</button>
     </div>
-    <div class="grid grid-cols-2 gap-3 mb-4">
-        <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]"><p class="text-[10px] text-gray-500">OMSET</p><p id="dash-omset" class="text-md font-bold">Rp 0</p></div>
-        <div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-400"><p class="text-[10px] text-gray-500">HPP</p><p id="dash-hpp" class="text-md font-bold text-red-600">Rp 0</p></div>
+
+    <!-- Baris 1: Omset & HPP Penjualan -->
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]">
+            <p class="text-[10px] text-gray-500">OMSET PENJUALAN</p>
+            <p id="dash-omset" class="text-md font-bold">Rp 0</p>
+        </div>
+        <div class="bg-white p-3 rounded-xl shadow border-l-4 border-orange-400">
+            <p class="text-[10px] text-gray-500">HPP PENJUALAN</p>
+            <p id="dash-hpp" class="text-md font-bold text-orange-600">Rp 0</p>
+        </div>
     </div>
-    <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-6 flex justify-between items-center text-white">
-        <div><p class="text-xs text-gray-300 mb-1">LABA BERSIH</p><p id="dash-laba" class="text-2xl font-bold text-[#a38d58]">Rp 0</p></div>
-        <div class="text-right"><p class="text-[10px] text-gray-400">Total Botol Terjual</p><p id="dash-qty" class="text-lg font-bold">0</p></div>
+
+    <!-- Baris 2: Pengeluaran Pembelian Stok -->
+    <div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-500 mb-3">
+        <div class="flex justify-between items-start">
+            <div>
+                <p class="text-[10px] text-gray-500">PENGELUARAN PEMBELIAN STOK</p>
+                <p id="dash-pengeluaran" class="text-md font-bold text-red-600">Rp 0</p>
+            </div>
+            <button onclick="toggleDetailPengeluaran()" class="text-[10px] text-gray-400 underline mt-1">Detail ▾</button>
+        </div>
+        <!-- Detail breakdown -->
+        <div id="detail-pengeluaran" class="hidden mt-2 pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
+            <div class="bg-red-50 p-2 rounded">
+                <p class="text-[9px] text-gray-400">Bibit / Aroma</p>
+                <p id="dash-pengeluaran-bibit" class="text-xs font-bold text-red-700">Rp 0</p>
+            </div>
+            <div class="bg-red-50 p-2 rounded">
+                <p class="text-[9px] text-gray-400">Botol & Bahan</p>
+                <p id="dash-pengeluaran-bahan" class="text-xs font-bold text-red-700">Rp 0</p>
+            </div>
+            <div class="bg-gray-50 p-2 rounded col-span-2">
+                <p class="text-[9px] text-gray-400">Jumlah Transaksi Pembelian Selesai</p>
+                <p id="dash-jml-pembelian" class="text-xs font-bold text-gray-700">0 transaksi</p>
+            </div>
+        </div>
     </div>
-    <div class="bg-white p-4 rounded-xl shadow mb-6 relative h-64"><canvas id="grafikOmset"></canvas></div>
+
+    <!-- Kartu Utama: Laba Real -->
+    <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-3 text-white">
+        <div class="flex justify-between items-start mb-3">
+            <div>
+                <p class="text-xs text-gray-300 mb-1">LABA BERSIH REAL</p>
+                <p id="dash-laba-real" class="text-2xl font-bold text-[#a38d58]">Rp 0</p>
+                <p class="text-[9px] text-gray-400 mt-1">Omset − HPP − Pengeluaran Stok</p>
+            </div>
+            <div class="text-right">
+                <p class="text-[10px] text-gray-400">Total Botol</p>
+                <p id="dash-qty" class="text-lg font-bold">0</p>
+            </div>
+        </div>
+        <!-- Mini breakdown laba -->
+        <div class="grid grid-cols-3 gap-2 border-t border-gray-600 pt-3">
+            <div class="text-center">
+                <p class="text-[9px] text-gray-400">Laba Kotor</p>
+                <p id="dash-laba" class="text-xs font-bold text-yellow-300">Rp 0</p>
+                <p class="text-[8px] text-gray-500">Omset−HPP</p>
+            </div>
+            <div class="text-center border-x border-gray-600">
+                <p class="text-[9px] text-gray-400">Pengeluaran</p>
+                <p id="dash-pengeluaran-mini" class="text-xs font-bold text-red-400">Rp 0</p>
+                <p class="text-[8px] text-gray-500">Beli stok</p>
+            </div>
+            <div class="text-center">
+                <p class="text-[9px] text-gray-400">Margin</p>
+                <p id="dash-margin" class="text-xs font-bold text-green-300">0%</p>
+                <p class="text-[8px] text-gray-500">Laba/Omset</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grafik: Omset vs Pengeluaran per bulan -->
+    <div class="bg-white p-4 rounded-xl shadow mb-4">
+        <h3 class="text-xs font-bold text-gray-600 mb-2">📊 Omset vs Pengeluaran per Bulan</h3>
+        <div class="relative h-56"><canvas id="grafikOmset"></canvas></div>
+    </div>
+
+    <!-- Grafik: Laba per bulan -->
+    <div class="bg-white p-4 rounded-xl shadow mb-6">
+        <h3 class="text-xs font-bold text-gray-600 mb-2">📈 Laba Bersih per Bulan</h3>
+        <div class="relative h-48"><canvas id="grafikLaba"></canvas></div>
+    </div>
+
     <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
     <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-red-400"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><p class="text-xs text-gray-500 mb-2 border-b pb-2">Aroma underperforming.</p><div id="daftar-aroma-bawah" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
 </div>
@@ -383,6 +458,7 @@ const db = firebase.firestore();
 // STATE
 // ============================================================
 let chartInstance = null;
+let chartLabaInstance = null;
 let globalBibit = [];
 let globalBahan = [];
 let dataPesananExport = [];
@@ -391,6 +467,11 @@ let filterAktif = 'on_proses';
 let semuaDataPesanan = [];
 let tipePembelianAktif = 'bibit';
 let semuaDataPembelian = [];
+let dataPengeluaranBulanan = {}; // { 'Jan 2025': 500000, ... }
+let totalPengeluaran = 0;
+let totalPengeluaranBibit = 0;
+let totalPengeluaranBahan = 0;
+let jmlTransaksiPembelian = 0;
 
 // Nama bahan mapping
 const namaBahan = { "botol_35":"Botol 35 ml","botol_50":"Botol 50 ml","botol_100":"Botol 100 ml","abs_standar":"Absolute Standar","abs_khusus":"Absolute Khusus" };
@@ -433,7 +514,12 @@ function switchTab(t) {
     });
     document.getElementById('page-'+t).classList.remove('hidden');
     document.getElementById('tab-'+t).classList.replace('text-gray-500','tab-active');
-    if (t === 'dashboard' && chartInstance) { setTimeout(() => { chartInstance.resize(); chartInstance.update(); }, 100); }
+    if (t === 'dashboard' && (chartInstance || chartLabaInstance)) {
+        setTimeout(() => {
+            if (chartInstance) { chartInstance.resize(); chartInstance.update(); }
+            if (chartLabaInstance) { chartLabaInstance.resize(); chartLabaInstance.update(); }
+        }, 100);
+    }
 }
 
 function aktifkanNotif() {
@@ -878,18 +964,19 @@ function selesaikanPembelian(orderId, orderDataStr) {
             sisa_ml: firebase.firestore.FieldValue.increment(order.qty_ml)
         };
 
-        // Jika aroma belum ada di Firestore, gunakan set merge
+        // Jika aroma BARU (belum ada di Firestore) → pakai batch.set dengan merge
         if (!dataBibit) {
-            // Bibit baru: buat dokumen
-            stokRef.set({
+            batch.set(stokRef, {
                 nama: order.nama,
                 sisa_ml: order.qty_ml,
                 stok_kelas: { [order.kelas]: order.qty_ml },
                 modal: { [order.kelas]: order.harga_per_ml },
                 kelas_tersedia: [order.kelas]
             }, { merge: true });
-            batch.update(orderRef, { status: 'Selesai', waktu_selesai: firebase.firestore.FieldValue.serverTimestamp() });
-            batch.commit().then(() => alert(`✅ Stok bibit baru "${order.nama}" (${order.kelas}) berhasil ditambahkan!\nModal: Rp ${order.harga_per_ml}/ml`)).catch(e => alert("Gagal: " + e.message));
+            // orderRef sudah di-update di atas (status Selesai), tinggal commit
+            batch.commit()
+                .then(() => alert(`✅ Stok bibit BARU "${order.nama}" (${order.kelas}) berhasil ditambahkan!\nJumlah: ${order.qty_ml}ml\nModal: Rp ${order.harga_per_ml.toLocaleString()}/ml`))
+                .catch(e => alert("Gagal: " + e.message));
             return;
         }
 
@@ -914,7 +1001,6 @@ function selesaikanPembelian(orderId, orderDataStr) {
     batch.commit().then(() => {
         let pesan = `✅ Barang tiba & stok diperbarui!\n`;
         if (order.tipe === 'bibit') {
-            // Hitung modal rata baru untuk display
             const dataBibit = globalBibit.find(b => b.nama === order.nama);
             let stokL = dataBibit && dataBibit.stok_kelas && dataBibit.stok_kelas[order.kelas] ? dataBibit.stok_kelas[order.kelas] : 0;
             let modL  = dataBibit && dataBibit.modal && dataBibit.modal[order.kelas] ? dataBibit.modal[order.kelas] : 0;
@@ -922,7 +1008,7 @@ function selesaikanPembelian(orderId, orderDataStr) {
             let modB  = stokB > 0 ? Math.round((stokL * modL + order.qty_ml * order.harga_per_ml) / stokB) : order.harga_per_ml;
             pesan += `Bibit  : ${order.nama} (${order.kelas})\n`;
             pesan += `Tambah : +${order.qty_ml}ml\n`;
-            pesan += `Modal rata-rata baru: Rp ${modB.toLocaleString()}/ml`;
+            pesan += `Modal rata-rata baru: Rp ${modB.toLocaleString()}/ml\n`;
         } else {
             const dataBhn  = globalBahan.find(b => b.doc_id === order.id_bahan);
             let stokL = dataBhn ? (dataBhn.sisa || 0) : 0;
@@ -931,8 +1017,9 @@ function selesaikanPembelian(orderId, orderDataStr) {
             let hargB = stokB > 0 ? Math.round((stokL * hargL + order.qty * order.harga_satuan) / stokB) : order.harga_satuan;
             pesan += `Bahan  : ${order.nama}\n`;
             pesan += `Tambah : +${order.qty} unit\n`;
-            pesan += `Harga satuan rata-rata baru: Rp ${hargB.toLocaleString()}`;
+            pesan += `Harga satuan rata-rata baru: Rp ${hargB.toLocaleString()}\n`;
         }
+        pesan += `\n💰 Pengeluaran Rp ${(order.total_harga||0).toLocaleString()} otomatis tercatat di tab Analitik.`;
         alert(pesan);
     }).catch(e => alert("Gagal memperbarui stok: " + e.message));
 }
@@ -1044,12 +1131,128 @@ function renderFollowUp(dataList) {
     });
 }
 
-function renderGrafik(d) {
-    const ctx=document.getElementById('grafikOmset').getContext('2d');
-    const l=Object.keys(d).length?Object.keys(d):['Belum ada'];
-    const v=Object.values(d).length?Object.values(d):[0];
-    if(chartInstance) chartInstance.destroy();
-    chartInstance=new Chart(ctx,{type:'bar',data:{labels:l,datasets:[{label:'Omset (Rp)',data:v,backgroundColor:'#a38d58',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true}}}});
+function toggleDetailPengeluaran() {
+    const el = document.getElementById('detail-pengeluaran');
+    el.classList.toggle('hidden');
+}
+
+function fmt(n) { return 'Rp ' + Math.round(n).toLocaleString('id-ID'); }
+
+function renderDashboard(stat, pengeluaranData) {
+    const omset        = stat.total_omset || 0;
+    const hpp          = stat.total_hpp   || 0;
+    const labaKotor    = omset - hpp;
+    const labaReal     = labaKotor - totalPengeluaran;
+    const margin       = omset > 0 ? ((labaReal / omset) * 100).toFixed(1) : 0;
+
+    // Kartu atas
+    document.getElementById('dash-omset').innerText = fmt(omset);
+    document.getElementById('dash-hpp').innerText   = fmt(hpp);
+    document.getElementById('dash-qty').innerText   = stat.total_qty || 0;
+
+    // Pengeluaran
+    document.getElementById('dash-pengeluaran').innerText       = fmt(totalPengeluaran);
+    document.getElementById('dash-pengeluaran-bibit').innerText = fmt(totalPengeluaranBibit);
+    document.getElementById('dash-pengeluaran-bahan').innerText = fmt(totalPengeluaranBahan);
+    document.getElementById('dash-jml-pembelian').innerText     = jmlTransaksiPembelian + ' transaksi';
+
+    // Laba
+    document.getElementById('dash-laba').innerText          = fmt(labaKotor);
+    document.getElementById('dash-laba-real').innerText     = fmt(labaReal);
+    document.getElementById('dash-pengeluaran-mini').innerText = fmt(totalPengeluaran);
+    document.getElementById('dash-margin').innerText        = margin + '%';
+
+    // Warna laba real: merah kalau minus
+    const elLabaReal = document.getElementById('dash-laba-real');
+    elLabaReal.className = labaReal >= 0
+        ? 'text-2xl font-bold text-[#a38d58]'
+        : 'text-2xl font-bold text-red-400';
+
+    // Grafik omset vs pengeluaran
+    renderGrafik(stat.bulanan || {}, dataPengeluaranBulanan);
+
+    // Grafik laba per bulan
+    renderGrafikLaba(stat.bulanan || {}, stat.hpp_bulanan || {}, dataPengeluaranBulanan);
+
+    // Top/bottom aroma
+    renderTopAroma(stat.terjual_aroma || {});
+    renderBottomAroma(stat.terjual_aroma || {});
+}
+
+function renderGrafik(bulananOmset, bulananPengeluaran) {
+    const ctx = document.getElementById('grafikOmset').getContext('2d');
+
+    // Gabungkan semua label bulan dari omset & pengeluaran
+    const semuaBulan = Array.from(new Set([
+        ...Object.keys(bulananOmset),
+        ...Object.keys(bulananPengeluaran)
+    ])).sort();
+
+    const labels  = semuaBulan.length ? semuaBulan : ['Belum ada'];
+    const valOmset = labels.map(b => bulananOmset[b] || 0);
+    const valKeluar = labels.map(b => bulananPengeluaran[b] || 0);
+
+    if (chartInstance) chartInstance.destroy();
+    chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels,
+            datasets: [
+                { label: 'Omset', data: valOmset,  backgroundColor: '#a38d58', borderRadius: 4 },
+                { label: 'Pengeluaran Stok', data: valKeluar, backgroundColor: '#ef4444', borderRadius: 4 }
+            ]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: { y: { beginAtZero: true } },
+            plugins: { legend: { labels: { font: { size: 10 } } } }
+        }
+    });
+}
+
+function renderGrafikLaba(bulananOmset, bulananHpp, bulananPengeluaran) {
+    const ctx = document.getElementById('grafikLaba').getContext('2d');
+
+    const semuaBulan = Array.from(new Set([
+        ...Object.keys(bulananOmset),
+        ...Object.keys(bulananPengeluaran)
+    ])).sort();
+
+    const labels = semuaBulan.length ? semuaBulan : ['Belum ada'];
+    const valLaba = labels.map(b => {
+        const omset   = bulananOmset[b] || 0;
+        const hpp     = bulananHpp[b]   || 0;
+        const keluar  = bulananPengeluaran[b] || 0;
+        return omset - hpp - keluar;
+    });
+
+    if (chartLabaInstance) chartLabaInstance.destroy();
+    chartLabaInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [{
+                label: 'Laba Bersih',
+                data: valLaba,
+                borderColor: '#a38d58',
+                backgroundColor: 'rgba(163,141,88,0.1)',
+                fill: true,
+                tension: 0.3,
+                pointBackgroundColor: valLaba.map(v => v >= 0 ? '#a38d58' : '#ef4444'),
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    ticks: { callback: v => 'Rp ' + (v/1000).toFixed(0) + 'k' }
+                }
+            },
+            plugins: { legend: { labels: { font: { size: 10 } } } }
+        }
+    });
 }
 
 function renderTopAroma(d) {
@@ -1182,27 +1385,54 @@ function initAdminData() {
         renderDaftarPesanan(semuaDataPesanan);
     },error=>{ console.error(error); alert("Gagal memuat pesanan: "+error.message); });
 
-    // 4. Pembelian Stok (listener realtime)
-    db.collection("pembelian_stok").orderBy("waktu_buat","desc").limit(50).onSnapshot(snap=>{
-        semuaDataPembelian=[];
-        snap.forEach(doc=>semuaDataPembelian.push({id:doc.id,data:doc.data()}));
-        renderDaftarPembelian();
-    },error=>console.error("Gagal memuat pembelian:",error));
+    // 4. Pembelian Stok — realtime, hitung pengeluaran untuk analitik
+    db.collection("pembelian_stok").orderBy("waktu_buat","desc").limit(100).onSnapshot(snap => {
+        semuaDataPembelian = [];
+        // Reset counter pengeluaran
+        totalPengeluaran        = 0;
+        totalPengeluaranBibit   = 0;
+        totalPengeluaranBahan   = 0;
+        jmlTransaksiPembelian   = 0;
+        dataPengeluaranBulanan  = {};
 
-    // 5. Analitik
-    db.collection("statistik").doc("global").onSnapshot(doc=>{
-        if(doc.exists){
-            const stat=doc.data();
-            const laba=(stat.total_omset||0)-(stat.total_hpp||0);
-            document.getElementById('dash-omset').innerText='Rp '+(stat.total_omset||0).toLocaleString();
-            document.getElementById('dash-hpp').innerText='Rp '+(stat.total_hpp||0).toLocaleString();
-            document.getElementById('dash-laba').innerText='Rp '+laba.toLocaleString();
-            document.getElementById('dash-qty').innerText=stat.total_qty||0;
-            renderGrafik(stat.bulanan||{});
-            renderTopAroma(stat.terjual_aroma||{});
-            renderBottomAroma(stat.terjual_aroma||{});
+        snap.forEach(doc => {
+            const d = doc.data();
+            semuaDataPembelian.push({ id: doc.id, data: d });
+
+            // Hanya hitung yang status Selesai (barang sudah tiba)
+            if (d.status === 'Selesai') {
+                const nominal = d.total_harga || 0;
+                totalPengeluaran += nominal;
+                jmlTransaksiPembelian++;
+
+                if (d.tipe === 'bibit') totalPengeluaranBibit += nominal;
+                else                    totalPengeluaranBahan  += nominal;
+
+                // Kelompokkan per bulan berdasarkan waktu_selesai
+                const tgl = d.waktu_selesai ? d.waktu_selesai.toDate() : (d.waktu_buat ? d.waktu_buat.toDate() : new Date());
+                const bulanKey = tgl.toLocaleString('id-ID', { month: 'short', year: 'numeric' });
+                dataPengeluaranBulanan[bulanKey] = (dataPengeluaranBulanan[bulanKey] || 0) + nominal;
+            }
+        });
+
+        renderDaftarPembelian();
+
+        // Re-render dashboard jika sudah ada data statistik
+        const statEl = document.getElementById('dash-omset');
+        if (statEl && statEl.innerText !== 'Rp 0') {
+            // Ambil stat terakhir dari cache Firestore (offline cache)
+            db.collection("statistik").doc("global").get().then(doc => {
+                if (doc.exists) renderDashboard(doc.data(), dataPengeluaranBulanan);
+            });
         }
-    },error=>console.error("Gagal memuat analitik:",error));
+    }, error => console.error("Gagal memuat pembelian:", error));
+
+    // 5. Analitik — realtime dari statistik global
+    db.collection("statistik").doc("global").onSnapshot(doc => {
+        if (doc.exists) {
+            renderDashboard(doc.data(), dataPengeluaranBulanan);
+        }
+    }, error => console.error("Gagal memuat analitik:", error));
 
     // 6. CRM & Follow Up
     db.collection("crm").orderBy("total_spent","desc").onSnapshot(snap=>{
