@@ -164,6 +164,11 @@ const firebaseConfig = {
     appId:             "1:894897183896:web:71372dc8cbb9056c7144ed"
 };
 firebase.initializeApp(firebaseConfig);
+    const appCheck = initializeAppCheck(app, {
+  provider: new ReCaptchaV3Provider('6LfXU6ksAAAAABaPSzyVAgODFb1775vt-DCSvYFp'),
+  
+  isTokenAutoRefreshEnabled: true 
+});
 const db = firebase.firestore();
 
 db.enablePersistence({ synchronizeTabs: false })
