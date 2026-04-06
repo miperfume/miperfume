@@ -719,13 +719,14 @@ function cekRestock() {
     const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = '';
 
     // Kumpulkan ke array dulu, sort dari sisa terkecil
+    // Threshold bibit: tampil jika sisa < 30 ml
     const itemsBibit = [];
     globalBibit.forEach(b => {
         if (b.stok_kelas) {
             Object.entries(b.stok_kelas).forEach(([k, v]) => {
-                if (v <= 50) itemsBibit.push({ nama: b.nama, kelas: k, sisa: v });
+                if (v < 30) itemsBibit.push({ nama: b.nama, kelas: k, sisa: v });
             });
-        } else if (b.sisa_ml <= 50) {
+        } else if (b.sisa_ml < 30) {
             itemsBibit.push({ nama: b.nama, kelas: null, sisa: b.sisa_ml });
         }
     });
@@ -740,12 +741,21 @@ function cekRestock() {
         });
     }
 
+    // Threshold bahan: botol_35 < 6, botol_50 < 4, botol_100 < 3, absolute < 200
+    const LIMIT_BAHAN = {
+        botol_35:    { limit: 6,   unit: 'pcs' },
+        botol_50:    { limit: 4,   unit: 'pcs' },
+        botol_100:   { limit: 3,   unit: 'pcs' },
+        abs_standar: { limit: 200, unit: 'ml'  },
+        abs_khusus:  { limit: 200, unit: 'ml'  },
+    };
     const itemsBahan = [];
     globalBahan.forEach(b => {
-        const id = b.doc_id || '', sisa = Number(b.sisa) || 0;
-        const limit = id.includes('botol') ? 20 : 100;
-        const unit  = id.includes('botol') ? 'pcs' : 'ml';
-        if (sisa <= limit) itemsBahan.push({ nama: b.nama || id, sisa, unit });
+        const id   = b.doc_id || '';
+        const sisa = Number(b.sisa) || 0;
+        const cfg  = LIMIT_BAHAN[id];
+        if (!cfg) return; // id tidak dikenal, skip
+        if (sisa < cfg.limit) itemsBahan.push({ nama: b.nama || id, sisa, unit: cfg.unit });
     });
     itemsBahan.sort((a, b) => a.sisa - b.sisa);
 
@@ -1302,7 +1312,7 @@ function initAdminData() {
                 if(diffDays>=7) followupList.push({nama:d.nama,no_wa:d.no_wa,hari_lalu:diffDays,aroma:Array.from(d.aromas).join(', ')});
             }
         });
-        renderCRM(crmList.slice(0,50));
+        renderCRM(crmList.slice(0,20));
         renderFollowUp(followupList);
     });
 }
