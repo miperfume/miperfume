@@ -717,15 +717,45 @@ function hapusDokumen(col, id) { if (confirm("Hapus?")) db.collection(col).doc(i
 function cekRestock() {
     const wBibit = document.getElementById('restock-bibit'); wBibit.innerHTML = '';
     const wBahan = document.getElementById('restock-bahan'); wBahan.innerHTML = '';
-    let adaBibit = false;
+
+    // Kumpulkan ke array dulu, sort dari sisa terkecil
+    const itemsBibit = [];
     globalBibit.forEach(b => {
-        if (b.stok_kelas) Object.entries(b.stok_kelas).forEach(([k,v]) => { if (v<=50){ adaBibit=true; wBibit.innerHTML+=`<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)} <span class="text-[10px] text-gray-500">(${escapeHTML(k)})</span></span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${v} ml</span></div>`; } });
-        else if (b.sisa_ml<=50) { adaBibit=true; wBibit.innerHTML+=`<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${b.sisa_ml} ml</span></div>`; }
+        if (b.stok_kelas) {
+            Object.entries(b.stok_kelas).forEach(([k, v]) => {
+                if (v <= 50) itemsBibit.push({ nama: b.nama, kelas: k, sisa: v });
+            });
+        } else if (b.sisa_ml <= 50) {
+            itemsBibit.push({ nama: b.nama, kelas: null, sisa: b.sisa_ml });
+        }
     });
-    if (!adaBibit) wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>';
-    let adaBahan = false;
-    globalBahan.forEach(b => { const id=b.doc_id||'', sisa=Number(b.sisa)||0, limit=id.includes('botol')?20:100, unit=id.includes('botol')?'pcs':'ml'; if(sisa<=limit){ adaBahan=true; wBahan.innerHTML+=`<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(b.nama||id)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${sisa} ${unit}</span></div>`; } });
-    if (!adaBahan) wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>';
+    itemsBibit.sort((a, b) => a.sisa - b.sisa);
+
+    if (!itemsBibit.length) {
+        wBibit.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>';
+    } else {
+        itemsBibit.forEach(item => {
+            const kelasHtml = item.kelas ? ` <span class="text-[10px] text-gray-500">(${escapeHTML(item.kelas)})</span>` : '';
+            wBibit.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(item.nama)}${kelasHtml}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${item.sisa} ml</span></div>`;
+        });
+    }
+
+    const itemsBahan = [];
+    globalBahan.forEach(b => {
+        const id = b.doc_id || '', sisa = Number(b.sisa) || 0;
+        const limit = id.includes('botol') ? 20 : 100;
+        const unit  = id.includes('botol') ? 'pcs' : 'ml';
+        if (sisa <= limit) itemsBahan.push({ nama: b.nama || id, sisa, unit });
+    });
+    itemsBahan.sort((a, b) => a.sisa - b.sisa);
+
+    if (!itemsBahan.length) {
+        wBahan.innerHTML = '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>';
+    } else {
+        itemsBahan.forEach(item => {
+            wBahan.innerHTML += `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(item.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${item.sisa} ${item.unit}</span></div>`;
+        });
+    }
 }
 
 // ============================================================
@@ -767,8 +797,52 @@ function tolakPesanan(id) {
 
 function selesaikanPesanan(id) {
     if (!confirm("Tandai selesai? Omset akan masuk ke Buku Analitik via Server.")) return;
-    db.collection("pesanan").doc(id).update({ status: "Selesai" })
-        .then(() => alert("🎉 Pesanan Selesai!")).catch(e => alert(e.message));
+
+    // Ambil data pesanan dulu supaya bisa langsung update statistik bulanan
+    db.collection("pesanan").doc(id).get().then(snap => {
+        if (!snap.exists) return alert("Pesanan tidak ditemukan.");
+        const data = snap.data();
+        const omset = Number(data.total) || 0;
+        const hpp   = Number(data.total_hpp) || 0;
+        const items = data.items || [];
+        const totalQty = items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+
+        const tgl = data.waktu ? data.waktu.toDate() : new Date();
+        const bln = tgl.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+
+        const batch = db.batch();
+
+        // Update status pesanan
+        batch.update(db.collection("pesanan").doc(id), { status: "Selesai" });
+
+        // Update statistik global secara langsung (atomic increment)
+        // Ini yang menyebabkan grafik laba langsung bergerak tanpa perlu sync manual
+        const statRef = db.collection("statistik").doc("global");
+        const statUpdate = {
+            total_omset: firebase.firestore.FieldValue.increment(omset),
+            total_hpp:   firebase.firestore.FieldValue.increment(hpp),
+            total_qty:   firebase.firestore.FieldValue.increment(totalQty),
+        };
+        statUpdate[`bulanan.${bln}`]     = firebase.firestore.FieldValue.increment(omset);
+        statUpdate[`hpp_bulanan.${bln}`] = firebase.firestore.FieldValue.increment(hpp);
+
+        // Update terjual per aroma
+        items.forEach(item => {
+            const aromaKey = (item.aroma || "Unknown")
+                .toUpperCase()
+                .replace(/[\.\[\]\/\*`]/g, "")
+                .replace(/\s+/g, "_")
+                .replace(/[^\w\-]/g, "")
+                .trim() || "UNKNOWN";
+            statUpdate[`terjual_aroma.${aromaKey}`] = firebase.firestore.FieldValue.increment(Number(item.qty) || 0);
+        });
+
+        batch.set(statRef, statUpdate, { merge: true });
+
+        return batch.commit();
+    })
+    .then(() => alert("🎉 Pesanan Selesai! Grafik Analitik diperbarui otomatis."))
+    .catch(e => alert("Gagal: " + e.message));
 }
 
 // ============================================================
