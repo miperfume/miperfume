@@ -168,8 +168,8 @@ firebase.initializeApp(firebaseConfig);
 
 // Inisialisasi App Check format Compat
 firebase.appCheck().activate(
-    '6LfXU6ksAAAAABaPSzyVAgODFb1775vt-DCSvYFp', // Site Key reCAPTCHA Anda
-    true // isTokenAutoRefreshEnabled
+    new firebase.appCheck.ReCaptchaV3Provider('6LfXU6ksAAAAABaPSzyVAgODFb1775vt-DCSvYFp'),
+    true
 );
     
 const db = firebase.firestore();
