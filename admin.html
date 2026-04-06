@@ -376,8 +376,8 @@ firebase.initializeApp(firebaseConfig);
     
 // AKTIVASI APP CHECK UNTUK ADMIN
 firebase.appCheck().activate(
-    '6LfXU6ksAAAAABaPSzyVAgODFb1775vt-DCSvYFp', // Site Key reCAPTCHA Anda
-    true // isTokenAutoRefreshEnabled
+    new firebase.appCheck.ReCaptchaV3Provider('6LfXU6ksAAAAABaPSzyVAgODFb1775vt-DCSvYFp'),
+    true
 );
     
 const db = firebase.firestore();
