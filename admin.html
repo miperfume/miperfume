@@ -1091,7 +1091,7 @@ async function sinkronUlangStatistik(e) {
         const snap = await db.collection("pesanan").where("status", "==", "Selesai").get();
         
         let totalOmset = 0; let totalHpp = 0; let totalQty = 0;
-        let terjualAroma = {}; let bulanan = {};
+        let terjualAroma = {}; let bulanan = {}; let hppBulanan = {};
 
         snap.forEach(doc => {
             const d = doc.data();
@@ -1101,10 +1101,12 @@ async function sinkronUlangStatistik(e) {
             totalOmset += omset;
             totalHpp += hpp;
 
-            // Kelompokkan Omset Bulanan
+            // Kelompokkan Omset dan HPP Bulanan
             let tgl = d.waktu ? d.waktu.toDate() : new Date();
             const bln = tgl.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+            
             bulanan[bln] = (bulanan[bln] || 0) + omset;
+            hppBulanan[bln] = (hppBulanan[bln] || 0) + hpp; // <--- INI KUNCI PERBAIKANNYA
 
             // Kelompokkan Top 20 Aroma
             let items = d.items || [];
@@ -1126,10 +1128,11 @@ async function sinkronUlangStatistik(e) {
             total_hpp: totalHpp,
             total_qty: totalQty,
             bulanan: bulanan,
+            hpp_bulanan: hppBulanan, // <--- MENYIMPAN HPP BULANAN KE SERVER
             terjual_aroma: terjualAroma
         }, { merge: true });
 
-        alert("✅ Sinkronisasi Berhasil! Grafik dan Top 20 Aroma sudah akurat 100%.");
+        alert("✅ Sinkronisasi Berhasil! Grafik Laba Bersih dan Top 20 Aroma sudah akurat 100%.");
     } catch (err) {
         console.error(err);
         alert("Gagal sinkronisasi: " + err.message);
