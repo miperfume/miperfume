@@ -11,6 +11,7 @@
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-appcheck-compat.js"></script>
 
 <style>
     .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
@@ -372,6 +373,13 @@ const firebaseConfig = {
     appId: "1:894897183896:web:71372dc8cbb9056c7144ed"
 };
 firebase.initializeApp(firebaseConfig);
+    
+// AKTIVASI APP CHECK UNTUK ADMIN
+firebase.appCheck().activate(
+    '6LfXU6ksAAAAABaPSzyVAgODFb1775vt-DCSvYFp', // Site Key reCAPTCHA Anda
+    true // isTokenAutoRefreshEnabled
+);
+    
 const db = firebase.firestore();
 
 // FIX #5: Persistence aktif agar data muncul dari cache setelah login
