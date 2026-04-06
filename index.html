@@ -180,11 +180,8 @@ try {
     
 const db = firebase.firestore();
 
-db.settings({
-    localCache: firebase.firestore.persistentLocalCache({
-        tabManager: firebase.firestore.persistentSingleTabManager()
-    })
-});
+db.enablePersistence({ synchronizeTabs: false })
+    .catch(err => console.warn('Persistence tidak aktif:', err.code));
 
 // ============================================================
 // STATE
