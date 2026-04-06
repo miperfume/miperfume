@@ -195,14 +195,16 @@ function closeSplash() {
 const splashFallback = setTimeout(closeSplash, 5000);
 
 // ============================================================
-// AUTH — Login anonim lalu muat data
+// AUTH — LOGIN PINTAR (ANTI-HILANG RIWAYAT)
 // ============================================================
-firebase.auth().signInAnonymously().catch(err => console.error("Gagal Auth Anonim:", err));
-
 firebase.auth().onAuthStateChanged(user => {
     if (user) {
+        // Jika sudah punya sesi (riwayat aman)
         buyerId = user.uid;
         loadRiwayat();
+    } else {
+        // Jika benar-benar baru pertama kali buka web
+        firebase.auth().signInAnonymously().catch(err => console.error("Gagal Auth Anonim:", err));
     }
 });
 
@@ -528,7 +530,13 @@ function loadRiwayat() {
                     ${tombolBayar}
                 </div>`;
             });
-        }, err => console.error("Gagal load riwayat:", err));
+        }, err => {
+            console.error("Gagal load riwayat:", err);
+            if(err.message.includes("requires an index")) {
+                console.warn("BUAT INDEX DI SINI: ", err.message);
+                alert("Sistem sedang mensinkronisasi Database (Index). Buka F12 (Console) di browser untuk melihat link pembuatannya.");
+            }
+        });
 }
 </script>
 </body>
