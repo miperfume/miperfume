@@ -255,9 +255,12 @@
     <!-- PAGE: DASHBOARD -->
     <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
         <div class="flex justify-between items-center border-b pb-1 mb-3">
-            <h2 class="font-bold text-gray-700 text-sm">Laporan Keseluruhan (Global)</h2>
-            <button onclick="exportExcel()" class="bg-green-600 text-white text-xs px-2 py-1 rounded shadow">📥 Download CSV</button>
-        </div>
+    <h2 class="font-bold text-gray-700 text-sm">Laporan Keseluruhan (Global)</h2>
+    <div class="flex gap-2">
+        <button onclick="sinkronUlangStatistik(event)" class="bg-yellow-500 hover:bg-yellow-600 text-white text-xs px-2 py-1 rounded shadow">🔄 Sinkron Data</button>
+        <button onclick="exportExcel()" class="bg-green-600 text-white text-xs px-2 py-1 rounded shadow">📥 Download CSV</button>
+    </div>
+</div>
         <div class="grid grid-cols-2 gap-3 mb-3">
             <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]"><p class="text-[10px] text-gray-500">OMSET PENJUALAN</p><p id="dash-omset" class="text-md font-bold">Rp 0</p></div>
             <div class="bg-white p-3 rounded-xl shadow border-l-4 border-orange-400"><p class="text-[10px] text-gray-500">HPP PENJUALAN</p><p id="dash-hpp" class="text-md font-bold text-orange-600">Rp 0</p></div>
@@ -1073,7 +1076,68 @@ function exportExcel() {
     a.href = window.URL.createObjectURL(new Blob([csv], {type:'text/csv;charset=utf-8;'}));
     a.download = "Laporan_MI_Perfume.csv"; a.click();
 }
+// ============================================================
+// FUNGSI SAPU JAGAT: MENGHITUNG ULANG SELURUH DATA DARI AWAL
+// ============================================================
+async function sinkronUlangStatistik(e) {
+    if(!confirm("Fitur ini akan membaca seluruh pesanan 'Selesai' dari awal toko buka dan menghitung ulang Omset, Laba, serta Top 20 Aroma secara akurat. Lanjutkan?")) return;
+    
+    const btn = e.target;
+    const originalText = btn.innerText;
+    btn.innerText = "⏳ Menghitung...";
+    btn.disabled = true;
 
+    try {
+        const snap = await db.collection("pesanan").where("status", "==", "Selesai").get();
+        
+        let totalOmset = 0; let totalHpp = 0; let totalQty = 0;
+        let terjualAroma = {}; let bulanan = {};
+
+        snap.forEach(doc => {
+            const d = doc.data();
+            const omset = Number(d.total) || 0;
+            const hpp = Number(d.total_hpp) || 0;
+            
+            totalOmset += omset;
+            totalHpp += hpp;
+
+            // Kelompokkan Omset Bulanan
+            let tgl = d.waktu ? d.waktu.toDate() : new Date();
+            const bln = tgl.toLocaleDateString("id-ID", { month: "short", year: "numeric" });
+            bulanan[bln] = (bulanan[bln] || 0) + omset;
+
+            // Kelompokkan Top 20 Aroma
+            let items = d.items || [];
+            if (!Array.isArray(items) || items.length === 0) {
+                if (d.aroma) items = [{ aroma: d.aroma, qty: Number(d.qty) || 1 }];
+            }
+
+            items.forEach(item => {
+                const a = (item.aroma || "Unknown").toUpperCase().trim();
+                const q = Number(item.qty) || 1;
+                totalQty += q;
+                terjualAroma[a] = (terjualAroma[a] || 0) + q;
+            });
+        });
+
+        // Tembak hasil hitungan baru ke Server
+        await db.collection("statistik").doc("global").set({
+            total_omset: totalOmset,
+            total_hpp: totalHpp,
+            total_qty: totalQty,
+            bulanan: bulanan,
+            terjual_aroma: terjualAroma
+        }, { merge: true });
+
+        alert("✅ Sinkronisasi Berhasil! Grafik dan Top 20 Aroma sudah akurat 100%.");
+    } catch (err) {
+        console.error(err);
+        alert("Gagal sinkronisasi: " + err.message);
+    }
+
+    btn.innerText = originalText;
+    btn.disabled = false;
+}
 // ============================================================
 // INIT — Dipanggil sekali setelah login berhasil
 // ============================================================
