@@ -389,9 +389,11 @@ try {
 const db = firebase.firestore();
 
 // FIX #5: Persistence aktif agar data muncul dari cache setelah login
-db.enablePersistence({ synchronizeTabs: true }).catch(err =>
-    console.warn('Persistence tidak aktif:', err.code)
-);
+db.settings({
+    localCache: firebase.firestore.persistentLocalCache({
+        tabManager: firebase.firestore.persistentMultipleTabManager()
+    })
+});
 
 // ============================================================
 // STATE
