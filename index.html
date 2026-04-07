@@ -169,7 +169,15 @@ try {
 } catch (e) { console.error("App Check gagal:", e); }
 
 const db = firebase.firestore();
-db.enablePersistence({ synchronizeTabs: false }).catch(err => console.warn('Persistence:', err.code));
+// Multi-tab persistence agar semua tab bisa pakai cache IndexedDB
+db.enableMultiTabIndexedDbPersistence().catch(err => {
+    if (err.code === 'failed-precondition') {
+        // Fallback: banyak tab terbuka, hanya satu yang bisa pakai persistence
+        db.enablePersistence({ synchronizeTabs: false }).catch(() => {});
+    } else if (err.code !== 'unimplemented') {
+        console.warn('Persistence gagal:', err.code);
+    }
+});
 
 // ============================================================
 // STATE
@@ -208,13 +216,17 @@ firebase.auth().onAuthStateChanged(user => {
 });
 
 // ============================================================
-// DATA BAHAN — onSnapshot agar sinkron dengan stok realtime
+// DATA BAHAN — fetch sekali saat load (data internal, tidak perlu realtime di customer)
+// Harga modal dan stok absolut adalah data internal yang tidak perlu di-stream ke pembeli.
 // ============================================================
-db.collection("bahan").onSnapshot(snap => {
-    snap.forEach(doc => {
-        dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 };
-    });
-}, err => console.error("Gagal load bahan:", err));
+function loadBahan() {
+    db.collection("bahan").get().then(snap => {
+        snap.forEach(doc => {
+            dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 };
+        });
+    }).catch(err => console.error("Gagal load bahan:", err));
+}
+loadBahan();
 
 // ============================================================
 // DATA STOK — realtime
@@ -411,7 +423,7 @@ function kirimPesananAkhir() {
         no_wa:     escapeHTML(noWa),
         items:     keranjang,
         total:     totalFinal,
-        total_hpp: totalHppFinal,
+        total_hpp: 0, // Placeholder — Cloud Function rekapDataServer hitung ulang dari items[].hpp_total
         status:    "Menunggu Diproses",
         waktu:     firebase.firestore.FieldValue.serverTimestamp()
     }).then(() => {
