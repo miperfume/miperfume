@@ -178,17 +178,16 @@
         </div>
 
         <div id="form-bahan-baru" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-            <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
-            <div class="space-y-2">
-                <input type="text" id="bahan-baru-id" class="w-full border p-2 rounded text-sm" placeholder="ID unik (mis. botol_200)">
-                <input type="text" id="bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
-                <div class="flex gap-2">
-                    <input type="number" id="bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
-                    <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
-                </div>
-                <button type="button" onclick="simpanBahanBaru()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
-            </div>
+    <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
+    <div class="space-y-2">
+        <input type="text" id="bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
+        <div class="flex gap-2">
+            <input type="number" id="bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
+            <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
         </div>
+        <button type="button" onclick="simpanBahanBaru()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
+    </div>
+</div>
         
         <div id="info-bahan-stok" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
             <div class="flex justify-between mb-1">
@@ -282,17 +281,16 @@
                     class="text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
             </div>
             <div id="form-bahan-baru-pembelian" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
-                <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Botol / Absolute Baru</p>
-                <div class="space-y-2">
-                    <input type="text" id="pb-bahan-baru-id" class="w-full border p-2 rounded text-sm" placeholder="ID unik (mis. botol_200)">
-                    <input type="text" id="pb-bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama (mis. Botol 200 ml)">
-                    <div class="flex gap-2">
-                        <input type="number" id="pb-bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
-                        <input type="number" id="pb-bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
-                    </div>
-                    <button type="button" onclick="simpanBahanBaruDariPembelian()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan & Gunakan</button>
-                </div>
-            </div>
+    <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Botol / Absolute Baru</p>
+    <div class="space-y-2">
+        <input type="text" id="pb-bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama (mis. Botol 200 ml)">
+        <div class="flex gap-2">
+            <input type="number" id="pb-bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
+            <input type="number" id="pb-bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
+        </div>
+        <button type="button" onclick="simpanBahanBaruDariPembelian()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan & Gunakan</button>
+    </div>
+</div>
             <div id="info-stok-bahan-pb" class="bg-blue-50 border border-blue-200 rounded-lg p-2 text-xs hidden">
                 <div class="flex justify-between">
                     <span class="text-gray-500">Stok saat ini: <b id="info-sisa-bahan-pb" class="text-blue-700">-</b></span>
@@ -948,31 +946,34 @@ function simpanEditBahan(e) {
 
 function toggleFormBahanBaru() {
     const form = document.getElementById('form-bahan-baru');
-    form.classList.toggle('hidden');
-    if (!form.classList.contains('hidden')) {
-        document.getElementById('bahan-baru-id').focus();
+    if (form) {
+        form.classList.toggle('hidden');
+        if (!form.classList.contains('hidden')) {
+            document.getElementById('bahan-baru-nama').focus();
+        }
     }
 }
 
 function simpanBahanBaru() {
-    const newId    = document.getElementById('bahan-baru-id').value.trim().toLowerCase().replace(/\s+/g,'_');
     const newNama  = document.getElementById('bahan-baru-nama').value.trim();
     const newQty   = parseInt(document.getElementById('bahan-baru-qty').value) || 0;
     const newHarga = parseInt(document.getElementById('bahan-baru-harga').value) || 0;
-    if (!newId)    return alert("Masukkan ID unik untuk bahan baru!");
+    
     if (!newNama)  return alert("Masukkan nama bahan!");
     if (newQty <= 0)   return alert("Stok awal harus lebih dari 0!");
     if (newHarga <= 0) return alert("Harga satuan harus lebih dari 0!");
-    const existing = globalBahan.find(b => b.doc_id === newId);
-    if (existing) return alert(`ID "${newId}" sudah digunakan untuk "${existing.nama}". Gunakan ID lain.`);
+
+    // Generate ID unik otomatis (item_ + timestamp ms)
+    const newId = "item_" + Date.now();
+    
     db.collection("bahan").doc(newId).set({id: newId, nama: newNama, sisa: newQty, harga_satuan: newHarga})
         .then(() => {
             alert(`✅ Bahan "${newNama}" berhasil ditambahkan!`);
-            document.getElementById('bahan-baru-id').value = '';
             document.getElementById('bahan-baru-nama').value = '';
             document.getElementById('bahan-baru-qty').value = '';
             document.getElementById('bahan-baru-harga').value = '';
             document.getElementById('form-bahan-baru').classList.add('hidden');
+            
             const opt = `<option value="${escapeHTML(newId)}">${escapeHTML(newNama)}</option>`;
             document.getElementById('bahan-id').innerHTML += opt;
             document.getElementById('pb-bahan-id').innerHTML += opt;
@@ -987,7 +988,7 @@ function toggleFormBahanBaruPembelian() {
     const form = document.getElementById('form-bahan-baru-pembelian');
     form.classList.toggle('hidden');
     if (!form.classList.contains('hidden')) {
-        document.getElementById('pb-bahan-baru-id').focus();
+        document.getElementById('pb-bahan-baru-nama').focus();
     }
 }
 
@@ -1007,24 +1008,25 @@ function onPilihBahanPembelian() {
 }
 
 function simpanBahanBaruDariPembelian() {
-    const newId    = document.getElementById('pb-bahan-baru-id').value.trim().toLowerCase().replace(/\s+/g,'_');
     const newNama  = document.getElementById('pb-bahan-baru-nama').value.trim();
     const newQty   = parseInt(document.getElementById('pb-bahan-baru-qty').value) || 0;
     const newHarga = parseInt(document.getElementById('pb-bahan-baru-harga').value) || 0;
-    if (!newId)    return alert("Masukkan ID unik!");
+    
     if (!newNama)  return alert("Masukkan nama bahan!");
     if (newQty <= 0)   return alert("Stok awal harus lebih dari 0!");
     if (newHarga <= 0) return alert("Harga satuan harus lebih dari 0!");
-    const existing = globalBahan.find(b => b.doc_id === newId);
-    if (existing) return alert(`ID "${newId}" sudah digunakan. Gunakan ID lain.`);
+
+    // Generate ID unik otomatis (item_ + timestamp ms)
+    const newId = "item_" + Date.now();
+    
     db.collection("bahan").doc(newId).set({id: newId, nama: newNama, sisa: newQty, harga_satuan: newHarga})
         .then(() => {
             alert(`✅ Bahan "${newNama}" ditambahkan!`);
-            document.getElementById('pb-bahan-baru-id').value = '';
             document.getElementById('pb-bahan-baru-nama').value = '';
             document.getElementById('pb-bahan-baru-qty').value = '';
             document.getElementById('pb-bahan-baru-harga').value = '';
             document.getElementById('form-bahan-baru-pembelian').classList.add('hidden');
+            
             const opt = `<option value="${escapeHTML(newId)}">${escapeHTML(newNama)}</option>`;
             document.getElementById('bahan-id').innerHTML += opt;
             document.getElementById('pb-bahan-id').innerHTML += opt;
