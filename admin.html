@@ -391,10 +391,20 @@ try {
 const db         = firebase.firestore();
 const functions  = firebase.functions();
 
-// Callable Cloud Function untuk selesaikan pembelian (server-side atomic)
+// Callable Cloud Functions — server-side atomic
 const fnSelesaikanPembelian = functions.httpsCallable('selesaikanPembelian');
+const fnTerimaPesanan       = functions.httpsCallable('terimaPesanan');
+const fnHapusBibitStok      = functions.httpsCallable('hapusBibitStok');
+const fnHapusBahanStok      = functions.httpsCallable('hapusBahanStok');
+const fnSinkronStatistik    = functions.httpsCallable('sinkronUlangStatistik');
 
-db.enablePersistence({ synchronizeTabs: false }).catch(err => console.warn('Persistence:', err.code));
+db.enableMultiTabIndexedDbPersistence().catch(err => {
+    if (err.code === 'failed-precondition') {
+        db.enablePersistence({ synchronizeTabs: false }).catch(() => {});
+    } else if (err.code !== 'unimplemented') {
+        console.warn('Persistence gagal:', err.code);
+    }
+});
 
 // ============================================================
 // OFFLINE INDICATOR
@@ -457,6 +467,8 @@ function togglePassword() { const p = $id('input-pass'); p.type = p.type === 'pa
 // TAB
 // ============================================================
 const TABS = ['pesanan','stok','pembelian','crm','dashboard','restock','followup'];
+const tabsLoaded = new Set(); // Lazy load: track tab yang sudah subscribe
+
 function switchTab(t) {
     TABS.forEach(id => {
         $id('page-'+id).classList.add('hidden');
@@ -470,6 +482,13 @@ function switchTab(t) {
             chartInstance?.resize(); chartInstance?.update();
             chartLabaInstance?.resize(); chartLabaInstance?.update();
         }, 100);
+    }
+    // Lazy load: subscribe listener non-kritis saat tab pertama kali dibuka
+    if (!tabsLoaded.has(t)) {
+        tabsLoaded.add(t);
+        if (t === 'pembelian' && !listeners.pembelian) subscribePembelian();
+        if (t === 'crm'       && !listeners.crm)       subscribeCRM();
+        if (t === 'dashboard' && !listeners.statistik)  subscribeStatistik();
     }
 }
 
@@ -620,29 +639,12 @@ function renderDaftarPesanan(allData) {
 // PESANAN — AKSI
 // ============================================================
 function terimaPesanan(id, items) {
-    let stokAman = true, pesanError = "";
-    for (const item of items) {
-        if (item.bibit) {
-            const d = globalBibit.find(b => b.nama === item.aroma);
-            if (!d) { stokAman = false; pesanError += `- Aroma ${item.aroma} tidak ditemukan.\n`; continue; }
-            const stok = (item.kelas && d.stok_kelas?.[item.kelas] !== undefined) ? d.stok_kelas[item.kelas] : (d.sisa_ml || 0);
-            if (stok < item.bibit) { stokAman = false; pesanError += `- Stok ${item.aroma} (${item.kelas}) sisa ${stok}ml (Butuh: ${item.bibit}ml).\n`; }
-        }
-    }
-    if (!stokAman) { alert("⚠️ GAGAL DITERIMA! STOK TIDAK CUKUP:\n\n" + pesanError); return; }
-    if (!confirm("Terima pesanan? Stok akan dipotong dan status menjadi 'Diproses'.")) return;
-    const batch = db.batch();
-    batch.update(db.collection("pesanan").doc(id), { status: "Diproses" });
-    items.forEach(item => {
-        if (item.bibit) {
-            const obj = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
-            if (item.kelas) obj[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
-            batch.update(db.collection("stok").doc(item.aroma), obj);
-        }
-        if (item.id_botol)    batch.update(db.collection("bahan").doc(item.id_botol),    { sisa: firebase.firestore.FieldValue.increment(-item.qty) });
-        if (item.id_absolute) batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
-    });
-    batch.commit().then(() => alert("✅ Pesanan diterima & Stok berhasil dipotong!")).catch(e => alert("Gagal: " + e.message));
+    // Pindahkan ke Cloud Function untuk mencegah race condition:
+    // dua admin klik "Terima" bersamaan → Transaction di server gagal untuk yang kedua
+    if (!confirm("Terima pesanan? Stok akan dipotong secara atomik di server dan status menjadi 'Diproses'.")) return;
+    fnTerimaPesanan({ pesananId: id })
+        .then(() => alert("✅ Pesanan diterima & Stok berhasil dipotong!"))
+        .catch(e => alert("⚠️ Gagal menerima pesanan:\n" + (e.message || e.details || "Error tidak diketahui")));
 }
 
 function tolakPesanan(id) {
@@ -891,15 +893,21 @@ function simpanBahanBaru(source) {
 function hapusBibitTerpilih() {
     const val = $id('bibit-pilih').value;
     if (val === '_NEW_') return alert("Pilih aroma yang ingin dihapus.");
-    if (!confirm(`Hapus aroma "${val}"? Tindakan ini permanen.`)) return;
-    db.collection("stok").doc(val).delete().then(() => alert("✅ Aroma dihapus.")).catch(e => alert("Gagal: " + e.message));
+    if (!confirm(`Hapus aroma "${val}"? Tindakan ini permanen.\n\nSistem akan mengecek apakah ada pesanan aktif yang menggunakan aroma ini.`)) return;
+    // Cloud Function: cek pesanan aktif sebelum hapus
+    fnHapusBibitStok({ namaAroma: val })
+        .then(() => alert("✅ Aroma dihapus."))
+        .catch(e => alert("⚠️ Gagal hapus aroma:\n" + (e.message || e.details || "Error tidak diketahui")));
 }
 function hapusBahanTerpilih() {
     const id = $id('bahan-id').value;
     if (!id) return alert("Pilih bahan terlebih dahulu.");
     const nama = globalBahan.find(b => b.doc_id === id)?.nama || namaBahanMap[id] || id;
-    if (!confirm(`Hapus "${nama}"? Tindakan ini permanen.`)) return;
-    db.collection("bahan").doc(id).delete().then(() => alert("✅ Bahan dihapus.")).catch(e => alert("Gagal: " + e.message));
+    if (!confirm(`Hapus "${nama}"? Tindakan ini permanen.\n\nSistem akan mengecek apakah ada pesanan aktif yang menggunakan bahan ini.`)) return;
+    // Cloud Function: cek pesanan aktif sebelum hapus
+    fnHapusBahanStok({ idBahan: id })
+        .then(() => alert("✅ Bahan dihapus."))
+        .catch(e => alert("⚠️ Gagal hapus bahan:\n" + (e.message || e.details || "Error tidak diketahui")));
 }
 
 function cekRestock() {
@@ -1153,7 +1161,16 @@ function renderFollowUp(dataList) {
 // ============================================================
 function cetakStruk(data) {
     const iR = (data.items||[]).map(i => `<tr><td style="vertical-align:top;width:10%;padding-bottom:4px;">${i.qty||1}x</td><td style="vertical-align:top;width:60%;padding-bottom:4px;">${escapeHTML(i.aroma||'-')}<br><span style="font-size:9px;color:#555;">${[i.kelas?escapeHTML(i.kelas):'',i.ukuran?`${i.ukuran}ml`:''].filter(Boolean).join(' ')}</span></td><td style="vertical-align:top;width:30%;text-align:right;padding-bottom:4px;">${(i.subtotal||0).toLocaleString('id-ID')}</td></tr>`).join('');
-    const wS = data.waktu ? (typeof data.waktu.toDate==='function' ? data.waktu.toDate() : new Date(data.waktu.seconds*1000)).toLocaleString('id-ID') : new Date().toLocaleString('id-ID');
+    let wS;
+    try {
+        if (data.waktu && typeof data.waktu.toDate === 'function') {
+            wS = data.waktu.toDate().toLocaleString('id-ID');
+        } else if (data.waktu && data.waktu.seconds) {
+            wS = new Date(data.waktu.seconds * 1000).toLocaleString('id-ID');
+        } else {
+            wS = new Date().toLocaleString('id-ID');
+        }
+    } catch (_) { wS = new Date().toLocaleString('id-ID'); }
     $id('print-section').innerHTML = `<div style="text-align:center;margin-bottom:6px;font-family:monospace;"><div style="font-size:17px;font-weight:bold;letter-spacing:2px;">MI PERFUME</div><div style="font-size:9px;margin-top:1px;">-- Nota Pembelian --</div></div><div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:3px 0;margin-bottom:5px;font-size:10px;font-family:monospace;">Pembeli : <b>${escapeHTML(data.nama)}</b><br>Tanggal : ${wS}<br>Status  : <b>LUNAS</b></div><table style="width:100%;font-size:10px;border-collapse:collapse;font-family:monospace;">${iR}</table><div style="border-top:1px dashed #000;margin-top:5px;padding-top:5px;text-align:right;font-size:12px;font-family:monospace;"><b>TOTAL: Rp ${(data.total||0).toLocaleString('id-ID')}</b></div><div style="text-align:center;margin-top:10px;font-size:10px;font-family:monospace;">Terima kasih sudah berbelanja!<br><span style="font-size:9px;">Barang tidak dapat ditukar</span></div>`;
     requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
 }
@@ -1171,69 +1188,28 @@ function exportCSV() {
 // SINKRON ULANG (manual fallback jika ada inkonsistensi)
 // ============================================================
 async function sinkronUlangStatistik(e) {
-    if (!confirm("Hitung ulang seluruh statistik dari semua pesanan Selesai? Lanjutkan?")) return;
+    if (!confirm("Hitung ulang seluruh statistik dari semua pesanan Selesai?\n\nProses berjalan di server dengan pagination — aman untuk data besar.")) return;
     const btn = e.target, orig = btn.innerText;
-    btn.innerText = "⏳ Menghitung..."; btn.disabled = true;
+    btn.innerText = "⏳ Menghitung di server..."; btn.disabled = true;
     try {
-        const snap = await db.collection("pesanan").where("status","==","Selesai").get();
-        let tO=0, tH=0, tQ=0, tA={}, bln={}, hppBln={};
-        snap.forEach(doc => {
-            const d = doc.data(), omset = Number(d.total)||0, hpp = Number(d.total_hpp)||0;
-            tO += omset; tH += hpp;
-            const tgl = d.waktu ? d.waktu.toDate() : new Date();
-            const b = tgl.toLocaleDateString("id-ID",{month:"short",year:"numeric"});
-            bln[b] = (bln[b]||0) + omset; hppBln[b] = (hppBln[b]||0) + hpp;
-            let items = d.items || [];
-            if (!Array.isArray(items)||!items.length) { if (d.aroma) items = [{aroma:d.aroma,qty:Number(d.qty)||1}]; }
-            items.forEach(item => { const a=(item.aroma||"Unknown").toUpperCase().trim(), q=Number(item.qty)||1; tQ+=q; tA[a]=(tA[a]||0)+q; });
-        });
-        await db.collection("statistik").doc("global").set({ total_omset:tO, total_hpp:tH, total_qty:tQ, bulanan:bln, hpp_bulanan:hppBln, terjual_aroma:tA }, { merge: true });
-        alert("✅ Sinkronisasi Berhasil!");
-    } catch(err) { console.error(err); alert("Gagal: " + err.message); }
+        // Pindah ke Cloud Function: pagination 500/batch, tidak bisa timeout di client
+        const result = await fnSinkronStatistik({});
+        alert(`✅ Sinkronisasi Berhasil!\n${result.data.totalDocs} pesanan diproses.`);
+    } catch(err) {
+        console.error(err);
+        alert("Gagal: " + (err.message || err.details || "Error tidak diketahui"));
+    }
     btn.innerText = orig; btn.disabled = false;
 }
 
 // ============================================================
-// INIT — semua listener Firestore
+// INIT — listener kritis (stok, bahan, pesanan) langsung aktif.
+//        Listener non-kritis (pembelian, statistik, crm) lazy-load saat tab dibuka.
 // ============================================================
-function initAdminData() {
-    // Stok bibit — realtime
-    listeners.stok = db.collection("stok").orderBy("nama").onSnapshot(snap => {
-        const selBibit = $id('bibit-pilih'), selPb = $id('pb-bibit-nama'), prevVal = selBibit.value;
-        const optsBibit = ['<option value="_NEW_">➕ BUAT AROMA BARU...</option>'];
-        const optsPb    = ['<option value="_NEW_">➕ Aroma Baru (Belum Ada di Stok)</option>'];
-        globalBibit = [];
-        snap.forEach(doc => {
-            const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data);
-            optsBibit.push(`<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`);
-            optsPb.push(`<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`);
-        });
-        // Set innerHTML sekali (bukan +=) untuk performa
-        selBibit.innerHTML = optsBibit.join('');
-        selPb.innerHTML    = optsPb.join('');
-        if (prevVal && prevVal !== '_NEW_') selBibit.value = prevVal;
-        onPilihBibitStok();
-        cekRestock();
-    });
 
-    // Bahan — onSnapshot agar selalu fresh (bukan .get() sekali)
-    listeners.bahan = db.collection("bahan").onSnapshot(snap => {
-        globalBahan = [];
-        snap.forEach(doc => { const d = doc.data(); d.doc_id = doc.id; globalBahan.push(d); });
-        onPilihBahanStok();
-        const defaultIds = ['botol_35','botol_50','botol_100','abs_standar','abs_khusus'];
-        const defaultOpts  = '<option value="">-- Pilih Bahan --</option><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
-        const defaultOptsPb = '<option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
-        const extra = globalBahan.filter(b => !defaultIds.includes(b.doc_id)).map(b => `<option value="${escapeHTML(b.doc_id)}">${escapeHTML(b.nama||b.doc_id)}</option>`).join('');
-        $id('bahan-id').innerHTML   = defaultOpts + extra;
-        $id('pb-bahan-id').innerHTML = defaultOptsPb + extra;
-        cekRestock();
-    }, err => console.error("Gagal load bahan:", err.message));
-
-    // Pesanan
-    subscribeQueryPesanan();
-
-    // Pembelian stok
+// Subscribe pembelian — lazy load saat tab pembelian pertama dibuka
+function subscribePembelian() {
+    if (listeners.pembelian) return;
     listeners.pembelian = db.collection("pembelian_stok").orderBy("waktu_buat","desc").limit(100).onSnapshot(snap => {
         semuaDataPembelian = [];
         totalPengeluaran = 0; totalPengeluaranBibit = 0; totalPengeluaranBahan = 0;
@@ -1250,15 +1226,20 @@ function initAdminData() {
         });
         renderDaftarPembelian();
         if (cachedStatistik) renderDashboard(cachedStatistik);
-        else db.collection("statistik").doc("global").get().then(doc => { if (doc.exists) renderDashboard(doc.data()); });
     }, err => console.error("Gagal memuat pembelian:", err.message));
+}
 
-    // Statistik — realtime, cache selalu fresh
+// Subscribe statistik — lazy load saat tab dashboard pertama dibuka
+function subscribeStatistik() {
+    if (listeners.statistik) return;
     listeners.statistik = db.collection("statistik").doc("global").onSnapshot(doc => {
         if (doc.exists) { cachedStatistik = doc.data(); renderDashboard(doc.data()); }
     }, err => console.error("Gagal memuat analitik:", err.message));
+}
 
-    // CRM — limit 100 (tidak load semua)
+// Subscribe CRM — lazy load saat tab crm/followup pertama dibuka
+function subscribeCRM() {
+    if (listeners.crm) return;
     listeners.crm = db.collection("crm").orderBy("total_spent","desc").limit(100).onSnapshot(snap => {
         const crmList = [], followupList = [], now = new Date();
         snap.forEach(doc => {
@@ -1271,6 +1252,46 @@ function initAdminData() {
         renderCRM(crmList.slice(0,20));
         renderFollowUp(followupList);
     }, err => console.error("Gagal memuat CRM:", err.message));
+}
+
+function initAdminData() {
+    // Stok bibit — realtime (kritis: dipakai di pesanan & stok tab)
+    listeners.stok = db.collection("stok").orderBy("nama").onSnapshot(snap => {
+        const selBibit = $id('bibit-pilih'), selPb = $id('pb-bibit-nama'), prevVal = selBibit.value;
+        const optsBibit = ['<option value="_NEW_">➕ BUAT AROMA BARU...</option>'];
+        const optsPb    = ['<option value="_NEW_">➕ Aroma Baru (Belum Ada di Stok)</option>'];
+        globalBibit = [];
+        snap.forEach(doc => {
+            const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data);
+            optsBibit.push(`<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`);
+            optsPb.push(`<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`);
+        });
+        selBibit.innerHTML = optsBibit.join('');
+        selPb.innerHTML    = optsPb.join('');
+        if (prevVal && prevVal !== '_NEW_') selBibit.value = prevVal;
+        onPilihBibitStok();
+        cekRestock();
+    });
+
+    // Bahan — realtime (kritis: dipakai di stok & pesanan)
+    listeners.bahan = db.collection("bahan").onSnapshot(snap => {
+        globalBahan = [];
+        snap.forEach(doc => { const d = doc.data(); d.doc_id = doc.id; globalBahan.push(d); });
+        onPilihBahanStok();
+        const defaultIds = ['botol_35','botol_50','botol_100','abs_standar','abs_khusus'];
+        const defaultOpts  = '<option value="">-- Pilih Bahan --</option><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
+        const defaultOptsPb = '<option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
+        const extra = globalBahan.filter(b => !defaultIds.includes(b.doc_id)).map(b => `<option value="${escapeHTML(b.doc_id)}">${escapeHTML(b.nama||b.doc_id)}</option>`).join('');
+        $id('bahan-id').innerHTML    = defaultOpts + extra;
+        $id('pb-bahan-id').innerHTML = defaultOptsPb + extra;
+        cekRestock();
+    }, err => console.error("Gagal load bahan:", err.message));
+
+    // Pesanan — kritis, langsung subscribe
+    subscribeQueryPesanan();
+
+    // Non-kritis: pembelian, statistik, CRM akan lazy-load saat tab dibuka
+    // (lihat switchTab — tabsLoaded Set)
 }
 </script>
 </body>
