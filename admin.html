@@ -620,29 +620,22 @@ function renderDaftarPesanan(allData) {
 // PESANAN — AKSI
 // ============================================================
 function terimaPesanan(id, items) {
-    let stokAman = true, pesanError = "";
-    for (const item of items) {
-        if (item.bibit) {
-            const d = globalBibit.find(b => b.nama === item.aroma);
-            if (!d) { stokAman = false; pesanError += `- Aroma ${item.aroma} tidak ditemukan.\n`; continue; }
-            const stok = (item.kelas && d.stok_kelas?.[item.kelas] !== undefined) ? d.stok_kelas[item.kelas] : (d.sisa_ml || 0);
-            if (stok < item.bibit) { stokAman = false; pesanError += `- Stok ${item.aroma} (${item.kelas}) sisa ${stok}ml (Butuh: ${item.bibit}ml).\n`; }
-        }
-    }
-    if (!stokAman) { alert("⚠️ GAGAL DITERIMA! STOK TIDAK CUKUP:\n\n" + pesanError); return; }
-    if (!confirm("Terima pesanan? Stok akan dipotong dan status menjadi 'Diproses'.")) return;
-    const batch = db.batch();
-    batch.update(db.collection("pesanan").doc(id), { status: "Diproses" });
-    items.forEach(item => {
-        if (item.bibit) {
-            const obj = { sisa_ml: firebase.firestore.FieldValue.increment(-item.bibit) };
-            if (item.kelas) obj[`stok_kelas.${item.kelas}`] = firebase.firestore.FieldValue.increment(-item.bibit);
-            batch.update(db.collection("stok").doc(item.aroma), obj);
-        }
-        if (item.id_botol)    batch.update(db.collection("bahan").doc(item.id_botol),    { sisa: firebase.firestore.FieldValue.increment(-item.qty) });
-        if (item.id_absolute) batch.update(db.collection("bahan").doc(item.id_absolute), { sisa: firebase.firestore.FieldValue.increment(-item.absolute_ml) });
-    });
-    batch.commit().then(() => alert("✅ Pesanan diterima & Stok berhasil dipotong!")).catch(e => alert("Gagal: " + e.message));
+  if (!confirm("Terima pesanan? Stok akan dipotong dan status menjadi 'Diproses'.")) return;
+  
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = "Memproses...";
+  
+  try {
+    const terimaFunc = firebase.functions().httpsCallable('terimaPesanan');
+    await terimaFunc({ pesananId: id });
+    alert("✅ Pesanan diterima & Stok berhasil dipotong!");
+  } catch (err) {
+    alert("Gagal: " + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Terima (Potong Stok)";
+  }
 }
 
 function tolakPesanan(id) {
