@@ -399,8 +399,11 @@ function kirimPesananAkhir() {
     if (nama.length > 100) return alert("Nama terlalu panjang (maks. 100 karakter).");
     if (!keranjang.length) return alert("Keranjang masih kosong!");
 
-    const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal,       0);
-    const totalHppFinal = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
+    const buatPesananFunc = firebase.functions().httpsCallable('buatPesanan');
+  try {
+    await buatPesananFunc({ nama, noWa: noWa, keranjang });
+    alert("✅ Pesanan Terkirim!");
+    keranjang = []; renderKeranjang();
 
     const btn = $id('btn-submit');
     btn.textContent = "Memproses..."; btn.disabled = true;
