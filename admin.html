@@ -130,76 +130,75 @@
 <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
     <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Restock / Tambah Bibit</h2>
 
-<!-- [PERUBAHAN 1] Dropdown aroma + tombol Edit -->
-<div class="mb-3">
-    <div class="flex gap-2 items-center mb-2">
-        <select id="bibit-pilih" class="flex-1 border p-2 rounded text-sm bg-gray-50" onchange="onPilihBibitStok()">
-            <option value="_NEW_">➕ BUAT AROMA BARU...</option>
-        </select>
-        <!-- Tombol edit muncul saat aroma existing dipilih -->
-        <button type="button" id="btn-edit-bibit" onclick="bukaModalEditBibitTerpilih()"
-            class="hidden text-xs bg-[#a38d58] text-white px-3 py-2 rounded font-bold shadow whitespace-nowrap">✏️ Edit</button>
-    </div>
-    <!-- Input nama baru — tampil saat _NEW_ -->
-    <input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mb-2" placeholder="Ketik nama aroma baru...">
-</div>
-
-<!-- Tabel kelas dinamis -->
-<div class="mb-3 bg-gray-50 p-2 rounded border">
-    <div class="flex justify-between items-center mb-2">
-        <label class="text-xs font-bold text-gray-600">Kelas & Stok (ml):</label>
-        <button type="button" id="btn-tambah-kelas-custom" onclick="toggleFormKelasBaruInline()"
-            class="hidden text-xs text-[#a38d58] border border-dashed border-[#a38d58] px-2 py-0.5 rounded">➕ Kelas Baru</button>
-    </div>
-    <div id="kelas-rows-container" class="grid grid-cols-1 gap-2 text-xs"></div>
-    <div id="form-kelas-baru-inline" class="hidden mt-2 bg-yellow-50 border border-yellow-200 rounded p-2">
-        <div class="flex gap-2 mb-1.5">
-            <input type="text" id="kelas-baru-nama" class="flex-1 border p-1.5 rounded text-xs" placeholder="Nama kelas baru">
-            <input type="number" id="kelas-baru-modal" class="w-24 border p-1.5 rounded text-xs" placeholder="Modal/ml">
-            <input type="number" id="kelas-baru-stok" class="w-20 border p-1.5 rounded text-xs" placeholder="Stok ml">
+    <div class="mb-3">
+        <div class="flex gap-2 items-center mb-2">
+            <select id="bibit-pilih" class="flex-1 border p-2 rounded text-sm bg-gray-50" onchange="onPilihBibitStok()">
+                <option value="_NEW_">➕ BUAT AROMA BARU...</option>
+            </select>
+            <button type="button" id="btn-edit-bibit" onclick="bukaModalEditBibitTerpilih()"
+                class="hidden text-xs bg-[#a38d58] text-white px-3 py-2 rounded font-bold shadow whitespace-nowrap">✏️ Edit</button>
         </div>
-        <button type="button" onclick="simpanKelasBaruInline()" class="w-full bg-yellow-500 text-white text-xs py-1.5 rounded font-bold">Tambah Kelas Ini</button>
+        <input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mb-2" placeholder="Ketik nama aroma baru...">
     </div>
-</div>
-<button type="button" onclick="simpanBibitDariStok()" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit</button>
 
-
+    <div class="mb-3 bg-gray-50 p-2 rounded border">
+        <div class="flex justify-between items-center mb-2">
+            <label class="text-xs font-bold text-gray-600">Kelas & Stok (ml):</label>
+            <button type="button" id="btn-tambah-kelas-custom" onclick="toggleFormKelasBaruInline()"
+                class="text-xs text-[#a38d58] border border-dashed border-[#a38d58] px-2 py-0.5 rounded">➕ Kelas Baru</button>
+        </div>
+        <div id="kelas-rows-container" class="grid grid-cols-1 gap-2 text-xs"></div>
+        <div id="form-kelas-baru-inline" class="hidden mt-2 bg-yellow-50 border border-yellow-200 rounded p-2">
+            <div class="flex gap-2 mb-1.5">
+                <input type="text" id="kelas-baru-nama" class="flex-1 border p-1.5 rounded text-xs" placeholder="Nama kelas baru">
+                <input type="number" id="kelas-baru-modal" class="w-24 border p-1.5 rounded text-xs" placeholder="Modal/ml">
+                <input type="number" id="kelas-baru-stok" class="w-20 border p-1.5 rounded text-xs" placeholder="Stok ml">
+            </div>
+            <button type="button" onclick="simpanKelasBaruInline()" class="w-full bg-yellow-500 text-white text-xs py-1.5 rounded font-bold">Tambah Kelas Ini</button>
+        </div>
+    </div>
+    
+    <button type="button" id="btn-simpan-bibit-inline" onclick="simpanBibitDariStok()" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit Baru</button>
 </div>
 
 <!-- FORM BAHAN: Update botol & absolute -->
 
 <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
-    <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Update Botol & Absolute</h2>
+    <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Stok Botol & Absolute</h2>
 
-<div class="mb-3">
-    <!-- [PERUBAHAN 2] Baris dropdown bahan + tombol Edit + tombol Baru -->
-    <div class="flex gap-2 mb-3 items-center">
-        <select id="bahan-id" required class="flex-1 border p-2 rounded text-sm" onchange="onPilihBahanStok()">
-            <option value="">-- Pilih Bahan --</option>
-            <option value="botol_35">Botol 35 ml</option>
-            <option value="botol_50">Botol 50 ml</option>
-            <option value="botol_100">Botol 100 ml</option>
-            <option value="abs_standar">Absolute Standar</option>
-            <option value="abs_khusus">Absolute Khusus</option>
-        </select>
-        <!-- Tombol edit muncul saat bahan dipilih -->
-        <button type="button" id="btn-edit-bahan-stok" onclick="bukaModalEditBahanDariStok()"
-            class="hidden text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">✏️ Edit</button>
-        <button type="button" onclick="toggleFormBahanBaru()" id="btn-bahan-baru-toggle"
-            class="text-xs bg-gray-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
-    </div>
+    <div class="mb-3">
+        <div class="flex gap-2 mb-3 items-center">
+            <select id="bahan-id" required class="flex-1 border p-2 rounded text-sm" onchange="onPilihBahanStok()">
+                <option value="">-- Pilih Bahan --</option>
+                </select>
+            <button type="button" id="btn-edit-bahan-stok" onclick="bukaModalEditBahanDariStok()"
+                class="hidden text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">✏️ Edit</button>
+            <button type="button" onclick="toggleFormBahanBaru()" id="btn-bahan-baru-toggle"
+                class="text-xs bg-gray-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
+        </div>
 
-    <!-- Form tambah bahan baru -->
-    <div id="form-bahan-baru" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-        <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
-        <div class="space-y-2">
-            <input type="text" id="bahan-baru-id" class="w-full border p-2 rounded text-sm" placeholder="ID unik (mis. botol_200)">
-            <input type="text" id="bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
-            <div class="flex gap-2">
-                <input type="number" id="bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
-                <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
+        <div id="form-bahan-baru" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+            <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
+            <div class="space-y-2">
+                <input type="text" id="bahan-baru-id" class="w-full border p-2 rounded text-sm" placeholder="ID unik (mis. botol_200)">
+                <input type="text" id="bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
+                <div class="flex gap-2">
+                    <input type="number" id="bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
+                    <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
+                </div>
+                <button type="button" onclick="simpanBahanBaru()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
             </div>
-            <button type="button" onclick="simpanBahanBaru()" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
+        </div>
+        
+        <div id="info-bahan-stok" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+            <div class="flex justify-between mb-1">
+                <span class="text-gray-500 text-xs">Stok Saat Ini:</span>
+                <b id="label-sisa-bahan" class="text-blue-700">-</b>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-gray-500 text-xs">Harga Modal:</span>
+                <b id="label-harga-bahan" class="text-green-700">-</b>
+            </div>
         </div>
     </div>
 </div>
@@ -649,47 +648,61 @@ function renderKelasRows(d) {
     const btnKelas  = document.getElementById('btn-tambah-kelas-custom');
     container.innerHTML = '';
 
-    if (!d) {
-        ['Standar','Premium','Super Prm','Diamond'].forEach(k => {
-            container.appendChild(buatBarisDynamic(k, '', '', false));
-        });
-        btnKelas.classList.add('hidden');
-        document.getElementById('form-kelas-baru-inline').classList.add('hidden');
-        return;
-    }
+    const allClasses = ['Standar', 'Premium', 'Super Premium', 'Diamond'];
 
-    btnKelas.classList.remove('hidden');
-    if (!d.stok_kelas) return;
-    Object.entries(d.stok_kelas).forEach(([kelas, stok]) => {
-        const modal = d.modal?.[kelas] ?? 0;
-        container.appendChild(buatBarisDynamic(kelas, modal, stok, true));
-    });
+    if (!d) {
+        // BUAT BARU: Bisa diisi, checkbox aktif
+        allClasses.forEach(k => { container.appendChild(buatBarisDynamic(k, '', '', false, false, true)); });
+        btnKelas.classList.remove('hidden');
+        document.getElementById('form-kelas-baru-inline').classList.add('hidden');
+    } else {
+        // DATA EXISTING: Terkunci (Read-only)
+        if (d.stok_kelas) {
+            Object.keys(d.stok_kelas).forEach(k => { if (!allClasses.includes(k)) allClasses.push(k); });
+        }
+        allClasses.forEach(k => {
+            const hasData = d.stok_kelas && d.stok_kelas[k] !== undefined;
+            const stok = hasData ? d.stok_kelas[k] : '';
+            const modal = (hasData && d.modal && d.modal[k] !== undefined) ? d.modal[k] : '';
+            // Panggil baris dalam status locked
+            container.appendChild(buatBarisDynamic(k, modal, stok, true, true, hasData));
+        });
+        btnKelas.classList.add('hidden'); // Sembunyikan tambah kelas inline saat mode read-only
+        document.getElementById('form-kelas-baru-inline').classList.add('hidden');
+    }
 }
 
-function buatBarisDynamic(kelas, modal, stok, isExisting) {
+function buatBarisDynamic(kelas, modal, stok, isExisting, isLocked, isChecked) {
     const div = document.createElement('div');
     div.className = 'flex items-center gap-2';
     div.dataset.kelasNama = kelas;
+
+    const dis = isLocked ? 'disabled' : '';
+    const chk = isChecked ? 'checked' : '';
+    const bgLock = isLocked ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : '';
+
     div.innerHTML = `
-        <label class="w-1/3 flex items-center gap-1 font-semibold text-gray-700 cursor-pointer">
-            <input type="checkbox" class="cb-kelas" data-kelas="${escapeHTML(kelas)}" checked>
+        <label class="w-1/3 flex items-center gap-1 font-semibold text-gray-700 ${isLocked ? 'opacity-70 cursor-not-allowed' : 'cursor-pointer'}">
+            <input type="checkbox" class="cb-kelas" data-kelas="${escapeHTML(kelas)}" ${chk} ${dis}>
             <span class="truncate text-xs">${escapeHTML(kelas)}</span>
         </label>
-        <input type="number" class="inp-modal w-1/3 border p-1 rounded text-xs"
-            data-kelas="${escapeHTML(kelas)}"
-            value="${isExisting && modal !== '' ? modal : ''}"
-            placeholder="Modal Rp">
-        <input type="number" class="inp-stok w-1/3 border p-1 rounded text-xs"
-            data-kelas="${escapeHTML(kelas)}"
-            value="${isExisting && stok !== '' ? stok : ''}"
-            placeholder="${isExisting ? 'Stok fix (ml)' : '+/- Stok ml'}">`;
+        <input type="number" class="inp-modal w-1/3 border p-1 rounded text-xs ${bgLock}"
+            data-kelas="${escapeHTML(kelas)}" value="${modal}" placeholder="Modal Rp" ${dis}>
+        <input type="number" class="inp-stok w-1/3 border p-1 rounded text-xs ${bgLock}"
+            data-kelas="${escapeHTML(kelas)}" value="${stok}" placeholder="${isExisting ? 'Stok (ml)' : 'Stok awal ml'}" ${dis}>`;
+
     const cb = div.querySelector('.cb-kelas');
     const mInp = div.querySelector('.inp-modal');
     const sInp = div.querySelector('.inp-stok');
-    cb.addEventListener('change', () => {
+
+    if (!isLocked) {
+        cb.addEventListener('change', () => {
+            mInp.disabled = !cb.checked;
+            sInp.disabled = !cb.checked;
+        });
         mInp.disabled = !cb.checked;
         sInp.disabled = !cb.checked;
-    });
+    }
     return div;
 }
 
@@ -697,11 +710,15 @@ function buatBarisDynamic(kelas, modal, stok, isExisting) {
 function onPilihBibitStok() {
     const val = document.getElementById('bibit-pilih').value;
     const isNew = val === '_NEW_';
+    
+    // Tampilkan form nama hanya saat buat baru
     document.getElementById('bibit-nama').style.display = isNew ? 'block' : 'none';
 
-    // Tampil tombol Edit hanya saat aroma existing dipilih
+    // Toggle Tombol Edit dan Simpan Inline
     const btnEdit = document.getElementById('btn-edit-bibit');
+    const btnSimpanInline = document.getElementById('btn-simpan-bibit-inline');
     if (btnEdit) btnEdit.classList.toggle('hidden', isNew);
+    if (btnSimpanInline) btnSimpanInline.classList.toggle('hidden', !isNew);
 
     if (isNew) {
         document.getElementById('bibit-nama').value = '';
@@ -812,25 +829,66 @@ function toggleEditKelasInline() {}
 function simpanEditKelasInline() {}
 
 function bukaModalEdit(id) {
-    const d=globalBibit.find(b=>b.doc_id===id); if(!d) return;
-    document.getElementById('edit-id-bibit').value=id;
-    document.getElementById('edit-nama-bibit').innerText=d.nama;
-    const w=document.getElementById('edit-container-kelas'); w.innerHTML='';
-    if(d.stok_kelas) Object.entries(d.stok_kelas).forEach(([kelas,stok])=>{
-        const m=(d.modal&&d.modal[kelas])?d.modal[kelas]:0;
-        w.innerHTML+=`<div class="bg-gray-50 p-2 rounded border"><label class="block text-xs font-bold text-gray-700 mb-1">${escapeHTML(kelas)}</label><div class="flex gap-2"><input type="number" id="edit-modal-${escapeHTML(kelas)}" value="${m}" class="w-1/2 border p-1 rounded text-sm" placeholder="Modal Rp"><input type="number" id="edit-stok-${escapeHTML(kelas)}" value="${stok}" class="w-1/2 border p-1 rounded text-sm" placeholder="Stok Fix (ml)"></div></div>`;
+    const d = globalBibit.find(b => b.doc_id === id); if (!d) return;
+    document.getElementById('edit-id-bibit').value = id;
+    document.getElementById('edit-nama-bibit').innerText = d.nama;
+    const w = document.getElementById('edit-container-kelas'); w.innerHTML = '';
+
+    const allClasses = ['Standar', 'Premium', 'Super Premium', 'Diamond'];
+    if (d.stok_kelas) Object.keys(d.stok_kelas).forEach(k => { if (!allClasses.includes(k)) allClasses.push(k); });
+
+    // Render semua kelas di modal agar user bisa menambah data pada kelas yang sebelumnya kosong
+    allClasses.forEach(kelas => {
+        const stok = (d.stok_kelas && d.stok_kelas[kelas] !== undefined) ? d.stok_kelas[kelas] : '';
+        const m = (d.modal && d.modal[kelas] !== undefined) ? d.modal[kelas] : '';
+
+        w.innerHTML += `
+        <div class="bg-gray-50 p-2 rounded border mb-2">
+            <label class="block text-xs font-bold text-gray-700 mb-1">${escapeHTML(kelas)}</label>
+            <div class="flex gap-2">
+                <div class="w-1/2">
+                    <span class="text-[9px] text-gray-500">Modal Rp</span>
+                    <input type="number" id="edit-modal-${escapeHTML(kelas)}" value="${m}" class="w-full border p-1 rounded text-sm" placeholder="Modal Rp">
+                </div>
+                <div class="w-1/2">
+                    <span class="text-[9px] text-gray-500">Stok Fix (ml)</span>
+                    <input type="number" id="edit-stok-${escapeHTML(kelas)}" value="${stok}" class="w-full border p-1 rounded text-sm" placeholder="Stok Fix">
+                </div>
+            </div>
+        </div>`;
     });
     document.getElementById('modal-edit').classList.remove('hidden');
 }
 function tutupModalEdit() { document.getElementById('modal-edit').classList.add('hidden'); }
 function simpanEditBibit(e) {
     e.preventDefault();
-    const id=document.getElementById('edit-id-bibit').value;
-    const d=globalBibit.find(b=>b.doc_id===id); if(!d||!d.stok_kelas) return tutupModalEdit();
-    let fS={...d.stok_kelas}, fM={...d.modal};
-    Object.keys(d.stok_kelas).forEach(k=>{ fS[k]=parseInt(document.getElementById(`edit-stok-${k}`).value)||0; fM[k]=parseInt(document.getElementById(`edit-modal-${k}`).value)||0; });
-    const total=Object.values(fS).reduce((a,b)=>a+b,0);
-    db.collection("stok").doc(id).update({sisa_ml:total,stok_kelas:fS,modal:fM}).then(()=>{ alert("✅ Data berhasil dikoreksi!"); tutupModalEdit(); });
+    const id = document.getElementById('edit-id-bibit').value;
+    const d = globalBibit.find(b => b.doc_id === id); if (!d) return tutupModalEdit();
+
+    let fS = {}, fM = {};
+    const allClasses = ['Standar', 'Premium', 'Super Premium', 'Diamond'];
+    if (d.stok_kelas) Object.keys(d.stok_kelas).forEach(k => { if (!allClasses.includes(k)) allClasses.push(k); });
+
+    allClasses.forEach(k => {
+        const sVal = document.getElementById(`edit-stok-${k}`).value;
+        const mVal = document.getElementById(`edit-modal-${k}`).value;
+        // Hanya simpan jika inputan tidak kosong ATAU data memang sudah ada sebelumnya
+        if (sVal !== '' || mVal !== '' || (d.stok_kelas && d.stok_kelas[k] !== undefined)) {
+            fS[k] = parseInt(sVal) || 0;
+            fM[k] = parseInt(mVal) || 0;
+        }
+    });
+
+    const total = Object.values(fS).reduce((a, b) => a + b, 0);
+    db.collection("stok").doc(id).update({
+        sisa_ml: total,
+        stok_kelas: fS,
+        modal: fM,
+        kelas_tersedia: Object.keys(fS)
+    }).then(() => {
+        alert("✅ Data berhasil dikoreksi!");
+        tutupModalEdit();
+    }).catch(err => alert("Gagal: " + err.message));
 }
 
 // ============================================================
@@ -840,36 +898,30 @@ function simpanEditBibit(e) {
 // [PERUBAHAN 5] onPilihBahanStok — toggle tombol Edit bahan
 function onPilihBahanStok() {
     const id = document.getElementById('bahan-id')?.value;
-    const labelBox  = document.getElementById('label-stok-bahan');
+    const infoBox  = document.getElementById('info-bahan-stok');
     const labelSisa = document.getElementById('label-sisa-bahan');
-    const qtyInp    = document.getElementById('bahan-qty');
-    const hrgInp    = document.getElementById('bahan-harga');
+    const labelHarga = document.getElementById('label-harga-bahan');
     const btnEdit   = document.getElementById('btn-edit-bahan-stok');
 
     if (!id) {
-        labelBox?.classList.add('hidden');
+        infoBox?.classList.add('hidden');
         if (btnEdit) btnEdit.classList.add('hidden');
-        if (qtyInp) qtyInp.value = '';
-        if (hrgInp) hrgInp.value = '';
         return;
     }
 
-    // Tampilkan tombol edit saat bahan dipilih
     if (btnEdit) btnEdit.classList.remove('hidden');
 
     const d    = globalBahan.find(b => b.doc_id === id);
     const unit = id.includes('botol') ? 'pcs' : 'ml';
+
     if (d) {
-        if (labelSisa) labelSisa.innerText = `${d.sisa ?? '-'} ${unit}`;
-        labelBox?.classList.remove('hidden');
-        if (hrgInp && d.harga_satuan) hrgInp.value = d.harga_satuan;
+        if (labelSisa) labelSisa.innerText = `${d.sisa ?? 0} ${unit}`;
+        if (labelHarga) labelHarga.innerText = `Rp ${(d.harga_satuan ?? 0).toLocaleString()}`;
     } else {
-        if (labelSisa) labelSisa.innerText = '- (belum ada data)';
-        labelBox?.classList.remove('hidden');
-        if (hrgInp) hrgInp.value = '';
+        if (labelSisa) labelSisa.innerText = `0 ${unit}`;
+        if (labelHarga) labelHarga.innerText = `Rp 0`;
     }
-    if (qtyInp) qtyInp.value = '';
-    if (qtyInp) qtyInp.focus();
+    infoBox?.classList.remove('hidden');
 }
 
 function bukaModalEditBahanDariStok() {
