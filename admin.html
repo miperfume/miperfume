@@ -549,7 +549,7 @@ function gantiFilterPesanan(v) {
 function subscribeQueryPesanan() {
     let query;
     if (filterAktif === 'on_proses') {
-        query = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses"]).orderBy("waktu","desc").limit(30);
+        query = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]).orderBy("waktu","desc").limit(30);
     } else if (filterAktif === 'selesai') {
         query = db.collection("pesanan").where("status","==","Selesai").orderBy("waktu","desc").limit(30);
     } else {
@@ -593,6 +593,7 @@ function renderDaftarPesanan(allData) {
         if(data.status==="Diproses"){sC="bg-blue-100 text-blue-700";bK="border-blue-400";}
         if(data.status==="Selesai") {sC="bg-green-100 text-green-700";bK="border-green-400";}
         if(data.status==="Ditolak"){sC="bg-red-100 text-red-700";bK="border-red-400";}
+        if(data.status==="Menunggu Lunas"){sC="bg-yellow-100 text-yellow-800";bK="border-yellow-500";}
         const items = Array.isArray(data.items) ? data.items : [{qty:1,aroma:data.aroma||"Unknown",kelas:data.kelas||"",ukuran:data.ukuran||"",hpp_total:data.total_hpp||0}];
         const pesananHPP = Number(data.total_hpp)||0;
         const detHTML = items.map(i => {
@@ -602,6 +603,7 @@ function renderDaftarPesanan(allData) {
         let actionButtons = '';
         if(data.status==="Menunggu Diproses") actionButtons=`<div class="flex gap-2 mt-3 border-t pt-3"><button class="flex-1 bg-blue-600 text-white text-sm py-2 rounded font-bold shadow btn-terima">Terima (Potong Stok)</button><button class="flex-1 text-red-500 bg-red-50 text-sm py-2 rounded border border-red-200 btn-tolak">Tolak</button></div>`;
         else if(data.status==="Diproses") actionButtons=`<div class="flex gap-2 mt-3 border-t pt-3"><button class="w-full bg-green-600 text-white text-sm py-2 rounded font-bold shadow btn-selesai">✅ Serahkan Pembeli (Selesai)</button></div>`;
+        else if(data.status==="Menunggu Lunas") actionButtons=`<div class="mt-3 border-t pt-3 space-y-2"><div class="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-center"><p class="text-xs font-bold text-yellow-800 mb-1">⏳ Menunggu Konfirmasi Pembayaran</p><p class="text-[10px] text-yellow-700">Pastikan buyer sudah membayar sebelum melanjutkan</p></div><div class="flex gap-2"><button class="flex-1 bg-[#a38d58] text-white text-sm py-2.5 rounded font-bold shadow btn-lunas">💰 LUNAS — Selesaikan</button><button class="flex-1 bg-gray-100 text-gray-600 text-xs py-2 rounded border btn-batal-lunas">Batalkan</button></div></div>`;
         else if(data.status==="Ditolak") actionButtons=`<div class="mt-3 border-t pt-3"><p class="text-xs text-red-500 italic">Alasan: ${escapeHTML(data.alasan||'-')}</p></div>`;
         let waktuHtml='';
         if(data.waktu&&(filterAktif==='selesai'||filterAktif==='semua')) waktuHtml=`<p class="text-[10px] text-gray-400 mt-1">🕐 ${data.waktu.toDate().toLocaleString('id-ID')}</p>`;
@@ -620,7 +622,9 @@ function renderDaftarPesanan(allData) {
         card.querySelector('.btn-print')?.addEventListener('click', () => cetakStruk(data));
         card.querySelector('.btn-terima')?.addEventListener('click', () => terimaPesanan(id, items));
         card.querySelector('.btn-tolak')?.addEventListener('click',  () => tolakPesanan(id));
-        card.querySelector('.btn-selesai')?.addEventListener('click',() => selesaikanPesanan(id));
+        card.querySelector('.btn-selesai')?.addEventListener('click',() => tandaiMenungguLunas(id));
+        card.querySelector('.btn-lunas')?.addEventListener('click',() => selesaikanPesanan(id));
+        card.querySelector('.btn-batal-lunas')?.addEventListener('click',() => batalkanMenungguLunas(id));
         container.appendChild(card);
         if(data.status==="Selesai") dataPesananExport.push({Tanggal:data.waktu?data.waktu.toDate().toLocaleString('id-ID'):'-',Nama:safeNama,WA:safeWA,Omset:data.total,HPP:pesananHPP,Laba:(data.total||0)-pesananHPP,Status:data.status});
     });
@@ -1127,8 +1131,20 @@ function tolakPesanan(id) {
     if(alasan&&alasan.trim()) db.collection("pesanan").doc(id).update({status:"Ditolak",alasan:escapeHTML(alasan.trim())}).then(()=>alert("🚫 Pesanan ditolak.")).catch(e=>alert(e.message));
 }
 
+function tandaiMenungguLunas(id) {
+    if(!confirm("Pesanan sudah diserahkan ke pembeli?\nStatus akan berubah menjadi 'Menunggu Lunas' sampai pembayaran dikonfirmasi.")) return;
+    db.collection("pesanan").doc(id).update({status:"Menunggu Lunas"})
+        .catch(e=>alert("Gagal: "+e.message));
+}
+
+function batalkanMenungguLunas(id) {
+    if(!confirm("Kembalikan status pesanan ke 'Diproses'?")) return;
+    db.collection("pesanan").doc(id).update({status:"Diproses"})
+        .catch(e=>alert("Gagal: "+e.message));
+}
+
 function selesaikanPesanan(id) {
-    if(!confirm("Tandai selesai? Omset akan masuk ke Buku Analitik.")) return;
+    if(!confirm("Konfirmasi pembayaran LUNAS? Omset akan masuk ke Buku Analitik.")) return;
     db.collection("pesanan").doc(id).get().then(snap=>{
         if(!snap.exists) return alert("Pesanan tidak ditemukan.");
         const data=snap.data();
@@ -1138,7 +1154,7 @@ function selesaikanPesanan(id) {
         const tgl=data.waktu?data.waktu.toDate():new Date();
         const bln=tgl.toLocaleDateString("id-ID",{month:"short",year:"numeric"});
         const batch=db.batch();
-        batch.update(db.collection("pesanan").doc(id),{status:"Selesai"});
+        batch.update(db.collection("pesanan").doc(id),{status:"Selesai",waktu_lunas:firebase.firestore.FieldValue.serverTimestamp()});
         const statUpdate={
             total_omset: firebase.firestore.FieldValue.increment(omset),
             total_hpp:   firebase.firestore.FieldValue.increment(hpp),
@@ -1152,7 +1168,9 @@ function selesaikanPesanan(id) {
         });
         batch.set(db.collection("statistik").doc("global"),statUpdate,{merge:true});
         return batch.commit();
-    }).then(()=>alert("🎉 Pesanan Selesai! Grafik Analitik diperbarui.")).catch(e=>alert("Gagal: "+e.message));
+    }).then(()=>{
+        alert("🎉 Pembayaran LUNAS! Pesanan selesai & Grafik Analitik diperbarui.");
+    }).catch(e=>alert("Gagal: "+e.message));
 }
 
 // ============================================================
@@ -1482,9 +1500,9 @@ function initAdminData() {
         }
     }, err=>console.error("Gagal memuat pembelian:",err));
 
-    // Statistik — listener realtime, update cache & render
+    // Statistik — listener realtime, update cache & render (merge dengan pengeluaran terbaru)
     listeners.statistik = db.collection("statistik").doc("global").onSnapshot(doc=>{
-        if(doc.exists) renderDashboard(doc.data());
+        if(doc.exists) { cachedStatistik = doc.data(); renderDashboard(doc.data()); }
     }, err=>console.error("Gagal memuat analitik:",err));
 
     // CRM
