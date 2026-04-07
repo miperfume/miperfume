@@ -245,7 +245,7 @@
             <div class="flex justify-between items-center mb-3 border-b pb-2">
                 <h3 class="font-bold text-gray-700 text-sm">📋 Riwayat Order Pembelian</h3>
                 <select id="filter-pembelian" onchange="renderDaftarPembelian()" class="border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 py-1.5 pl-3 pr-4 rounded-lg shadow-sm">
-                    <option value="aktif">🔄 Sedang Diproses</option><option value="selesai">✅ Selesai</option><option value="semua">📋 Semua</option>
+                    <option value="aktif">🔄 Sedang Diproses</option><option value="selesai">✅ Selesai</option><option value="batal">❌ Dibatalkan</option><option value="semua">📋 Semua</option>
                 </select>
             </div>
             <div id="daftar-pembelian" class="space-y-3"></div>
@@ -489,28 +489,55 @@ function gantiFilterPesanan(v) {
 }
 
 function subscribeQueryPesanan() {
-    let query;
+    // Query utama pakai orderBy("waktu") — butuh Composite Index di Firestore.
+    // Jika index belum ada, Firestore error dan onSnapshot tidak berjalan.
+    // Fallback: query tanpa orderBy, urutan diatur client-side.
+    let query, queryFallback;
     if (filterAktif === 'on_proses') {
-        query = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]).orderBy("waktu","desc").limit(30);
+        query         = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]).orderBy("waktu","desc").limit(30);
+        queryFallback = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]).limit(30);
     } else if (filterAktif === 'selesai') {
-        query = db.collection("pesanan").where("status","==","Selesai").orderBy("waktu","desc").limit(30);
+        query         = db.collection("pesanan").where("status","==","Selesai").orderBy("waktu","desc").limit(30);
+        queryFallback = db.collection("pesanan").where("status","==","Selesai").limit(30);
     } else {
-        query = db.collection("pesanan").orderBy("waktu","desc").limit(30);
+        query         = db.collection("pesanan").orderBy("waktu","desc").limit(30);
+        queryFallback = db.collection("pesanan").limit(30);
     }
+
     let isInitialLoad = true;
-    listeners.pesanan = query.onSnapshot(snap => {
-        semuaDataPesanan = [];
-        snap.forEach(doc => semuaDataPesanan.push({ id: doc.id, data: doc.data() }));
-        snap.docChanges().forEach(change => {
-            if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") {
-                $id('notif-sound').play().catch(()=>{});
-                if ("Notification" in window && Notification.permission === "granted")
-                    new Notification("Pesanan Baru!", { body: `Dari ${change.doc.data().nama}`, icon: 'logo.jpeg' });
+
+    function pasangListener(q) {
+        return q.onSnapshot(snap => {
+            semuaDataPesanan = [];
+            snap.forEach(doc => semuaDataPesanan.push({ id: doc.id, data: doc.data() }));
+            // Urutkan client-side: dokumen waktu null (baru dibuat) tampil paling atas
+            semuaDataPesanan.sort((a, b) => {
+                const tA = a.data.waktu ? a.data.waktu.toMillis() : Infinity;
+                const tB = b.data.waktu ? b.data.waktu.toMillis() : Infinity;
+                return tB - tA;
+            });
+            snap.docChanges().forEach(change => {
+                if (!isInitialLoad && change.type === "added" && change.doc.data().status === "Menunggu Diproses") {
+                    $id('notif-sound').play().catch(()=>{});
+                    if ("Notification" in window && Notification.permission === "granted")
+                        new Notification("Pesanan Baru!", { body: `Dari ${change.doc.data().nama}`, icon: 'logo.jpeg' });
+                }
+            });
+            isInitialLoad = false;
+            renderDaftarPesanan(semuaDataPesanan);
+        }, err => {
+            if (err.code === 'failed-precondition' || (err.message && err.message.includes('index'))) {
+                console.warn("Index Firestore belum ada, pakai fallback query:", err.message);
+                if (listeners.pesanan) { listeners.pesanan(); delete listeners.pesanan; }
+                listeners.pesanan = pasangListener(queryFallback);
+            } else {
+                console.error("Gagal memuat pesanan:", err.message);
+                $id('daftar-pesanan').innerHTML = `<p class="text-center text-red-500 text-sm mt-4">⚠️ Gagal memuat: ${err.message}</p>`;
             }
         });
-        isInitialLoad = false;
-        renderDaftarPesanan(semuaDataPesanan);
-    }, err => console.error("Gagal memuat pesanan:", err.message));
+    }
+
+    listeners.pesanan = pasangListener(query);
 }
 
 function updateBadgePesanan(n) {
@@ -550,7 +577,10 @@ function renderDaftarPesanan(allData) {
         if (data.status === "Menunggu Diproses")
             actionButtons = `<div class="flex gap-2 mt-3 border-t pt-3"><button class="flex-1 bg-blue-600 text-white text-sm py-2 rounded font-bold shadow btn-terima">Terima (Potong Stok)</button><button class="flex-1 text-red-500 bg-red-50 text-sm py-2 rounded border border-red-200 btn-tolak">Tolak</button></div>`;
         else if (data.status === "Diproses")
-            actionButtons = `<div class="mt-3 border-t pt-3"><button class="w-full bg-green-600 text-white text-sm py-2 rounded font-bold shadow btn-selesai">✅ Serahkan Pembeli (Selesai)</button></div>`;
+            actionButtons = `<div class="mt-3 border-t pt-3 space-y-2">
+                <button class="w-full bg-green-600 text-white text-sm py-2 rounded font-bold shadow btn-selesai">📦 Serahkan ke Pembeli</button>
+                <button class="w-full bg-[#a38d58] text-white text-sm py-2 rounded font-bold shadow btn-lunas-langsung">💰 Serah + LUNAS Sekaligus</button>
+            </div>`;
         else if (data.status === "Menunggu Lunas")
             actionButtons = `<div class="mt-3 border-t pt-3 space-y-2"><div class="bg-yellow-50 border border-yellow-300 rounded-lg p-3 text-center"><p class="text-xs font-bold text-yellow-800 mb-1">⏳ Menunggu Konfirmasi Pembayaran</p><p class="text-[10px] text-yellow-700">Pastikan buyer sudah membayar sebelum melanjutkan</p></div><div class="flex gap-2"><button class="flex-1 bg-[#a38d58] text-white text-sm py-2.5 rounded font-bold shadow btn-lunas">💰 LUNAS — Selesaikan</button><button class="flex-1 bg-gray-100 text-gray-600 text-xs py-2 rounded border btn-batal-lunas">Batalkan</button></div></div>`;
         else if (data.status === "Ditolak")
@@ -576,6 +606,7 @@ function renderDaftarPesanan(allData) {
         card.querySelector('.btn-terima')?.addEventListener('click', () => terimaPesanan(id, items));
         card.querySelector('.btn-tolak')?.addEventListener('click',  () => tolakPesanan(id));
         card.querySelector('.btn-selesai')?.addEventListener('click',() => tandaiMenungguLunas(id));
+        card.querySelector('.btn-lunas-langsung')?.addEventListener('click', () => selesaikanPesananLangsung(id));
         card.querySelector('.btn-lunas')?.addEventListener('click',  () => selesaikanPesanan(id));
         card.querySelector('.btn-batal-lunas')?.addEventListener('click', () => batalkanMenungguLunas(id));
 
@@ -627,6 +658,15 @@ function tandaiMenungguLunas(id) {
 function batalkanMenungguLunas(id) {
     if (!confirm("Kembalikan status ke 'Diproses'?")) return;
     db.collection("pesanan").doc(id).update({ status: "Diproses" }).catch(e => alert("Gagal: " + e.message));
+}
+
+function selesaikanPesananLangsung(id) {
+    if (!confirm("Serahkan ke pembeli DAN tandai LUNAS sekarang?\nOmset akan masuk ke Analitik.")) return;
+    db.collection("pesanan").doc(id).update({
+        status: "Selesai",
+        waktu_lunas: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => alert("🎉 Pesanan Selesai & LUNAS! Analitik diperbarui otomatis."))
+      .catch(e => alert("Gagal: " + e.message));
 }
 
 function selesaikanPesanan(id) {
@@ -812,7 +852,7 @@ function simpanEditBahan(e) {
     const harga = parseInt($id('edit-harga-bahan').value) || 0;
     if (sisa < 0 || harga < 0) return alert("Nilai tidak boleh negatif!");
     db.collection("bahan").doc(id).update({ sisa, harga_satuan: harga })
-        .then(() => { alert("✅ Data bahan diperbarui!"); tutupModalEditBahan(); if (listeners._refreshBahan) listeners._refreshBahan(); })
+        .then(() => { alert("✅ Data bahan diperbarui!"); tutupModalEditBahan(); })
         .catch(e => alert("Gagal: " + e.message));
 }
 
@@ -833,9 +873,18 @@ function simpanBahanBaru(source) {
         .then(() => {
             alert(`✅ Bahan "${newNama}" berhasil ditambahkan!`);
             $id(`${pfx}-nama`).value = ''; $id(`${pfx}-qty`).value = ''; $id(`${pfx}-harga`).value = '';
-            if (source === 'pembelian') { $id('form-bahan-baru-pembelian').classList.add('hidden'); $id('pb-bahan-id').value = newId; onPilihBahanPembelian(); }
+            if (source === 'pembelian') {
+                $id('form-bahan-baru-pembelian').classList.add('hidden');
+                // Tambahkan option sementara supaya bahan baru langsung terpilih sebelum onSnapshot update
+                const selPb = $id('pb-bahan-id');
+                if (!selPb.querySelector(`option[value="${newId}"]`)) {
+                    const opt = document.createElement('option');
+                    opt.value = newId; opt.textContent = newNama;
+                    selPb.appendChild(opt);
+                }
+                selPb.value = newId; onPilihBahanPembelian();
+            }
             else $id('form-bahan-baru').classList.add('hidden');
-            if (listeners._refreshBahan) listeners._refreshBahan();
         }).catch(e => alert("Gagal: " + e.message));
 }
 
@@ -872,6 +921,15 @@ function cekRestock() {
     wBahan.innerHTML = itemsBahan.length
         ? itemsBahan.map(item => `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(item.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${item.sisa} ${item.unit}</span></div>`).join('')
         : '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>';
+
+    // Update badge jumlah item kritis di tab Restock
+    const totalKritis = itemsBibit.length + itemsBahan.length;
+    const tabRestock = $id('tab-restock');
+    if (tabRestock) {
+        tabRestock.textContent = totalKritis > 0
+            ? `Restock 🚨 (${totalKritis})`
+            : 'Restock 🚨';
+    }
 }
 
 // ============================================================
