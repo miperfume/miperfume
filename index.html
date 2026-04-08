@@ -468,21 +468,13 @@ function kirimPesananAkhir() {
     // Eksekusi: WAJIB mendapatkan token App Check terlebih dahulu
     try {
         firebase.appCheck().getToken(false)
-            .then((appCheckToken) => {
-                if (appCheckToken && appCheckToken.token) {
-                    // Jika token valid didapat, jalankan pengiriman!
-                    doSend(); 
-                } else {
-                    // Jika token kosong, hentikan
-                    throw new Error("Token App Check Kosong");
-                }
-            })
-            .catch((err) => {
-                console.error("App Check ditolak:", err);
-                alert("Keamanan Gagal: Sistem mendeteksi aktivitas mencurigakan atau koneksi tidak stabil. Silakan muat ulang halaman.");
-                btn.disabled = false;
-                btn.textContent = "Kirim Pesanan Sekarang";
-            });
+    .then(doSend)
+    .catch(err => {
+        console.error("App Check gagal:", err);
+        alert("Verifikasi keamanan gagal. Coba muat ulang halaman.");
+        btn.disabled = false;
+        btn.textContent = "Kirim Pesanan Sekarang";
+    });
     } catch(e) {
         console.error("App Check Error:", e);
         alert("Sistem keamanan belum siap. Silakan muat ulang halaman.");
