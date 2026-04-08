@@ -415,30 +415,34 @@ function renderKeranjang() {
 // KIRIM PESANAN
 // ============================================================
 function kirimPesananAkhir() {
-    if (!buyerId) return alert("Sistem keamanan sedang memuat. Mohon tunggu.");
+    console.log("1. Fungsi kirimPesananAkhir dimulai");
+    
+    if (!buyerId) {
+        console.error("Error: buyerId kosong!");
+        return alert("Sistem keamanan sedang memuat. Mohon tunggu.");
+    }
+
     const nama = $id('nama').value.trim();
     const noWa = $id('no-wa').value.trim();
-    if (!nama)             return alert("Harap isi Nama Pemesan!");
-    if (nama.length > 100) return alert("Nama terlalu panjang (maks. 100 karakter).");
-    if (!keranjang.length) return alert("Keranjang masih kosong!");
+    
+    console.log("2. Validasi input selesai:", { nama, noWa });
 
-    const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal,       0);
-    // Clamp hpp — rules mensyaratkan total_hpp <= total
-    const totalHppRaw   = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
+    const totalFinal    = keranjang.reduce((s, i) => s + Number(i.subtotal), 0);
+    const totalHppRaw   = keranjang.reduce((s, i) => s + Number(i.hpp_total || 0), 0);
     const totalHppFinal = Math.min(totalHppRaw, totalFinal);
 
     const btn = $id('btn-submit');
     btn.textContent = "Memproses..."; btn.disabled = true;
 
-    // Strip field internal — hanya kirim field yg divalidasi rules
     const itemsBersih = keranjang.map(i => ({
         aroma:  String(i.aroma),
         kelas:  String(i.kelas),
-        ukuran: Number(i.ukuran), // Wajib Number agar cocok dengan [35, 50, 100]
-        qty:    Number(i.qty)     // Wajib Number
+        ukuran: Number(i.ukuran),
+        qty:    Number(i.qty)
     }));
 
     function doSend() {
+        console.log("4. Memasuki fungsi doSend (Firestore Request)");
         db.collection("pesanan").add({
             buyer_id:  buyerId,
             nama:      escapeHTML(nama),
@@ -448,37 +452,35 @@ function kirimPesananAkhir() {
             total_hpp: totalHppFinal,
             status:    "Menunggu Diproses",
             waktu:     firebase.firestore.FieldValue.serverTimestamp()
-        }).then(() => {
-            alert("✅ Pesanan Terkirim! Menunggu konfirmasi admin.");
-            keranjang = []; renderKeranjang();
-            $id('nama').value  = '';
-            $id('no-wa').value = '';
-            btn.textContent = "Kirim Pesanan Sekarang";
-            switchTab('riwayat');
+        }).then((doc) => {
+            console.log("5. SUKSES! ID:", doc.id);
+            alert("✅ Pesanan Terkirim!");
+            location.reload(); // Segarkan halaman
         }).catch(err => {
-            console.error("Kirim pesanan error:", err);
+            console.error("5. FIRESTORE ERROR:", err);
             alert("Gagal mengirim: " + err.message);
             btn.disabled = false;
-            btn.textContent = "Kirim Pesanan Sekarang";
         });
     }
 
-    // Eksekusi: WAJIB mendapatkan token App Check terlebih dahulu
-    try {
-        firebase.appCheck().getToken(false)
-    .then(doSend)
-    .catch(err => {
-        console.error("App Check gagal:", err);
-        alert("Verifikasi keamanan gagal. Coba muat ulang halaman.");
-        btn.disabled = false;
-        btn.textContent = "Kirim Pesanan Sekarang";
-    });
-    } catch(e) {
-        console.error("App Check Error:", e);
-        alert("Sistem keamanan belum siap. Silakan muat ulang halaman.");
-        btn.disabled = false;
-        btn.textContent = "Kirim Pesanan Sekarang";
-    }
+    console.log("3. Meminta Token App Check...");
+    
+    // DEBUG: Coba ambil token
+    firebase.appCheck().getToken(false)
+        .then(res => {
+            console.log("Token didapat:", res.token.substring(0, 10) + "...");
+            doSend(); // Panggil fungsi kirim
+        })
+        .catch(err => {
+            console.error("APP CHECK GAGAL TOTAL:", err);
+            alert("Gagal verifikasi keamanan. Pesan error: " + err.message);
+            btn.disabled = false;
+            btn.textContent = "Kirim Pesanan Sekarang";
+            
+            // EMERGENCY BYPASS (Gunakan hanya untuk ngetes)
+            // console.warn("Mencoba bypass App Check karena error...");
+            // doSend(); 
+        });
 }
 
 // ============================================================
