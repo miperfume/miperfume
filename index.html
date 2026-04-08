@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html lang="id" class="light">
 <head>
     <meta charset="UTF-8">
@@ -20,126 +21,126 @@
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
-    <!-- Splash -->
-    <div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
-        <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
-        <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
-            <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
-            <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
+<!-- Splash -->
+<div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
+    <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
+    <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
+        <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
+        <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
+    </div>
+</div>
+
+<header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
+    <div class="flex items-center gap-3">
+        <img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md">
+        <div class="flex flex-col">
+            <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
+            <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
+        </div>
+    </div>
+    <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg" aria-label="Toggle dark mode">🌓</button>
+</header>
+
+<div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 sticky top-[73px] z-10">
+    <button id="tab-pesan"    class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
+    <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm"                  onclick="switchTab('riwayat')">Riwayat</button>
+</div>
+
+<div id="page-pesan" class="p-4 max-w-md mx-auto">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
+        <div class="mb-3">
+            <label class="block text-sm font-bold mb-1">Nama Pemesan</label>
+            <input type="text" id="nama" required maxlength="100"
+                class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="Nama Anda" autocomplete="name">
+        </div>
+        <div>
+            <label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label>
+            <input type="tel" id="no-wa" maxlength="20"
+                class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="0812..." autocomplete="tel">
         </div>
     </div>
 
-    <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
-        <div class="flex items-center gap-3">
-            <img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md">
-            <div class="flex flex-col">
-                <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
-                <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
-            </div>
-        </div>
-        <button onclick="document.documentElement.classList.toggle('dark')" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg" aria-label="Toggle dark mode">🌓</button>
-    </header>
-
-    <div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 sticky top-[73px] z-10">
-        <button id="tab-pesan"    class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
-        <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm"                  onclick="switchTab('riwayat')">Riwayat</button>
-    </div>
-
-    <div id="page-pesan" class="p-4 max-w-md mx-auto">
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
+        <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
+        <form id="form-item" onsubmit="tambahKeKeranjang(event)">
             <div class="mb-3">
-                <label class="block text-sm font-bold mb-1">Nama Pemesan</label>
-                <input type="text" id="nama" required maxlength="100"
-                    class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="Nama Anda" autocomplete="name">
+                <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
+                <input type="text" id="search-aroma" oninput="filterAromaDebounced()"
+                    class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm mb-2"
+                    placeholder="🔍 Ketik untuk mencari aroma...">
+                <select id="aroma" required onchange="updateKelasOptions()"
+                    class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm bg-gray-50 dark:bg-gray-700">
+                    <option value="" disabled selected>Memuat ketersediaan...</option>
+                </select>
             </div>
-            <div>
-                <label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label>
-                <input type="tel" id="no-wa" maxlength="20"
-                    class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="0812..." autocomplete="tel">
+            <div class="mb-3">
+                <label class="block text-xs font-medium mb-1">Kelas</label>
+                <select id="kelas" required onchange="hitungSubTotal()"
+                    class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm">
+                    <option value="" disabled selected>Pilih aroma dulu</option>
+                </select>
             </div>
-        </div>
-
-        <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
-            <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
-            <form id="form-item" onsubmit="tambahKeKeranjang(event)">
-                <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
-                    <input type="text" id="search-aroma" oninput="filterAromaDebounced()"
-                        class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm mb-2"
-                        placeholder="🔍 Ketik untuk mencari aroma...">
-                    <select id="aroma" required onchange="updateKelasOptions()"
-                        class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm bg-gray-50 dark:bg-gray-700">
-                        <option value="" disabled selected>Memuat ketersediaan...</option>
-                    </select>
-                </div>
-                <div class="mb-3">
-                    <label class="block text-xs font-medium mb-1">Kelas</label>
-                    <select id="kelas" required onchange="hitungSubTotal()"
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div>
+                    <label class="block text-xs font-medium mb-1">Ukuran</label>
+                    <select id="ukuran" required onchange="hitungSubTotal()"
                         class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm">
-                        <option value="" disabled selected>Pilih aroma dulu</option>
+                        <option value="" disabled selected>Pilih...</option>
+                        <option value="35">35 ml</option>
+                        <option value="50">50 ml</option>
+                        <option value="100">100 ml</option>
                     </select>
                 </div>
-                <div class="grid grid-cols-2 gap-3 mb-4">
-                    <div>
-                        <label class="block text-xs font-medium mb-1">Ukuran</label>
-                        <select id="ukuran" required onchange="hitungSubTotal()"
-                            class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm">
-                            <option value="" disabled selected>Pilih...</option>
-                            <option value="35">35 ml</option>
-                            <option value="50">50 ml</option>
-                            <option value="100">100 ml</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium mb-1">Jumlah</label>
-                        <input type="number" id="qty" required min="1" max="50" value="1" oninput="hitungSubTotal()"
-                            class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm text-center">
-                    </div>
+                <div>
+                    <label class="block text-xs font-medium mb-1">Jumlah</label>
+                    <input type="number" id="qty" required min="1" max="50" value="1" oninput="hitungSubTotal()"
+                        class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm text-center">
                 </div>
-                <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600">
-                    <span class="text-xs">Subtotal:</span>
-                    <span id="subtotal-item" class="font-bold text-gold">Rp 0</span>
-                </div>
-                <button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">
-                    Masukkan Keranjang
-                </button>
-            </form>
-        </div>
-
-        <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
-            <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between">
-                <span>🛒 Keranjang</span>
-                <span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span>
-            </h2>
-            <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
-                <p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>
             </div>
-            <div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4">
-                <span class="text-sm font-bold">Total:</span>
-                <span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span>
+            <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600">
+                <span class="text-xs">Subtotal:</span>
+                <span id="subtotal-item" class="font-bold text-gold">Rp 0</span>
             </div>
-            <button id="btn-submit" onclick="kirimPesananAkhir()"
-                class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>
-                Kirim Pesanan Sekarang
+            <button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">
+                Masukkan Keranjang
             </button>
-        </div>
+        </form>
     </div>
 
-    <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden">
-        <div id="daftar-riwayat" class="space-y-3"></div>
-    </div>
-
-    <!-- Modal QRIS -->
-    <div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
-        <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
-            <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none" aria-label="Tutup">&times;</button>
-            <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
-            <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
-                onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
-            <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
-            <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
+    <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
+        <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between">
+            <span>🛒 Keranjang</span>
+            <span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span>
+        </h2>
+        <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
+            <p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>
         </div>
+        <div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4">
+            <span class="text-sm font-bold">Total:</span>
+            <span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span>
+        </div>
+        <button id="btn-submit" onclick="kirimPesananAkhir()"
+            class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>
+            Kirim Pesanan Sekarang
+        </button>
     </div>
+</div>
+
+<div id="page-riwayat" class="p-4 max-w-md mx-auto hidden">
+    <div id="daftar-riwayat" class="space-y-3"></div>
+</div>
+
+<!-- Modal QRIS -->
+<div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
+        <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none" aria-label="Tutup">&times;</button>
+        <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
+        <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
+            onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
+        <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
+        <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
+    </div>
+</div>
 
 <script>
 // ============================================================
@@ -162,14 +163,26 @@ const firebaseConfig = {
     messagingSenderId: "894897183896",
     appId:             "1:894897183896:web:71372dc8cbb9056c7144ed"
 };
+
+// 1. Inisialisasi Firebase (Gunakan config asli Anda)
 firebase.initializeApp(firebaseConfig);
 
-try {
-    firebase.appCheck().activate('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr', true);
-} catch (e) { console.error("App Check gagal:", e); }
-
 const db = firebase.firestore();
-db.enablePersistence({ synchronizeTabs: false }).catch(err => console.warn('Persistence:', err.code));
+db.enablePersistence().catch(err => console.warn('Persistence:', err.code));
+
+// 2. Aktifkan App Check (reCAPTCHA v3)
+try {
+    const appCheck = firebase.appCheck();
+    appCheck.activate(
+      new firebase.appCheck.ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
+      true // Mengizinkan auto-refresh token
+    );
+} catch (e) {
+    console.warn("App Check gagal dimuat:", e);
+}
+
+
+
 
 // ============================================================
 // STATE
@@ -198,23 +211,33 @@ const splashFallback = setTimeout(closeSplash, 5000);
 // ============================================================
 // AUTH — anonymous login untuk buyer_id
 // ============================================================
+// ✅ YANG BENAR
 firebase.auth().onAuthStateChanged(user => {
     if (user) {
         buyerId = user.uid;
+        loadBahan();
         loadRiwayat();
     } else {
-        firebase.auth().signInAnonymously().catch(err => console.error("Auth gagal:", err));
+        firebase.auth().signInAnonymously().catch(err => {
+            console.error("Gagal login anonim:", err);
+            alert("Terjadi kesalahan sistem, silakan muat ulang halaman.");
+        });
     }
 });
 
+        
 // ============================================================
-// DATA BAHAN — onSnapshot agar sinkron dengan stok realtime
+// DATA BAHAN — cukup get() sekali (bukan realtime)
+// Bahan tidak berubah saat customer browsing; realtime tidak perlu
+// dan mahal (buka koneksi persistent + kirim data harga modal).
 // ============================================================
-db.collection("bahan").onSnapshot(snap => {
-    snap.forEach(doc => {
-        dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 };
-    });
-}, err => console.error("Gagal load bahan:", err));
+function loadBahan() {
+    db.collection("bahan").get().then(snap => {
+        snap.forEach(doc => {
+            dataBahan[doc.id] = { sisa: doc.data().sisa || 0, harga_satuan: doc.data().harga_satuan || 0 };
+        });
+    }).catch(err => console.error("Gagal load bahan:", err));
+}
 
 // ============================================================
 // DATA STOK — realtime
@@ -438,7 +461,8 @@ function switchTab(t) {
     });
     $id('page-'+t).classList.remove('hidden');
     $id('tab-'+t).classList.replace('text-gray-500','tab-active');
-    if (t === 'riwayat' && buyerId) loadRiwayat();
+    if (t === 'riwayat' && buyerId && !riwayatListener) loadRiwayat();
+
 }
 
 // ============================================================
@@ -514,5 +538,6 @@ function loadRiwayat() {
         });
 }
 </script>
+
 </body>
 </html>
