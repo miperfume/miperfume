@@ -167,9 +167,6 @@ const firebaseConfig = {
 // 1. Inisialisasi Firebase (Gunakan config asli Anda)
 firebase.initializeApp(firebaseConfig);
 
-const db = firebase.firestore();
-db.enablePersistence().catch(err => console.warn('Persistence:', err.code));
-
 // 2. Aktifkan App Check (reCAPTCHA v3)
 try {
     const appCheck = firebase.appCheck();
@@ -181,6 +178,8 @@ try {
     console.warn("App Check gagal dimuat:", e);
 }
 
+    const db = firebase.firestore();
+db.enablePersistence().catch(err => console.warn('Persistence:', err.code));
 
 
 
