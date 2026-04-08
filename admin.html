@@ -392,7 +392,11 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 try {
-    new firebase.appCheck.ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr', true);
+    const appCheck = firebase.appCheck();
+    appCheck.activate(
+      new firebase.appCheck.ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
+      true // Mengizinkan auto-refresh token
+    );
 } catch (e) { console.warn("App Check gagal:", e); }
 
 const db         = firebase.firestore();
