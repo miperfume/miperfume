@@ -465,11 +465,29 @@ function kirimPesananAkhir() {
         });
     }
 
-    // Pastikan App Check token sudah siap sebelum write
+    // Eksekusi: WAJIB mendapatkan token App Check terlebih dahulu
     try {
-        firebase.appCheck().getToken(false).then(doSend).catch(() => doSend());
+        firebase.appCheck().getToken(false)
+            .then((appCheckToken) => {
+                if (appCheckToken && appCheckToken.token) {
+                    // Jika token valid didapat, jalankan pengiriman!
+                    doSend(); 
+                } else {
+                    // Jika token kosong, hentikan
+                    throw new Error("Token App Check Kosong");
+                }
+            })
+            .catch((err) => {
+                console.error("App Check ditolak:", err);
+                alert("Keamanan Gagal: Sistem mendeteksi aktivitas mencurigakan atau koneksi tidak stabil. Silakan muat ulang halaman.");
+                btn.disabled = false;
+                btn.textContent = "Kirim Pesanan Sekarang";
+            });
     } catch(e) {
-        doSend();
+        console.error("App Check Error:", e);
+        alert("Sistem keamanan belum siap. Silakan muat ulang halaman.");
+        btn.disabled = false;
+        btn.textContent = "Kirim Pesanan Sekarang";
     }
 }
 
