@@ -411,6 +411,17 @@ db.enablePersistence({ synchronizeTabs: false }).catch(err => console.warn('Pers
 window.addEventListener('online',  () => $id('offline-banner').classList.remove('show'));
 window.addEventListener('offline', () => $id('offline-banner').classList.add('show'));
 
+// Helper: tampilkan error listener Firestore ke UI (bukan hanya console)
+function tampilkanErrorKoneksi(label, err) {
+    console.error(label, err.message);
+    // Tampilkan offline-banner sebagai sinyal visual agar admin tahu ada masalah
+    const banner = $id('offline-banner');
+    if (banner) {
+        banner.textContent = `⚠️ Gagal memuat ${label} — ${err.message}`;
+        banner.classList.add('show');
+    }
+}
+
 // ============================================================
 // STATE
 // ============================================================
@@ -1293,7 +1304,7 @@ function initAdminData() {
         $id('bahan-id').innerHTML   = defaultOpts + extra;
         $id('pb-bahan-id').innerHTML = defaultOptsPb + extra;
         cekRestock();
-    }, err => console.error("Gagal load bahan:", err.message));
+    }, err => tampilkanErrorKoneksi("data bahan", err));
 
     // Pesanan
     subscribeQueryPesanan();
@@ -1316,12 +1327,12 @@ function initAdminData() {
         renderDaftarPembelian();
         if (cachedStatistik) renderDashboard(cachedStatistik);
         else db.collection("statistik").doc("global").get().then(doc => { if (doc.exists) renderDashboard(doc.data()); });
-    }, err => console.error("Gagal memuat pembelian:", err.message));
+    }, err => tampilkanErrorKoneksi("pembelian stok", err));
 
     // Statistik — realtime, cache selalu fresh
     listeners.statistik = db.collection("statistik").doc("global").onSnapshot(doc => {
         if (doc.exists) { cachedStatistik = doc.data(); renderDashboard(doc.data()); }
-    }, err => console.error("Gagal memuat analitik:", err.message));
+    }, err => tampilkanErrorKoneksi("analitik", err));
 
     // CRM — limit 100 (tidak load semua)
     listeners.crm = db.collection("crm").orderBy("total_spent","desc").limit(100).onSnapshot(snap => {
@@ -1335,7 +1346,7 @@ function initAdminData() {
         });
         renderCRM(crmList.slice(0,20));
         renderFollowUp(followupList);
-    }, err => console.error("Gagal memuat CRM:", err.message));
+    }, err => tampilkanErrorKoneksi("CRM", err));
 }
 </script>
 
