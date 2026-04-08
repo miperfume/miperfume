@@ -193,7 +193,6 @@ let dataStok        = {};
 let dataBahan       = {};
 let rawAromas       = [];
 let riwayatListener = null;
-let stokListener    = null;
 let stokSudahDimuat = false;
 
 // Harga — bisa dipindahkan ke Firestore /config/harga di masa depan
@@ -212,39 +211,12 @@ const splashFallback = setTimeout(closeSplash, 5000);
 // ============================================================
 // AUTH — anonymous login untuk buyer_id
 // ============================================================
+// ✅ YANG BENAR
 firebase.auth().onAuthStateChanged(user => {
     if (user) {
         buyerId = user.uid;
         loadBahan();
         loadRiwayat();
-
-        // ✅ Stok listener diattach SETELAH auth token siap
-        // sehingga rules "isAuthed()" pasti lolos
-        if (!stokListener) {
-            stokListener = db.collection("stok").orderBy("nama").onSnapshot(snap => {
-                rawAromas = []; dataStok = {};
-                snap.forEach(doc => {
-                    const d = doc.data();
-                    dataStok[d.nama] = {
-                        sisa_ml:        d.sisa_ml        || 0,
-                        stok_kelas:     d.stok_kelas     || {},
-                        modal:          d.modal          || {},
-                        kelas_tersedia: d.kelas_tersedia || ["Standar"]
-                    };
-                    rawAromas.push(d);
-                });
-                renderAromaOptions("");
-                if (!stokSudahDimuat) {
-                    stokSudahDimuat = true;
-                    clearTimeout(splashFallback);
-                    setTimeout(closeSplash, 300);
-                }
-            }, err => {
-                console.error("Gagal load stok:", err);
-                clearTimeout(splashFallback);
-                closeSplash();
-            });
-        }
     } else {
         firebase.auth().signInAnonymously().catch(err => {
             console.error("Gagal login anonim:", err);
@@ -253,6 +225,7 @@ firebase.auth().onAuthStateChanged(user => {
     }
 });
 
+        
 // ============================================================
 // DATA BAHAN — cukup get() sekali (bukan realtime)
 // Bahan tidak berubah saat customer browsing; realtime tidak perlu
@@ -265,6 +238,33 @@ function loadBahan() {
         });
     }).catch(err => console.error("Gagal load bahan:", err));
 }
+
+// ============================================================
+// DATA STOK — realtime
+// ============================================================
+db.collection("stok").orderBy("nama").onSnapshot(snap => {
+    rawAromas = []; dataStok = {};
+    snap.forEach(doc => {
+        const d = doc.data();
+        dataStok[d.nama] = {
+            sisa_ml:        d.sisa_ml       || 0,
+            stok_kelas:     d.stok_kelas    || {},
+            modal:          d.modal         || {},
+            kelas_tersedia: d.kelas_tersedia || ["Standar"]
+        };
+        rawAromas.push(d);
+    });
+    renderAromaOptions("");
+    if (!stokSudahDimuat) {
+        stokSudahDimuat = true;
+        clearTimeout(splashFallback);
+        setTimeout(closeSplash, 300);
+    }
+}, err => {
+    console.error("Gagal load stok:", err);
+    clearTimeout(splashFallback);
+    closeSplash();
+});
 
 // ============================================================
 // RENDER AROMA — gunakan DocumentFragment, bukan innerHTML +=
@@ -428,27 +428,46 @@ function kirimPesananAkhir() {
     const btn = $id('btn-submit');
     btn.textContent = "Memproses..."; btn.disabled = true;
 
-    db.collection("pesanan").add({
-        buyer_id:  buyerId,
-        nama:      escapeHTML(nama),
-        no_wa:     escapeHTML(noWa),
-        items:     keranjang,
-        total:     totalFinal,
-        total_hpp: totalHppFinal,
-        status:    "Menunggu Diproses",
-        waktu:     firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-        alert("✅ Pesanan Terkirim! Menunggu konfirmasi admin.");
-        keranjang = []; renderKeranjang();
-        $id('nama').value  = '';
-        $id('no-wa').value = '';
-        btn.textContent = "Kirim Pesanan Sekarang";
-        switchTab('riwayat');
-    }).catch(err => {
-        alert("Gagal mengirim: " + err.message);
-        btn.disabled = false;
-        btn.textContent = "Kirim Pesanan Sekarang";
-    });
+    // Strip field internal — hanya kirim field yg divalidasi rules
+    const itemsBersih = keranjang.map(i => ({
+        aroma:    i.aroma,
+        kelas:    i.kelas,
+        ukuran:   i.ukuran,
+        qty:      i.qty,
+        subtotal: i.subtotal,
+    }));
+
+    function doSend() {
+        db.collection("pesanan").add({
+            buyer_id:  buyerId,
+            nama:      escapeHTML(nama),
+            no_wa:     escapeHTML(noWa),
+            items:     itemsBersih,
+            total:     totalFinal,
+            total_hpp: totalHppFinal,
+            status:    "Menunggu Diproses",
+            waktu:     firebase.firestore.FieldValue.serverTimestamp()
+        }).then(() => {
+            alert("✅ Pesanan Terkirim! Menunggu konfirmasi admin.");
+            keranjang = []; renderKeranjang();
+            $id('nama').value  = '';
+            $id('no-wa').value = '';
+            btn.textContent = "Kirim Pesanan Sekarang";
+            switchTab('riwayat');
+        }).catch(err => {
+            console.error("Kirim pesanan error:", err);
+            alert("Gagal mengirim: " + err.message);
+            btn.disabled = false;
+            btn.textContent = "Kirim Pesanan Sekarang";
+        });
+    }
+
+    // Pastikan App Check token sudah siap sebelum write
+    try {
+        firebase.appCheck().getToken(false).then(doSend).catch(() => doSend());
+    } catch(e) {
+        doSend();
+    }
 }
 
 // ============================================================
