@@ -466,7 +466,7 @@ function kirimPesananAkhir() {
     console.log("3. Meminta Token App Check...");
     
     // DEBUG: Coba ambil token
-    firebase.appCheck().getToken(true)
+    firebase.appCheck().getToken(false)
         .then(res => {
             console.log("Token didapat:", res.token.substring(0, 10) + "...");
             doSend(); // Panggil fungsi kirim
