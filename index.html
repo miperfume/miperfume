@@ -443,6 +443,12 @@ function kirimPesananAkhir() {
 
     function doSend() {
         console.log("4. Memasuki fungsi doSend (Firestore Request)");
+
+        console.log("=== BONGKAR DATA SEBELUM DIKIRIM ===");
+    console.log("Buyer ID:", buyerId);
+    console.log("Tipe Total:", typeof totalFinal, "| Nilai:", totalFinal);
+    console.log("Isi ItemsBersih:", JSON.stringify(itemsBersih, null, 2));
+        
         db.collection("pesanan").add({
             buyer_id:  buyerId,
             nama:      escapeHTML(nama),
