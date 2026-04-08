@@ -392,7 +392,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 
 try {
-    firebase.appCheck.ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr', true);
+    new firebase.appCheck.ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr', true);
 } catch (e) { console.warn("App Check gagal:", e); }
 
 const db         = firebase.firestore();
