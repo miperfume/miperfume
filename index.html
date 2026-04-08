@@ -432,11 +432,10 @@ function kirimPesananAkhir() {
 
     // Strip field internal — hanya kirim field yg divalidasi rules
     const itemsBersih = keranjang.map(i => ({
-        aroma:    i.aroma,
-        kelas:    i.kelas,
-        ukuran:   i.ukuran,
-        qty:      i.qty,
-        subtotal: i.subtotal,
+        aroma:  String(i.aroma),
+        kelas:  String(i.kelas),
+        ukuran: Number(i.ukuran), // Wajib Number agar cocok dengan [35, 50, 100]
+        qty:    Number(i.qty)     // Wajib Number
     }));
 
     function doSend() {
