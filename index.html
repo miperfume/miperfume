@@ -193,6 +193,7 @@ let dataStok        = {};
 let dataBahan       = {};
 let rawAromas       = [];
 let riwayatListener = null;
+let stokListener    = null;
 let stokSudahDimuat = false;
 
 // Harga — bisa dipindahkan ke Firestore /config/harga di masa depan
@@ -217,6 +218,34 @@ firebase.auth().onAuthStateChanged(user => {
         buyerId = user.uid;
         loadBahan();
         loadRiwayat();
+
+        // ✅ Stok listener diattach SETELAH auth token siap
+        // Rules: isAuthed() — token harus ada saat onSnapshot dipanggil
+        if (!stokListener) {
+            stokListener = db.collection("stok").orderBy("nama").onSnapshot(snap => {
+                rawAromas = []; dataStok = {};
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    dataStok[d.nama] = {
+                        sisa_ml:        d.sisa_ml        || 0,
+                        stok_kelas:     d.stok_kelas     || {},
+                        modal:          d.modal          || {},
+                        kelas_tersedia: d.kelas_tersedia || ["Standar"]
+                    };
+                    rawAromas.push(d);
+                });
+                renderAromaOptions("");
+                if (!stokSudahDimuat) {
+                    stokSudahDimuat = true;
+                    clearTimeout(splashFallback);
+                    setTimeout(closeSplash, 300);
+                }
+            }, err => {
+                console.error("Gagal load stok:", err);
+                clearTimeout(splashFallback);
+                closeSplash();
+            });
+        }
     } else {
         firebase.auth().signInAnonymously().catch(err => {
             console.error("Gagal login anonim:", err);
@@ -225,7 +254,6 @@ firebase.auth().onAuthStateChanged(user => {
     }
 });
 
-        
 // ============================================================
 // DATA BAHAN — cukup get() sekali (bukan realtime)
 // Bahan tidak berubah saat customer browsing; realtime tidak perlu
@@ -238,33 +266,6 @@ function loadBahan() {
         });
     }).catch(err => console.error("Gagal load bahan:", err));
 }
-
-// ============================================================
-// DATA STOK — realtime
-// ============================================================
-db.collection("stok").orderBy("nama").onSnapshot(snap => {
-    rawAromas = []; dataStok = {};
-    snap.forEach(doc => {
-        const d = doc.data();
-        dataStok[d.nama] = {
-            sisa_ml:        d.sisa_ml       || 0,
-            stok_kelas:     d.stok_kelas    || {},
-            modal:          d.modal         || {},
-            kelas_tersedia: d.kelas_tersedia || ["Standar"]
-        };
-        rawAromas.push(d);
-    });
-    renderAromaOptions("");
-    if (!stokSudahDimuat) {
-        stokSudahDimuat = true;
-        clearTimeout(splashFallback);
-        setTimeout(closeSplash, 300);
-    }
-}, err => {
-    console.error("Gagal load stok:", err);
-    clearTimeout(splashFallback);
-    closeSplash();
-});
 
 // ============================================================
 // RENDER AROMA — gunakan DocumentFragment, bukan innerHTML +=
@@ -423,7 +424,9 @@ function kirimPesananAkhir() {
     if (!keranjang.length) return alert("Keranjang masih kosong!");
 
     const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal,       0);
-    const totalHppFinal = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
+    // Clamp hpp — rules mensyaratkan total_hpp <= total
+    const totalHppRaw   = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
+    const totalHppFinal = Math.min(totalHppRaw, totalFinal);
 
     const btn = $id('btn-submit');
     btn.textContent = "Memproses..."; btn.disabled = true;
