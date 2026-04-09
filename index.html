@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pesan - MI Perfume</title>
 
+```
 <!-- PWA: Manifest & Theme -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#a38d58">
@@ -33,88 +34,69 @@
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('sw.js', { scope: '/' })
+            // Path absolut agar scope / berfungsi dari subfolder manapun
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
                 .then(reg => {
                     console.log('[PWA] SW terdaftar, scope:', reg.scope);
-
-                    // Deteksi update SW baru
                     reg.addEventListener('updatefound', () => {
-                        const newWorker = reg.installing;
-                        newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                // Ada versi baru — tampilkan notif update
-                                showUpdateBanner();
+                        const w = reg.installing;
+                        w.addEventListener('statechange', () => {
+                            if (w.state === 'installed' && navigator.serviceWorker.controller) {
+                                const el = document.getElementById('update-banner');
+                                if (el) el.classList.remove('hidden');
                             }
                         });
                     });
                 })
                 .catch(err => console.warn('[PWA] SW gagal:', err));
         });
-
-        // Reload saat SW baru aktif
         let refreshing = false;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
             if (!refreshing) { refreshing = true; location.reload(); }
         });
     }
 
-    // ── Online / Offline banner ──
-    function updateOnlineStatus() {
-        const banner = document.getElementById('offline-banner');
-        if (!banner) return;
-        if (navigator.onLine) {
-            banner.style.display = 'none';
-        } else {
-            banner.style.display = 'flex';
-        }
-    }
-    window.addEventListener('online',  updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
+    window.addEventListener('online',  () => {
+        const b = document.getElementById('offline-banner');
+        if (b) b.style.display = 'none';
+    });
+    window.addEventListener('offline', () => {
+        const b = document.getElementById('offline-banner');
+        if (b) b.style.display = 'flex';
+    });
 
-    // ── Install prompt ──
     let deferredInstallPrompt = null;
     window.addEventListener('beforeinstallprompt', e => {
         e.preventDefault();
         deferredInstallPrompt = e;
         setTimeout(() => {
-            const banner = document.getElementById('install-banner');
-            if (banner && !sessionStorage.getItem('install-dismissed')) {
-                banner.classList.remove('hidden');
-            }
+            const b = document.getElementById('install-banner');
+            if (b && !sessionStorage.getItem('install-dismissed')) b.classList.remove('hidden');
         }, 4000);
     });
-
     window.installPWA = function () {
         if (!deferredInstallPrompt) return;
         deferredInstallPrompt.prompt();
-        deferredInstallPrompt.userChoice.then(result => {
+        deferredInstallPrompt.userChoice.then(() => {
             deferredInstallPrompt = null;
             document.getElementById('install-banner')?.classList.add('hidden');
         });
     };
-
     window.dismissInstall = function () {
         sessionStorage.setItem('install-dismissed', '1');
         document.getElementById('install-banner')?.classList.add('hidden');
     };
-
     window.addEventListener('appinstalled', () => {
         document.getElementById('install-banner')?.classList.add('hidden');
         deferredInstallPrompt = null;
     });
-
-    // ── Update banner ──
-    function showUpdateBanner() {
-        const el = document.getElementById('update-banner');
-        if (el) el.classList.remove('hidden');
-    }
-
     window.applyUpdate = function () {
         navigator.serviceWorker.getRegistration().then(reg => {
             reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
         });
     };
 </script>
+```
 
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
@@ -144,10 +126,13 @@
     <button onclick="dismissInstall()" class="text-gray-400 text-base px-1 shrink-0">✕</button>
 </div>
 
-<!-- Splash -->
+<!-- Splash — z-[999] agar di atas semua elemen lain -->
 
-<div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
-    <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
+<!-- closeSplash() di app.js menggunakan inline style opacity+remove, bukan Tailwind class -->
+
+<div id="splash" class="fixed inset-0 z-[999] bg-white" style="transition: opacity 0.7s ease;">
+    <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover"
+        onerror="this.style.display='none'">
     <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
         <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
         <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
@@ -184,6 +169,7 @@
         </div>
     </div>
 
+```
 <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
     <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
     <form id="form-item" onsubmit="tambahKeKeranjang(event)">
@@ -248,6 +234,7 @@
         Kirim Pesanan Sekarang
     </button>
 </div>
+```
 
 </div>
 
@@ -261,7 +248,7 @@
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
         <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none" aria-label="Tutup">&times;</button>
         <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
-        <img src="/qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
+        <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
             onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
         <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
         <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
