@@ -7,6 +7,7 @@
     <title>Pesan - MI Perfume</title>
 
 <!-- PWA Meta Tags -->
+
 <meta name="application-name" content="MI Perfume">
 <meta name="description" content="Sistem Pemesanan dan Manajemen MI Perfume">
 <meta name="theme-color" content="#a38d58">
@@ -16,11 +17,13 @@
 <meta name="apple-mobile-web-app-title" content="MI Perfume">
 
 <!-- Manifest & Icons -->
+
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.jpeg">
 <link rel="icon" type="image/jpeg" href="logo.jpeg">
 
 <script src="https://cdn.tailwindcss.com"></script>
+
 <script>tailwind.config = { darkMode: 'class' }</script>
 
 <!-- Firebase v9 Modular SDK (ESM via CDN) -->
@@ -32,7 +35,7 @@ import {
     getAuth, onAuthStateChanged, signInAnonymously
 }                                                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import {
-    getFirestore, enableIndexedDbPersistence,
+    initializeFirestore, persistentLocalCache,
     collection, addDoc, getDocs, query,
     where, orderBy, limit, onSnapshot,
     serverTimestamp
@@ -48,6 +51,30 @@ function escapeHTML(str) {
 function $id(id) { return document.getElementById(id); }
 
 // ============================================================
+// TOAST NOTIFICATION
+// ============================================================
+function showToast(msg, type = 'info', duration = 3000) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;width:90%;max-width:360px;pointer-events:none';
+        document.body.appendChild(container);
+    }
+    const colors = { success:'background:#22c55e', error:'background:#ef4444', info:'background:#a38d58', warning:'background:#f59e0b' };
+    const icons  = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+    const toast  = document.createElement('div');
+    toast.style.cssText = `${colors[type]||colors.info};color:white;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);pointer-events:auto;opacity:0;transition:opacity 0.25s,transform 0.25s;transform:translateY(-8px);max-width:100%;text-align:center;line-height:1.4`;
+    toast.textContent = `${icons[type]||''} ${msg}`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity='1'; toast.style.transform='translateY(0)'; });
+    setTimeout(() => {
+        toast.style.opacity='0'; toast.style.transform='translateY(-8px)';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
+}
+
+// ============================================================
 // FIREBASE INIT
 // ============================================================
 const firebaseConfig = {
@@ -61,7 +88,10 @@ const firebaseConfig = {
 
 const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const db   = getFirestore(app);
+// Offline persistence modern (persistentLocalCache menggantikan enableIndexedDbPersistence)
+const db   = initializeFirestore(app, {
+    localCache: persistentLocalCache()
+});
 
 // App Check (reCAPTCHA v3)
 try {
@@ -72,9 +102,6 @@ try {
 } catch (e) {
     console.warn("App Check gagal dimuat:", e);
 }
-
-// Offline persistence
-enableIndexedDbPersistence(db).catch(err => console.warn('Persistence:', err.code));
 
 // ============================================================
 // STATE
@@ -139,7 +166,7 @@ onAuthStateChanged(auth, user => {
     } else {
         signInAnonymously(auth).catch(err => {
             console.error("Gagal login anonim:", err);
-            alert("Terjadi kesalahan sistem, silakan muat ulang halaman.");
+            showToast("Terjadi kesalahan sistem, silakan muat ulang halaman.", 'error', 5000);
         });
     }
 });
@@ -220,8 +247,18 @@ function hitungSubTotal() {
 }
 
 // ============================================================
-// KERANJANG
+// KERANJANG — dengan sessionStorage agar tidak hilang saat refresh
 // ============================================================
+function simpanKeranjang() {
+    try { sessionStorage.setItem('mi_keranjang', JSON.stringify(keranjang)); } catch(e) {}
+}
+function muatKeranjang() {
+    try {
+        const data = sessionStorage.getItem('mi_keranjang');
+        if (data) keranjang = JSON.parse(data);
+    } catch(e) { keranjang = []; }
+}
+muatKeranjang(); // muat saat halaman pertama kali buka
 function tambahKeKeranjang(e) {
     e.preventDefault();
     const aroma  = $id('aroma').value;
@@ -229,7 +266,7 @@ function tambahKeKeranjang(e) {
     const ukuran = parseInt($id('ukuran').value);
     const qty    = parseInt($id('qty').value);
 
-    if (qty < 1 || qty > 50) return alert("Jumlah harus antara 1–50.");
+    if (qty < 1 || qty > 50) return showToast("Jumlah harus antara 1–50.", 'warning');
 
     const butuhBibit = (ukuran * 0.5) * qty;
     const idBotol    = 'botol_' + ukuran;
@@ -245,11 +282,11 @@ function tambahKeKeranjang(e) {
         : (dataStok[aroma]?.sisa_ml || 0);
 
     if ((butuhBibit + cartBibit) > stokBibit)
-        return alert(`❌ Bibit ${aroma} (${kelas}) tidak cukup.\nTersedia: ${stokBibit}ml, Butuh: ${butuhBibit+cartBibit}ml`);
+        return showToast(`Bibit ${aroma} (${kelas}) tidak cukup. Tersedia: ${stokBibit}ml, Butuh: ${butuhBibit+cartBibit}ml`, 'error', 4000);
     if ((qty + cartBotol) > (dataBahan[idBotol]?.sisa || 0))
-        return alert(`❌ Stok Botol ${ukuran}ml kurang.`);
+        return showToast(`Stok Botol ${ukuran}ml kurang.`, 'error');
     if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0))
-        return alert(`❌ Stok Absolute kelas ini kurang.`);
+        return showToast(`Stok Absolute kelas ini kurang.`, 'error');
 
     const subtotal = hitungHarga(kelas, ukuran, qty);
     keranjang.push({
@@ -262,7 +299,9 @@ function tambahKeKeranjang(e) {
                    + qty        * (dataBahan[idBotol]?.harga_satuan || 0)
                    + butuhAbs   * (dataBahan[idAbs]?.harga_satuan   || 0),
     });
+    simpanKeranjang();
     renderKeranjang();
+    showToast(`${aroma} (${ukuran}ml) ditambahkan!`, 'success');
     $id('qty').value          = 1;
     $id('subtotal-item').innerText = 'Rp 0';
     $id('kelas').value        = "";
@@ -271,7 +310,7 @@ function tambahKeKeranjang(e) {
     filterAromaDebounced();
 }
 
-function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
+function hapusItem(idx) { keranjang.splice(idx, 1); simpanKeranjang(); renderKeranjang(); }
 
 function renderKeranjang() {
     const wadah = $id('isi-keranjang');
@@ -312,12 +351,12 @@ function renderKeranjang() {
 // KIRIM PESANAN
 // ============================================================
 async function kirimPesananAkhir() {
-    if (!buyerId) return alert("Sistem keamanan sedang memuat. Mohon tunggu.");
+    if (!buyerId) return showToast("Sistem keamanan sedang memuat. Mohon tunggu.", 'warning');
     const nama = $id('nama').value.trim();
     const noWa = $id('no-wa').value.trim();
-    if (!nama)             return alert("Harap isi Nama Pemesan!");
-    if (nama.length > 100) return alert("Nama terlalu panjang (maks. 100 karakter).");
-    if (!keranjang.length) return alert("Keranjang masih kosong!");
+    if (!nama)             return showToast("Harap isi Nama Pemesan!", 'warning');
+    if (nama.length > 100) return showToast("Nama terlalu panjang (maks. 100 karakter).", 'warning');
+    if (!keranjang.length) return showToast("Keranjang masih kosong!", 'warning');
 
     const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal, 0);
     const totalHppRaw   = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
@@ -344,15 +383,15 @@ async function kirimPesananAkhir() {
             status:    "Menunggu Diproses",
             waktu:     serverTimestamp()
         });
-        alert("✅ Pesanan Terkirim! Menunggu konfirmasi admin.");
-        keranjang = []; renderKeranjang();
+        showToast("Pesanan Terkirim! Menunggu konfirmasi admin.", 'success', 4000);
+        keranjang = []; simpanKeranjang(); renderKeranjang();
         $id('nama').value  = '';
         $id('no-wa').value = '';
         btn.textContent = "Kirim Pesanan Sekarang";
         switchTab('riwayat');
     } catch (err) {
         console.error("Kirim pesanan error:", err);
-        alert("Gagal mengirim: " + err.message);
+        showToast("Gagal mengirim: " + err.message, 'error', 5000);
         btn.disabled = false;
         btn.textContent = "Kirim Pesanan Sekarang";
     }
