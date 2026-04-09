@@ -1,29 +1,53 @@
-import { initializeApp }                          from “https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js”;
-import { initializeAppCheck, ReCaptchaV3Provider,
-getToken }                               from “https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js”;
-import { getFirestore,
-collection, query, where, orderBy, limit,
-addDoc, getDocs, onSnapshot,
-serverTimestamp }                        from “https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js”;
-import { getAuth, onAuthStateChanged,
-signInAnonymously }                      from “https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js”;
+// ============================================================
+// FIREBASE IMPORTS
+// ============================================================
+import { initializeApp }                           from “https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js”;
+import { initializeAppCheck, ReCaptchaV3Provider } from “https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js”;
+import {
+getAuth, onAuthStateChanged, signInAnonymously
+}                                                  from “https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js”;
+import {
+initializeFirestore, persistentLocalCache,
+collection, addDoc, getDocs, query,
+where, orderBy, limit, onSnapshot,
+serverTimestamp
+}                                                  from “https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js”;
 
 // ============================================================
 // UTILS
 // ============================================================
 function escapeHTML(str) {
 if (!str) return ‘’;
-return String(str)
-.replace(/&/g, ‘&’)
-.replace(/</g, ‘<’)
-.replace(/>/g, ‘>’)
-.replace(/”/g, ‘"’)
-.replace(/’/g, ‘'’);
+return str.toString().replace(/[&<>’”]/g, t => ({’&’:’&’,’<’:’<’,’>’:’>’,”’”:’'’,’”’:’"’}[t] || t));
 }
 function $id(id) { return document.getElementById(id); }
 
 // ============================================================
-// FIREBASE INIT (v9 Modular)
+// TOAST NOTIFICATION
+// ============================================================
+function showToast(msg, type = ‘info’, duration = 3000) {
+let container = document.getElementById(‘toast-container’);
+if (!container) {
+container = document.createElement(‘div’);
+container.id = ‘toast-container’;
+container.style.cssText = ‘position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;width:90%;max-width:360px;pointer-events:none’;
+document.body.appendChild(container);
+}
+const colors = { success:‘background:#22c55e’, error:‘background:#ef4444’, info:‘background:#9c9e4a’, warning:‘background:#f59e0b’ };
+const icons  = { success:‘✅’, error:‘❌’, info:‘ℹ️’, warning:‘⚠️’ };
+const toast  = document.createElement(‘div’);
+toast.style.cssText = `${colors[type]||colors.info};color:white;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);pointer-events:auto;opacity:0;transition:opacity 0.25s,transform 0.25s;transform:translateY(-8px);max-width:100%;text-align:center;line-height:1.4`;
+toast.textContent = `${icons[type]||''} ${msg}`;
+container.appendChild(toast);
+requestAnimationFrame(() => { toast.style.opacity=‘1’; toast.style.transform=‘translateY(0)’; });
+setTimeout(() => {
+toast.style.opacity=‘0’; toast.style.transform=‘translateY(-8px)’;
+setTimeout(() => toast.remove(), 300);
+}, duration);
+}
+
+// ============================================================
+// FIREBASE INIT
 // ============================================================
 const firebaseConfig = {
 apiKey:            “AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY”,
@@ -35,14 +59,15 @@ appId:             “1:894897183896:web:71372dc8cbb9056c7144ed”
 };
 
 const app  = initializeApp(firebaseConfig);
-const db   = getFirestore(app);
 const auth = getAuth(app);
+const db   = initializeFirestore(app, {
+localCache: persistentLocalCache()
+});
 
 // App Check (reCAPTCHA v3)
-let appCheck = null;
 try {
-appCheck = initializeAppCheck(app, {
-provider: new ReCaptchaV3Provider(‘6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr’),
+initializeAppCheck(app, {
+provider:              new ReCaptchaV3Provider(‘6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr’),
 isTokenAutoRefreshEnabled: true
 });
 } catch (e) {
@@ -69,19 +94,12 @@ const HARGA_SUPER_PREMI = { “35”: 100000, “50”: 175000, “100”: 28000
 // ============================================================
 function closeSplash() {
 const el = $id(‘splash’);
-if (!el || el._closing) return;
-el._closing = true;
-el.style.transition = ‘opacity 0.7s ease’;
-el.style.opacity = ‘0’;
-el.style.pointerEvents = ‘none’;
-setTimeout(() => { try { el.remove(); } catch(e){} }, 750);
+if (el) el.classList.add(‘opacity-0’, ‘pointer-events-none’);
 }
-
-// FIX 1: Naikkan fallback timeout agar App Check punya cukup waktu load
-const splashFallback = setTimeout(closeSplash, 8000);
+const splashFallback = setTimeout(closeSplash, 5000);
 
 // ============================================================
-// AUTH — anonymous login untuk buyer_id
+// AUTH
 // ============================================================
 onAuthStateChanged(auth, user => {
 if (user) {
@@ -89,51 +107,43 @@ buyerId = user.uid;
 loadBahan();
 loadRiwayat();
 
-```
-if (!stokListener) {
-  const stokQuery = query(collection(db, "stok"), orderBy("nama"));
-  stokListener = onSnapshot(stokQuery, snap => {
-    rawAromas = []; dataStok = {};
-    snap.forEach(doc => {
-      const d = doc.data();
-      dataStok[d.nama] = {
-        sisa_ml:        d.sisa_ml        || 0,
-        stok_kelas:     d.stok_kelas     || {},
-        modal:          d.modal          || {},
-        kelas_tersedia: d.kelas_tersedia || ["Standar"]
-      };
-      rawAromas.push(d);
-    });
-    renderAromaOptions("");
-    // FIX 2: Tutup splash langsung (tanpa setTimeout tambahan)
-    // Juga handle kasus collection stok kosong (snap.empty = true)
-    if (!stokSudahDimuat) {
-      stokSudahDimuat = true;
-      clearTimeout(splashFallback);
-      closeSplash();
+    if (!stokListener) {
+        const stokQuery = query(collection(db, "stok"), orderBy("nama"));
+        stokListener = onSnapshot(stokQuery, snap => {
+            rawAromas = []; dataStok = {};
+            snap.forEach(doc => {
+                const d = doc.data();
+                dataStok[d.nama] = {
+                    sisa_ml:        d.sisa_ml        || 0,
+                    stok_kelas:     d.stok_kelas     || {},
+                    modal:          d.modal          || {},
+                    kelas_tersedia: d.kelas_tersedia || ["Standar"]
+                };
+                rawAromas.push(d);
+            });
+            renderAromaOptions("");
+            if (!stokSudahDimuat) {
+                stokSudahDimuat = true;
+                clearTimeout(splashFallback);
+                setTimeout(closeSplash, 300);
+            }
+        }, err => {
+            console.error("Gagal load stok:", err);
+            clearTimeout(splashFallback);
+            closeSplash();
+        });
     }
-  }, err => {
-    console.error("Gagal load stok:", err);
-    clearTimeout(splashFallback);
-    closeSplash();
-  });
-}
-```
-
 } else {
-// FIX 3: Tutup splash jika anonymous auth gagal
-signInAnonymously(auth).catch(err => {
-console.error(“Gagal login anonim:”, err);
-clearTimeout(splashFallback);
-closeSplash();
-alert(“Terjadi kesalahan sistem, silakan muat ulang halaman.”);
-});
+    signInAnonymously(auth).catch(err => {
+        console.error("Gagal login anonim:", err);
+        showToast("Terjadi kesalahan sistem, silakan muat ulang halaman.", 'error', 5000);
+    });
 }
 
 });
 
 // ============================================================
-// DATA BAHAN — get() sekali (bukan realtime)
+// DATA BAHAN
 // ============================================================
 async function loadBahan() {
 try {
@@ -153,12 +163,12 @@ console.error(“Gagal load bahan:”, err);
 // RENDER AROMA
 // ============================================================
 function renderAromaOptions(filterText) {
-const sel    = $id(‘aroma’);
-const oldVal = sel.value;
-const q      = filterText.toLowerCase();
-const parts  = [’<option value="" disabled selected>Pilih Aroma…</option>’];
+const sel     = $id(‘aroma’);
+const oldVal  = sel.value;
+const queryTxt = filterText.toLowerCase();
+const parts   = [’<option value="" disabled selected>Pilih Aroma…</option>’];
 rawAromas.forEach(d => {
-if (!d.nama.toLowerCase().includes(q)) return;
+if (!d.nama.toLowerCase().includes(queryTxt)) return;
 parts.push(d.sisa_ml >= 17.5
 ? `<option value="${escapeHTML(d.nama)}">${escapeHTML(d.nama)} (Tersedia)</option>`
 : `<option value="${escapeHTML(d.nama)}" disabled>${escapeHTML(d.nama)} (Kosong)</option>`);
@@ -181,7 +191,9 @@ const aroma = $id(‘aroma’).value, sel = $id(‘kelas’);
 const parts = [’<option value="" disabled selected>Pilih Kelas…</option>’];
 if (aroma && dataStok[aroma]) {
 dataStok[aroma].kelas_tersedia.forEach(k => {
-const label = k === “Super Premium” ? “Harga Khusus Promo” : `Rp ${(HARGA_PER_ML[k]||0).toLocaleString()}/ml`;
+const label = k === “Super Premium”
+? “Harga Khusus Promo”
+: `Rp ${(HARGA_PER_ML[k]||0).toLocaleString()}/ml`;
 parts.push(`<option value="${escapeHTML(k)}">${escapeHTML(k)} (${label})</option>`);
 });
 }
@@ -192,7 +204,8 @@ hitungSubTotal();
 function hitungHarga(kelas, ukuran, qty) {
 if (!kelas || !ukuran || !qty) return 0;
 const uk = parseInt(ukuran);
-if (kelas === “Super Premium”) return (HARGA_SUPER_PREMI[String(ukuran)] || HARGA_PER_ML[“Super Premium”] * uk) * qty;
+if (kelas === “Super Premium”)
+return (HARGA_SUPER_PREMI[String(ukuran)] || HARGA_PER_ML[“Super Premium”] * uk) * qty;
 let total = (HARGA_PER_ML[kelas] || 0) * uk * qty;
 if (kelas === “Standar” && uk === 35) total -= Math.floor(qty / 3) * 5000;
 return total;
@@ -205,8 +218,19 @@ return total;
 }
 
 // ============================================================
-// KERANJANG
+// KERANJANG — dengan sessionStorage agar tidak hilang saat refresh
 // ============================================================
+function simpanKeranjang() {
+try { sessionStorage.setItem(‘mi_keranjang’, JSON.stringify(keranjang)); } catch(e) {}
+}
+function muatKeranjang() {
+try {
+const data = sessionStorage.getItem(‘mi_keranjang’);
+if (data) keranjang = JSON.parse(data);
+} catch(e) { keranjang = []; }
+}
+muatKeranjang();
+
 function tambahKeKeranjang(e) {
 e.preventDefault();
 const aroma  = $id(‘aroma’).value;
@@ -214,11 +238,11 @@ const kelas  = $id(‘kelas’).value;
 const ukuran = parseInt($id(‘ukuran’).value);
 const qty    = parseInt($id(‘qty’).value);
 
-if (qty < 1 || qty > 50) return alert(“Jumlah harus antara 1–50.”);
+if (qty < 1 || qty > 50) return showToast("Jumlah harus antara 1–50.", 'warning');
 
 const butuhBibit = (ukuran * 0.5) * qty;
-const idBotol    = ‘botol_’ + ukuran;
-const idAbs      = (kelas === ‘Super Premium’ || kelas === ‘Diamond’) ? ‘abs_khusus’ : ‘abs_standar’;
+const idBotol    = 'botol_' + ukuran;
+const idAbs      = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar';
 const butuhAbs   = (ukuran * 0.5) * qty;
 
 const cartBibit = keranjang.filter(i => i.aroma===aroma && i.kelas===kelas).reduce((s,i) => s+i.bibit, 0);
@@ -226,37 +250,40 @@ const cartBotol = keranjang.filter(i => i.id_botol===idBotol).reduce((s,i) => s+
 const cartAbs   = keranjang.filter(i => i.id_absolute===idAbs).reduce((s,i) => s+i.absolute_ml, 0);
 
 const stokBibit = dataStok[aroma]?.stok_kelas?.[kelas] !== undefined
-? dataStok[aroma].stok_kelas[kelas]
-: (dataStok[aroma]?.sisa_ml || 0);
+    ? dataStok[aroma].stok_kelas[kelas]
+    : (dataStok[aroma]?.sisa_ml || 0);
 
 if ((butuhBibit + cartBibit) > stokBibit)
-return alert(`❌ Bibit ${aroma} (${kelas}) tidak cukup.\nTersedia: ${stokBibit}ml, Butuh: ${butuhBibit+cartBibit}ml`);
+    return showToast(`Bibit ${aroma} (${kelas}) tidak cukup. Tersedia: ${stokBibit}ml, Butuh: ${butuhBibit+cartBibit}ml`, 'error', 4000);
 if ((qty + cartBotol) > (dataBahan[idBotol]?.sisa || 0))
-return alert(`❌ Stok Botol ${ukuran}ml kurang.`);
+    return showToast(`Stok Botol ${ukuran}ml kurang.`, 'error');
 if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0))
-return alert(`❌ Stok Absolute kelas ini kurang.`);
+    return showToast(`Stok Absolute kelas ini kurang.`, 'error');
 
 const subtotal = hitungHarga(kelas, ukuran, qty);
 keranjang.push({
-aroma, kelas, ukuran, qty, subtotal,
-bibit:       butuhBibit,
-id_botol:    idBotol,
-id_absolute: idAbs,
-absolute_ml: butuhAbs,
-hpp_total:   butuhBibit * (dataStok[aroma]?.modal?.[kelas] || 0)
-+ qty        * (dataBahan[idBotol]?.harga_satuan || 0)
-+ butuhAbs   * (dataBahan[idAbs]?.harga_satuan   || 0),
+    aroma, kelas, ukuran, qty, subtotal,
+    bibit:       butuhBibit,
+    id_botol:    idBotol,
+    id_absolute: idAbs,
+    absolute_ml: butuhAbs,
+    hpp_total:   butuhBibit * (dataStok[aroma]?.modal?.[kelas] || 0)
+               + qty        * (dataBahan[idBotol]?.harga_satuan || 0)
+               + butuhAbs   * (dataBahan[idAbs]?.harga_satuan   || 0),
 });
+simpanKeranjang();
 renderKeranjang();
-$id(‘qty’).value               = 1;
-$id(‘subtotal-item’).innerText = ‘Rp 0’;
-$id(‘kelas’).value             = “”;
-$id(‘ukuran’).value            = “”;
-$id(‘search-aroma’).value      = “”;
+showToast(`${aroma} (${ukuran}ml) ditambahkan!`, 'success');
+$id('qty').value               = 1;
+$id('subtotal-item').innerText = 'Rp 0';
+$id('kelas').value             = "";
+$id('ukuran').value            = "";
+$id('search-aroma').value      = "";
 filterAromaDebounced();
+
 }
 
-function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
+function hapusItem(idx) { keranjang.splice(idx, 1); simpanKeranjang(); renderKeranjang(); }
 
 function renderKeranjang() {
 const wadah = $id(‘isi-keranjang’);
@@ -288,63 +315,116 @@ $id(‘badge-qty’).innerText   = tq;
 // KIRIM PESANAN
 // ============================================================
 async function kirimPesananAkhir() {
-if (!buyerId) return alert(“Sistem keamanan sedang memuat. Mohon tunggu.”);
+if (!buyerId) return showToast(“Sistem keamanan sedang memuat. Mohon tunggu.”, ‘warning’);
 const nama = $id(‘nama’).value.trim();
 const noWa = $id(‘no-wa’).value.trim();
-if (!nama)             return alert(“Harap isi Nama Pemesan!”);
-if (nama.length > 100) return alert(“Nama terlalu panjang (maks. 100 karakter).”);
-if (!keranjang.length) return alert(“Keranjang masih kosong!”);
+if (!nama)             return showToast(“Harap isi Nama Pemesan!”, ‘warning’);
+if (nama.length > 100) return showToast(“Nama terlalu panjang (maks. 100 karakter).”, ‘warning’);
+if (!keranjang.length) return showToast(“Keranjang masih kosong!”, ‘warning’);
 
-const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal,       0);
+const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal, 0);
 const totalHppRaw   = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
 const totalHppFinal = Math.min(totalHppRaw, totalFinal);
 
-const btn = $id(‘btn-submit’);
-btn.textContent = “Memproses…”; btn.disabled = true;
+const btn = $id('btn-submit');
+btn.textContent = "Memproses..."; btn.disabled = true;
 
 const itemsBersih = keranjang.map(i => ({
-aroma:  String(i.aroma),
-kelas:  String(i.kelas),
-ukuran: Number(i.ukuran),
-qty:    Number(i.qty)
+    aroma:  String(i.aroma),
+    kelas:  String(i.kelas),
+    ukuran: Number(i.ukuran),
+    qty:    Number(i.qty)
 }));
 
-// Validasi App Check token sebelum kirim
-if (appCheck) {
 try {
-await getToken(appCheck, false);
+    await addDoc(collection(db, "pesanan"), {
+        buyer_id:  buyerId,
+        nama:      escapeHTML(nama),
+        no_wa:     escapeHTML(noWa),
+        items:     itemsBersih,
+        total:     totalFinal,
+        total_hpp: totalHppFinal,
+        status:    "Menunggu Diproses",
+        waktu:     serverTimestamp()
+    });
+    showToast("Pesanan Terkirim! Menunggu konfirmasi admin.", 'success', 4000);
+    keranjang = []; simpanKeranjang(); renderKeranjang();
+    $id('nama').value  = '';
+    $id('no-wa').value = '';
+    btn.textContent = "Kirim Pesanan Sekarang";
+    switchTab('riwayat');
 } catch (err) {
-console.error(“App Check gagal:”, err);
-alert(“Verifikasi keamanan gagal. Coba muat ulang halaman.”);
-btn.disabled = false;
-btn.textContent = “Kirim Pesanan Sekarang”;
-return;
-}
+    console.error("Kirim pesanan error:", err);
+    showToast("Gagal mengirim: " + err.message, 'error', 5000);
+    btn.disabled = false;
+    btn.textContent = "Kirim Pesanan Sekarang";
 }
 
-try {
-await addDoc(collection(db, “pesanan”), {
-buyer_id:  buyerId,
-nama:      escapeHTML(nama),
-no_wa:     escapeHTML(noWa),
-items:     itemsBersih,
-total:     totalFinal,
-total_hpp: totalHppFinal,
-status:    “Menunggu Diproses”,
-waktu:     serverTimestamp()
-});
-alert(“✅ Pesanan Terkirim! Menunggu konfirmasi admin.”);
-keranjang = []; renderKeranjang();
-$id(‘nama’).value  = ‘’;
-$id(‘no-wa’).value = ‘’;
-btn.textContent = “Kirim Pesanan Sekarang”;
-switchTab(‘riwayat’);
-} catch (err) {
-console.error(“Kirim pesanan error:”, err);
-alert(“Gagal mengirim: “ + err.message);
-btn.disabled = false;
-btn.textContent = “Kirim Pesanan Sekarang”;
 }
+
+// ============================================================
+// RIWAYAT
+// ============================================================
+function loadRiwayat() {
+if (riwayatListener) riwayatListener();
+if (!buyerId) return;
+
+const riwayatQuery = query(
+    collection(db, "pesanan"),
+    where("buyer_id", "==", buyerId),
+    orderBy("waktu", "desc"),
+    limit(20)
+);
+
+riwayatListener = onSnapshot(riwayatQuery, snap => {
+    const container = $id('daftar-riwayat');
+    if (snap.empty) {
+        container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>';
+        return;
+    }
+    const frag = document.createDocumentFragment();
+    snap.forEach(docSnap => {
+        const d      = docSnap.data();
+        const sColor = d.status==="Selesai"        ? "bg-green-100 text-green-700"
+                     : d.status==="Ditolak"        ? "bg-red-100 text-red-700"
+                     : d.status==="Diproses"       ? "bg-blue-100 text-blue-700"
+                     : d.status==="Menunggu Lunas" ? "bg-yellow-100 text-yellow-800"
+                     : "bg-yellow-100 text-yellow-700";
+        const tgl = d.waktu
+            ? d.waktu.toDate().toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+            : 'Baru saja';
+        const itemsStr = (d.items||[]).map(i =>
+            `<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`
+        ).join('');
+        const alasanTolak = (d.status==="Ditolak" && d.alasan)
+            ? `<p class="text-xs text-red-500 mt-1 italic">Alasan: ${escapeHTML(d.alasan)}</p>` : '';
+        const showBayar = (d.status === "Selesai" || d.status === "Menunggu Lunas");
+
+        const card = document.createElement('div');
+        card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
+        card.innerHTML = `
+            <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
+                <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
+                <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
+            </div>
+            <div class="mb-2">${itemsStr}</div>
+            ${alasanTolak}
+            <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
+                <span>Total</span>
+                <span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
+            </div>
+            ${showBayar ? '<button class="mt-3 w-full bg-[#9c9e4a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
+        card.querySelector('.js-bayar')?.addEventListener('click', bukaQris);
+        frag.appendChild(card);
+    });
+    container.innerHTML = '';
+    container.appendChild(frag);
+}, err => {
+    console.error("Gagal load riwayat:", err);
+    if (err.message?.includes("requires an index"))
+        console.warn("Buat composite index: pesanan — buyer_id ASC, waktu DESC");
+});
+
 }
 
 // ============================================================
@@ -373,80 +453,13 @@ $id(‘modal-qris’).classList.remove(‘flex’);
 }
 
 // ============================================================
-// RIWAYAT
-// ============================================================
-function loadRiwayat() {
-if (riwayatListener) riwayatListener();
-if (!buyerId) return;
-
-const riwayatQuery = query(
-collection(db, “pesanan”),
-where(“buyer_id”, “==”, buyerId),
-orderBy(“waktu”, “desc”),
-limit(20)
-);
-
-riwayatListener = onSnapshot(riwayatQuery, snap => {
-const container = $id(‘daftar-riwayat’);
-if (snap.empty) {
-container.innerHTML = ‘<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>’;
-return;
-}
-const frag = document.createDocumentFragment();
-snap.forEach(doc => {
-const d      = doc.data();
-const sColor = d.status===“Selesai”        ? “bg-green-100 text-green-700”
-: d.status===“Ditolak”        ? “bg-red-100 text-red-700”
-: d.status===“Diproses”       ? “bg-blue-100 text-blue-700”
-: d.status===“Menunggu Lunas” ? “bg-yellow-100 text-yellow-800”
-: “bg-yellow-100 text-yellow-700”;
-const tgl = d.waktu
-? d.waktu.toDate().toLocaleDateString(‘id-ID’,{day:‘numeric’,month:‘short’,hour:‘2-digit’,minute:‘2-digit’})
-: ‘Baru saja’;
-const itemsStr = (d.items||[]).map(i =>
-`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`
-).join(’’);
-const alasanTolak = (d.status===“Ditolak” && d.alasan)
-? `<p class="text-xs text-red-500 mt-1 italic">Alasan: ${escapeHTML(d.alasan)}</p>` : ‘’;
-const showBayar = (d.status === “Selesai” || d.status === “Menunggu Lunas”);
-
-```
-  const card = document.createElement('div');
-  card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
-  card.innerHTML = `
-    <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
-      <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
-      <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
-    </div>
-    <div class="mb-2">${itemsStr}</div>
-    ${alasanTolak}
-    <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
-      <span>Total</span>
-      <span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
-    </div>
-    ${showBayar ? '<button class="mt-3 w-full bg-[#a38d58] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
-  card.querySelector('.js-bayar')?.addEventListener('click', bukaQris);
-  frag.appendChild(card);
-});
-container.innerHTML = '';
-container.appendChild(frag);
-```
-
-}, err => {
-console.error(“Gagal load riwayat:”, err);
-if (err.message?.includes(“requires an index”))
-console.warn(“Buat composite index: pesanan — buyer_id ASC, waktu DESC”);
-});
-}
-
-// ============================================================
-// Expose ke onclick HTML attributes
+// EXPOSE ke HTML (inline handlers)
 // ============================================================
 window.switchTab            = switchTab;
 window.bukaQris             = bukaQris;
 window.tutupQris            = tutupQris;
-window.filterAromaDebounced = filterAromaDebounced;
-window.updateKelasOptions   = updateKelasOptions;
-window.hitungSubTotal       = hitungSubTotal;
 window.tambahKeKeranjang    = tambahKeKeranjang;
 window.kirimPesananAkhir    = kirimPesananAkhir;
+window.updateKelasOptions   = updateKelasOptions;
+window.hitungSubTotal       = hitungSubTotal;
+window.filterAromaDebounced = filterAromaDebounced;
