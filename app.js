@@ -108,7 +108,6 @@ buyerId = user.uid;
 loadBahan();
 loadRiwayat();
 
-```
 if (!stokListener) {
     const stokQuery = query(collection(db, "stok"), orderBy("nama"));
     stokListener = onSnapshot(stokQuery, snap => {
@@ -135,7 +134,6 @@ if (!stokListener) {
         closeSplash();
     });
 }
-```
 
 } else {
 signInAnonymously(auth).catch(err => {
@@ -404,7 +402,6 @@ const alasanTolak = (d.status===“Ditolak” && d.alasan)
 ? `<p class="text-xs text-red-500 mt-1 italic">Alasan: ${escapeHTML(d.alasan)}</p>` : ‘’;
 const showBayar = (d.status === “Selesai” || d.status === “Menunggu Lunas”);
 
-```
     const card = document.createElement('div');
     card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
     card.innerHTML = `
@@ -424,7 +421,6 @@ const showBayar = (d.status === “Selesai” || d.status === “Menunggu Lunas�
 });
 container.innerHTML = '';
 container.appendChild(frag);
-```
 
 }, err => {
 console.error(“Gagal load riwayat:”, err);
