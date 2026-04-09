@@ -7,6 +7,8 @@
     <title>Admin - MI Perfume</title>
     <link rel="apple-touch-icon" href="logo.jpeg">
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#a38d58">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
@@ -1357,6 +1359,20 @@ window.toggleDetailPengeluaran  = toggleDetailPengeluaran;
 window.sinkronUlangStatistik    = sinkronUlangStatistik;
 window.exportCSV                = exportCSV;
 
+</script>
+    
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('ServiceWorker berhasil didaftarkan. Scope: ', registration.scope);
+        })
+        .catch(err => {
+          console.log('ServiceWorker gagal didaftarkan: ', err);
+        });
+    });
+  }
 </script>
 
 </body>
