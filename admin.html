@@ -1,27 +1,47 @@
 <!DOCTYPE html>
 
-<html lang="id">
+<html lang="id" class="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Admin - MI Perfume</title>
 
+<!-- Content Security Policy -->
+
+<meta http-equiv="Content-Security-Policy"
+content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com cdn.jsdelivr.net www.gstatic.com www.google.com www.googleapis.com; connect-src 'self' *.googleapis.com *.firebaseio.com *.firebasestorage.googleapis.com firebaseinstallations.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: assets.mixkit.co; frame-src 'none';">
+
 <!-- PWA Meta Tags -->
+
 <meta name="application-name" content="MI Perfume Admin">
 <meta name="description" content="Panel Admin MI Perfume — Manajemen Pesanan, Stok & Analitik">
-<meta name="theme-color" content="#1f2937">
+<meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111827" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Admin MI">
 
 <!-- Icons & Manifest -->
+
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="logo.jpeg">
 <link rel="icon" type="image/jpeg" href="logo.jpeg">
 
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+// Apply dark mode BEFORE render to prevent flash
+tailwind.config = { darkMode: 'class' };
+(function(){
+    try {
+        const saved = localStorage.getItem('mi_admin_theme');
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    } catch(e) {}
+})();
+</script>
 
 <style>
     .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
@@ -45,24 +65,48 @@
     .kelas-row { transition: background 0.15s; }
     .kelas-row:hover { background: #f9f7f2; }
     .kelas-row input[type=number]:focus { border-color: #a38d58; outline: none; }
-    /* Offline banner dihandle via JS (seragam dengan index.html) */
+    /* Tab bar scroll fade indicator */
+    .tab-bar-wrapper { position: relative; }
+    .tab-bar-wrapper::after { content: ''; position: absolute; right: 0; top: 0; bottom: 0; width: 32px; background: linear-gradient(to left, white, transparent); pointer-events: none; z-index: 1; }
+    .dark .tab-bar-wrapper::after { background: linear-gradient(to left, #1f2937, transparent); }
+    /* Dark mode overrides */
+    .dark body { background-color: #111827; color: #f3f4f6; }
+    .dark .bg-white { background-color: #1f2937 !important; }
+    .dark .bg-gray-100 { background-color: #111827 !important; }
+    .dark .bg-gray-50 { background-color: #374151 !important; }
+    .dark .text-gray-800 { color: #f3f4f6 !important; }
+    .dark .text-gray-700 { color: #d1d5db !important; }
+    .dark .text-gray-600 { color: #9ca3af !important; }
+    .dark .text-gray-500 { color: #6b7280 !important; }
+    .dark .border { border-color: #374151 !important; }
+    .dark .border-gray-100 { border-color: #374151 !important; }
+    .dark .border-gray-200 { border-color: #4b5563 !important; }
+    .dark .shadow { box-shadow: 0 1px 3px rgba(0,0,0,0.4) !important; }
+    .dark input, .dark select, .dark textarea { background-color: #374151 !important; color: #f3f4f6 !important; border-color: #4b5563 !important; }
+    .dark .bg-blue-50 { background-color: #1e3a5f !important; }
+    .dark .bg-yellow-50 { background-color: #3d3000 !important; }
+    .dark .bg-green-50 { background-color: #14401f !important; }
+    .dark .bg-red-50 { background-color: #450a0a !important; }
+    .dark .bg-gray-800 { background-color: #111827 !important; }
+    .dark header.bg-gray-800 { background-color: #0f172a !important; }
+    .dark .tab-active { color: #d4b96a !important; border-bottom-color: #d4b96a !important; }
 </style>
 
 </head>
-<body class="bg-gray-100 text-gray-800 pb-20">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
 
 <audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" style="display:none;"></audio>
 
 <!-- LOGIN -->
 
-<div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 px-4">
-    <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
+<div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 dark:bg-gray-900 px-4">
+    <div class="bg-white dark:bg-gray-800 p-8 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
         <img src="logo.jpeg" class="h-16 w-auto mx-auto mb-2 rounded" alt="Logo MI Perfume">
         <h1 class="text-2xl font-bold text-center text-[#a38d58] mb-4">Admin System</h1>
         <form id="form-login" onsubmit="prosesLogin(event)">
-            <div class="mb-4"><input type="email" id="input-user" required class="w-full border p-3 rounded" placeholder="Email Admin" autocomplete="email"></div>
+            <div class="mb-4"><input type="email" id="input-user" required class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white p-3 rounded" placeholder="Email Admin" autocomplete="email"></div>
             <div class="mb-6 relative">
-                <input type="password" id="input-pass" required class="w-full border p-3 rounded" placeholder="Password" autocomplete="current-password">
+                <input type="password" id="input-pass" required class="w-full border dark:border-gray-600 dark:bg-gray-700 dark:text-white p-3 rounded" placeholder="Password" autocomplete="current-password">
                 <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3">👁️</button>
             </div>
             <button type="submit" id="btn-login" class="w-full bg-gold text-white font-bold py-3 rounded">Masuk</button>
@@ -74,17 +118,21 @@
 <!-- MAIN CONTENT -->
 
 <div id="admin-content" class="hidden">
-    <header class="bg-gray-800 text-white p-3 sticky top-0 z-20 flex justify-between items-center">
+    <header class="bg-gray-800 dark:bg-gray-950 text-white p-3 sticky top-0 z-20 flex justify-between items-center">
         <div class="flex items-center gap-2">
             <img src="logo.jpeg" class="h-8 w-8 rounded" alt="Logo MI Perfume">
             <h1 class="font-bold text-[#a38d58]">MI Perfume</h1>
         </div>
-        <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
+        <div class="flex items-center gap-2">
+            <button onclick="toggleAdminDarkMode()" class="p-1.5 bg-gray-700 dark:bg-gray-600 rounded-full text-base" aria-label="Toggle dark mode">🌓</button>
+            <button onclick="logoutAdmin()" class="text-xs bg-gray-600 hover:bg-red-600 transition-colors px-3 py-1.5 rounded font-medium" title="Logout">⏻ Keluar</button>
+        </div>
     </header>
 
 <!-- TAB BAR -->
 
-<div class="flex bg-white shadow-sm mb-4 sticky top-[56px] z-10 overflow-x-auto hide-scrollbar">
+<div class="tab-bar-wrapper sticky top-[56px] z-10">
+<div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 overflow-x-auto hide-scrollbar">
     <button id="tab-pesanan"   class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap"    onclick="switchTab('pesanan')">Pesanan</button>
     <button id="tab-stok"      class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok</button>
     <button id="tab-pembelian" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('pembelian')">Pembelian 🛍️</button>
@@ -92,6 +140,7 @@
     <button id="tab-dashboard" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('dashboard')">Analitik</button>
     <button id="tab-restock"   class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('restock')">Restock 🚨</button>
     <button id="tab-followup"  class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('followup')">Follow-Up 💬</button>
+</div>
 </div>
 
 <!-- PAGE: PESANAN -->
@@ -387,7 +436,7 @@ import {
     signInWithEmailAndPassword, signOut
 }                                                              from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import {
-    getFirestore, enableIndexedDbPersistence,
+    initializeFirestore, persistentLocalCache,
     collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
     query, where, orderBy, limit, startAfter,
     onSnapshot, serverTimestamp
@@ -420,7 +469,7 @@ const firebaseConfig = {
 
 const app       = initializeApp(firebaseConfig);
 const auth      = getAuth(app);
-const db        = getFirestore(app);
+const db        = initializeFirestore(app, { localCache: persistentLocalCache() });
 const functions = getFunctions(app);
 
 // App Check
@@ -434,8 +483,6 @@ try {
 // Callable Cloud Functions
 const fnSelesaikanPembelian = httpsCallable(functions, 'selesaikanPembelian');
 const fnTerimaPesanan       = httpsCallable(functions, 'terimaPesanan');
-
-enableIndexedDbPersistence(db).catch(err => console.warn('Persistence:', err.code));
 
 // ============================================================
 // OFFLINE INDICATOR — seragam dengan index.html
@@ -518,8 +565,28 @@ function resetIdleTimer() {
 );
 
 // ============================================================
+// DARK MODE ADMIN — persist preference
+// ============================================================
+function toggleAdminDarkMode() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('mi_admin_theme', isDark ? 'dark' : 'light'); } catch(e) {}
+}
+window.toggleAdminDarkMode = toggleAdminDarkMode;
+
+// ============================================================
 // AUTH
 // ============================================================
+// Rate limiting login — max 5 percobaan dalam 5 menit
+const _loginState = (() => {
+    try {
+        const s = JSON.parse(sessionStorage.getItem('_ls') || '{}');
+        return { attempts: s.attempts || 0, lockUntil: s.lock || 0 };
+    } catch(e) { return { attempts: 0, lockUntil: 0 }; }
+})();
+function _saveLoginState() {
+    try { sessionStorage.setItem('_ls', JSON.stringify({ attempts: _loginState.attempts, lock: _loginState.lockUntil })); } catch(e) {}
+}
+
 onAuthStateChanged(auth, async user => {
     if (user) {
         try {
@@ -549,6 +616,15 @@ onAuthStateChanged(auth, async user => {
 
 function prosesLogin(e) {
     e.preventDefault();
+    // Rate limiting: max 5 percobaan, lock 5 menit
+    const now = Date.now();
+    if (_loginState.lockUntil > now) {
+        const sisaDetik = Math.ceil((_loginState.lockUntil - now) / 1000);
+        const errEl = $id('login-error');
+        errEl.textContent = `Terlalu banyak percobaan. Coba lagi dalam ${sisaDetik} detik.`;
+        errEl.classList.remove('hidden');
+        return;
+    }
     const email = $id('input-user').value.trim();
     const pass  = $id('input-pass').value;
     const btn   = $id('btn-login');
@@ -556,15 +632,40 @@ function prosesLogin(e) {
     btn.textContent = "Memeriksa..."; btn.disabled = true;
     errEl.classList.add('hidden');
     signInWithEmailAndPassword(auth, email, pass)
-        .then(() => { btn.textContent = "Masuk"; btn.disabled = false; })
+        .then(() => {
+            _loginState.attempts = 0; _loginState.lockUntil = 0; _saveLoginState();
+            btn.textContent = "Masuk"; btn.disabled = false;
+        })
         .catch(() => {
-            errEl.textContent = "Email atau password salah.";
+            _loginState.attempts++;
+            if (_loginState.attempts >= 5) {
+                _loginState.lockUntil = now + 5 * 60 * 1000; // 5 menit
+                errEl.textContent = "Terlalu banyak percobaan. Akun dikunci 5 menit.";
+            } else {
+                errEl.textContent = `Email atau password salah. (${_loginState.attempts}/5 percobaan)`;
+            }
+            _saveLoginState();
             errEl.classList.remove('hidden');
             btn.textContent = "Masuk"; btn.disabled = false;
         });
 }
 function logoutAdmin() { if (confirm("Keluar dari sistem?")) signOut(auth); }
 function togglePassword() { const p = $id('input-pass'); p.type = p.type === 'password' ? 'text' : 'password'; }
+
+// ============================================================
+// CHART.JS — lazy load hanya saat tab Analitik dibuka
+// ============================================================
+let chartJsLoaded = false;
+function ensureChartJs() {
+    return new Promise((resolve, reject) => {
+        if (chartJsLoaded || window.Chart) { chartJsLoaded = true; resolve(); return; }
+        const s = document.createElement('script');
+        s.src = 'https://cdn.jsdelivr.net/npm/chart.js';
+        s.onload = () => { chartJsLoaded = true; resolve(); };
+        s.onerror = reject;
+        document.head.appendChild(s);
+    });
+}
 
 // ============================================================
 // TAB
@@ -579,10 +680,13 @@ function switchTab(t) {
     $id('tab-'+t).classList.replace('text-gray-500','tab-active');
     if (t === 'stok') onPilihBahanStok();
     if (t === 'dashboard') {
-        setTimeout(() => {
-            chartInstance?.resize(); chartInstance?.update();
-            chartLabaInstance?.resize(); chartLabaInstance?.update();
-        }, 100);
+        ensureChartJs().then(() => {
+            setTimeout(() => {
+                chartInstance?.resize(); chartInstance?.update();
+                chartLabaInstance?.resize(); chartLabaInstance?.update();
+                if (cachedStatistik) renderDashboard(cachedStatistik);
+            }, 100);
+        });
     }
 }
 
@@ -1150,10 +1254,13 @@ function renderDashboard(stat) {
     $id('dash-pengeluaran-mini').innerText = fmt(totalPengeluaran);
     $id('dash-margin').innerText           = margin + '%';
     $id('dash-laba-real').className        = labaReal >= 0 ? 'text-2xl font-bold text-[#a38d58]' : 'text-2xl font-bold text-red-400';
-    updateGrafik(stat.bulanan||{}, dataPengeluaranBulanan);
-    updateGrafikLaba(stat.bulanan||{}, stat.hpp_bulanan||{}, dataPengeluaranBulanan);
     renderTopAroma(stat.terjual_aroma||{});
     renderBottomAroma(stat.terjual_aroma||{});
+    // Chart hanya dirender jika Chart.js sudah dimuat (tab dashboard sudah dibuka)
+    if (window.Chart) {
+        updateGrafik(stat.bulanan||{}, dataPengeluaranBulanan);
+        updateGrafikLaba(stat.bulanan||{}, stat.hpp_bulanan||{}, dataPengeluaranBulanan);
+    }
 }
 
 function updateGrafik(bO, bP) {
