@@ -76,7 +76,9 @@ el.style.opacity = ‘0’;
 el.style.pointerEvents = ‘none’;
 setTimeout(() => { try { el.remove(); } catch(e){} }, 750);
 }
-const splashFallback = setTimeout(closeSplash, 5000);
+
+// FIX 1: Naikkan fallback timeout agar App Check punya cukup waktu load
+const splashFallback = setTimeout(closeSplash, 8000);
 
 // ============================================================
 // AUTH — anonymous login untuk buyer_id
@@ -89,36 +91,41 @@ loadRiwayat();
 
 ```
 if (!stokListener) {
-    const stokQuery = query(collection(db, "stok"), orderBy("nama"));
-    stokListener = onSnapshot(stokQuery, snap => {
-        rawAromas = []; dataStok = {};
-        snap.forEach(doc => {
-            const d = doc.data();
-            dataStok[d.nama] = {
-                sisa_ml:        d.sisa_ml        || 0,
-                stok_kelas:     d.stok_kelas     || {},
-                modal:          d.modal          || {},
-                kelas_tersedia: d.kelas_tersedia || ["Standar"]
-            };
-            rawAromas.push(d);
-        });
-        renderAromaOptions("");
-        if (!stokSudahDimuat) {
-            stokSudahDimuat = true;
-            clearTimeout(splashFallback);
-            setTimeout(closeSplash, 300);
-        }
-    }, err => {
-        console.error("Gagal load stok:", err);
-        clearTimeout(splashFallback);
-        closeSplash();
+  const stokQuery = query(collection(db, "stok"), orderBy("nama"));
+  stokListener = onSnapshot(stokQuery, snap => {
+    rawAromas = []; dataStok = {};
+    snap.forEach(doc => {
+      const d = doc.data();
+      dataStok[d.nama] = {
+        sisa_ml:        d.sisa_ml        || 0,
+        stok_kelas:     d.stok_kelas     || {},
+        modal:          d.modal          || {},
+        kelas_tersedia: d.kelas_tersedia || ["Standar"]
+      };
+      rawAromas.push(d);
     });
+    renderAromaOptions("");
+    // FIX 2: Tutup splash langsung (tanpa setTimeout tambahan)
+    // Juga handle kasus collection stok kosong (snap.empty = true)
+    if (!stokSudahDimuat) {
+      stokSudahDimuat = true;
+      clearTimeout(splashFallback);
+      closeSplash();
+    }
+  }, err => {
+    console.error("Gagal load stok:", err);
+    clearTimeout(splashFallback);
+    closeSplash();
+  });
 }
 ```
 
 } else {
+// FIX 3: Tutup splash jika anonymous auth gagal
 signInAnonymously(auth).catch(err => {
 console.error(“Gagal login anonim:”, err);
+clearTimeout(splashFallback);
+closeSplash();
 alert(“Terjadi kesalahan sistem, silakan muat ulang halaman.”);
 });
 }
@@ -247,7 +254,6 @@ $id(‘kelas’).value             = “”;
 $id(‘ukuran’).value            = “”;
 $id(‘search-aroma’).value      = “”;
 filterAromaDebounced();
-
 }
 
 function hapusItem(idx) { keranjang.splice(idx, 1); renderKeranjang(); }
@@ -339,7 +345,6 @@ alert(“Gagal mengirim: “ + err.message);
 btn.disabled = false;
 btn.textContent = “Kirim Pesanan Sekarang”;
 }
-
 }
 
 // ============================================================
@@ -406,22 +411,22 @@ const alasanTolak = (d.status===“Ditolak” && d.alasan)
 const showBayar = (d.status === “Selesai” || d.status === “Menunggu Lunas”);
 
 ```
-    const card = document.createElement('div');
-    card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
-    card.innerHTML = `
-        <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
-            <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
-            <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
-        </div>
-        <div class="mb-2">${itemsStr}</div>
-        ${alasanTolak}
-        <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
-            <span>Total</span>
-            <span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
-        </div>
-        ${showBayar ? '<button class="mt-3 w-full bg-[#a38d58] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
-    card.querySelector('.js-bayar')?.addEventListener('click', bukaQris);
-    frag.appendChild(card);
+  const card = document.createElement('div');
+  card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
+  card.innerHTML = `
+    <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
+      <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
+      <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
+    </div>
+    <div class="mb-2">${itemsStr}</div>
+    ${alasanTolak}
+    <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
+      <span>Total</span>
+      <span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
+    </div>
+    ${showBayar ? '<button class="mt-3 w-full bg-[#a38d58] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
+  card.querySelector('.js-bayar')?.addEventListener('click', bukaQris);
+  frag.appendChild(card);
 });
 container.innerHTML = '';
 container.appendChild(frag);
