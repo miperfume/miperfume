@@ -13,17 +13,17 @@ const CACHE_CDN     = `mi-perfume-cdn-${CACHE_VERSION}`;
 
 // File shell utama yang di-precache
 const SHELL_URLS = [
-‘/’,
-‘/index.html’,
-‘/admin/’,
-‘/admin/index.html’,
-‘/style.css’,
-‘/admin.css’,
-‘/app.js’,
-‘/admin.js’,
-‘/logo.jpeg’,
-‘/manifest.json’,
-‘/offline.html’,
+‘./’,
+‘./index.html’,
+‘./admin/’,
+‘./admin/index.html’,
+‘./style.css’,
+‘./admin.css’,
+‘./app.js’,
+‘./admin.js’,
+‘./logo.jpeg’,
+‘./manifest.json’,
+‘./offline.html’,
 ];
 
 // CDN yang boleh di-cache
@@ -113,7 +113,7 @@ return response;
 } catch {
 // Fallback halaman offline untuk navigasi
 if (request.mode === ‘navigate’) {
-const offline = await caches.match(’/offline.html’);
+const offline = await caches.match(’./offline.html’);
 if (offline) return offline;
 }
 return new Response(‘Offline’, { status: 503 });
@@ -128,7 +128,7 @@ return response;
 const cached = await caches.match(request);
 if (cached) return cached;
 if (request.mode === ‘navigate’) {
-return caches.match(’/offline.html’) || new Response(‘Offline’, { status: 503 });
+return caches.match(’./offline.html’) || new Response(‘Offline’, { status: 503 });
 }
 return new Response(‘Offline’, { status: 503 });
 }
@@ -150,11 +150,11 @@ const data = event.data?.json() || {};
 const title   = data.title   || ‘MI Perfume’;
 const options = {
 body:    data.body    || ‘Ada notifikasi baru’,
-icon:    data.icon    || ‘/logo.jpeg’,
-badge:   data.badge   || ‘/logo.jpeg’,
+icon:    data.icon    || ‘./logo.jpeg’,
+badge:   data.badge   || ‘./logo.jpeg’,
 tag:     data.tag     || ‘mi-perfume-notif’,
 vibrate: [200, 100, 200],
-data:    { url: data.url || ‘/admin/’ },
+data:    { url: data.url || ‘./admin/’ },
 actions: data.actions || [],
 };
 event.waitUntil(self.registration.showNotification(title, options));
@@ -162,7 +162,7 @@ event.waitUntil(self.registration.showNotification(title, options));
 
 self.addEventListener(‘notificationclick’, event => {
 event.notification.close();
-const url = event.notification.data?.url || ‘/admin/’;
+const url = event.notification.data?.url || ‘./admin/’;
 event.waitUntil(
 clients.matchAll({ type: ‘window’, includeUncontrolled: true })
 .then(clientList => {
