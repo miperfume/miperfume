@@ -7,20 +7,20 @@
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#f3f4f6",
-  "theme_color": "#a38d58",
+  "theme_color": "#9c9e4a",
   "lang": "id",
   "categories": ["shopping", "lifestyle"],
   "icons": [
     {
       "src": "icon.PNG",
       "sizes": "192x192",
-      "type": "image/PNG",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
       "src": "icon.PNG",
       "sizes": "512x512",
-      "type": "image/PNG",
+      "type": "image/png",
       "purpose": "any maskable"
     }
   ],
