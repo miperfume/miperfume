@@ -5,14 +5,28 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Pesan - MI Perfume</title>
-    <link rel="apple-touch-icon" href="logo.jpeg">
-    <link rel="icon" type="image/jpeg" href="logo.jpeg">
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#a38d58">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>tailwind.config = { darkMode: 'class' }</script>
+
+```
+<!-- PWA Meta Tags -->
+<meta name="application-name" content="MI Perfume">
+<meta name="description" content="Sistem Pemesanan dan Manajemen MI Perfume">
+<meta name="theme-color" content="#a38d58">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="MI Perfume">
+
+<!-- Manifest & Icons -->
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="logo.jpeg">
+<link rel="icon" type="image/jpeg" href="logo.jpeg">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>tailwind.config = { darkMode: 'class' }</script>
+```
 
 <!-- Firebase v9 Modular SDK (ESM via CDN) -->
+
 <script type="module">
 import { initializeApp }                           from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js";
@@ -449,6 +463,93 @@ window.filterAromaDebounced = filterAromaDebounced;
 
 </script>
 
+<!-- PWA: Service Worker Registration & Install Prompt -->
+
+<script>
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => {
+                console.log('✅ Service Worker terdaftar:', reg.scope);
+
+                // Cek apakah ada update SW baru
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Ada versi baru tersedia — tampilkan notifikasi
+                            showUpdateBanner();
+                        }
+                    });
+                });
+            })
+            .catch(err => console.warn('❌ Service Worker gagal:', err));
+    });
+}
+
+// Banner update versi baru
+function showUpdateBanner() {
+    const banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-[#a38d58] text-white text-sm font-bold p-3 rounded-xl shadow-xl flex justify-between items-center';
+    banner.innerHTML = `
+        <span>🔄 Versi baru tersedia!</span>
+        <button onclick="window.location.reload()" class="bg-white text-[#a38d58] px-3 py-1 rounded-lg text-xs font-bold active:scale-95">
+            Update
+        </button>`;
+    document.body.appendChild(banner);
+}
+
+// PWA Install Prompt (Add to Home Screen)
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    showInstallBanner();
+});
+
+function showInstallBanner() {
+    if (document.getElementById('install-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-white dark:bg-gray-800 border border-[#a38d58] text-sm p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
+    banner.innerHTML = `
+        <div class="flex items-center gap-2">
+            <img src="logo.jpeg" class="w-8 h-8 rounded-md object-contain">
+            <span class="text-xs font-bold dark:text-white">Pasang MI Perfume<br><span class="font-normal text-gray-500">di layar utama HP kamu</span></span>
+        </div>
+        <div class="flex gap-2">
+            <button id="btn-install-yes" class="bg-[#a38d58] text-white px-3 py-1 rounded-lg text-xs font-bold active:scale-95">Pasang</button>
+            <button id="btn-install-no" class="bg-gray-100 dark:bg-gray-700 dark:text-white text-gray-600 px-3 py-1 rounded-lg text-xs active:scale-95">Nanti</button>
+        </div>`;
+    document.body.appendChild(banner);
+
+    document.getElementById('btn-install-yes').addEventListener('click', async () => {
+        banner.remove();
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('Install outcome:', outcome);
+            deferredPrompt = null;
+        }
+    });
+    document.getElementById('btn-install-no').addEventListener('click', () => banner.remove());
+}
+
+// Sembunyikan banner install setelah dipasang
+window.addEventListener('appinstalled', () => {
+    document.getElementById('install-banner')?.remove();
+    deferredPrompt = null;
+    console.log('✅ PWA berhasil dipasang!');
+});
+
+// Deteksi mode standalone (sudah diinstall)
+if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('📱 Berjalan sebagai PWA (standalone mode)');
+}
+</script>
+
 <style>
     .text-gold { color: #a38d58; }
     .bg-gold   { background-color: #a38d58; }
@@ -581,19 +682,6 @@ window.filterAromaDebounced = filterAromaDebounced;
         <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
     </div>
 </div>
-<script>
-  if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
-        .then(registration => {
-          console.log('ServiceWorker berhasil didaftarkan. Scope: ', registration.scope);
-        })
-        .catch(err => {
-          console.log('ServiceWorker gagal didaftarkan: ', err);
-        });
-    });
-  }
-</script>
 
 </body>
 </html>
