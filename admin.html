@@ -9,11 +9,6 @@
     <link rel="icon" type="image/jpeg" href="logo.jpeg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.8.1/firebase-functions-compat.js"></script>
 <style>
     .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
     .text-gold { color: #a38d58; } .bg-gold { background-color: #a38d58; }
@@ -36,7 +31,6 @@
     .kelas-row { transition: background 0.15s; }
     .kelas-row:hover { background: #f9f7f2; }
     .kelas-row input[type=number]:focus { border-color: #a38d58; outline: none; }
-    /* Offline banner */
     #offline-banner { display: none; }
     #offline-banner.show { display: flex; }
 </style>
@@ -81,6 +75,7 @@
     </header>
 
 <!-- TAB BAR -->
+
 <div class="flex bg-white shadow-sm mb-4 sticky top-[56px] z-10 overflow-x-auto hide-scrollbar">
     <button id="tab-pesanan"   class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap"    onclick="switchTab('pesanan')">Pesanan</button>
     <button id="tab-stok"      class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok</button>
@@ -92,6 +87,7 @@
 </div>
 
 <!-- PAGE: PESANAN -->
+
 <div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4">
     <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 text-center mb-2">
         <p class="text-xs text-blue-700 mb-1">Agar notifikasi berbunyi saat ditutup:</p>
@@ -114,6 +110,7 @@
 </div>
 
 <!-- PAGE: STOK -->
+
 <div id="page-stok" class="p-4 max-w-md mx-auto hidden">
     <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
         <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Restock / Tambah Bibit</h2>
@@ -144,43 +141,45 @@
         <button type="button" id="btn-simpan-bibit-inline" onclick="simpanBibitDariStok()" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit Baru</button>
     </div>
 
-    <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
-        <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Stok Botol & Absolute</h2>
-        <div class="flex gap-2 mb-3 items-center">
-            <select id="bahan-id" required class="flex-1 border p-2 rounded text-sm" onchange="onPilihBahanStok()">
-                <option value="">-- Pilih Bahan --</option>
-            </select>
-            <button type="button" id="btn-edit-bahan-stok" onclick="bukaModalEditBahanDariStok()" class="hidden text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">✏️ Edit</button>
-            <button type="button" onclick="toggleFormBahanBaru()" class="text-xs bg-gray-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
-        </div>
-        <div id="form-bahan-baru" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
-            <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
-            <div class="space-y-2">
-                <input type="text" id="bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
-                <div class="flex gap-2">
-                    <input type="number" id="bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
-                    <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
-                </div>
-                <button type="button" onclick="simpanBahanBaru('stok')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
+<div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
+    <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Stok Botol & Absolute</h2>
+    <div class="flex gap-2 mb-3 items-center">
+        <select id="bahan-id" required class="flex-1 border p-2 rounded text-sm" onchange="onPilihBahanStok()">
+            <option value="">-- Pilih Bahan --</option>
+        </select>
+        <button type="button" id="btn-edit-bahan-stok" onclick="bukaModalEditBahanDariStok()" class="hidden text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">✏️ Edit</button>
+        <button type="button" onclick="toggleFormBahanBaru()" class="text-xs bg-gray-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
+    </div>
+    <div id="form-bahan-baru" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+        <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
+        <div class="space-y-2">
+            <input type="text" id="bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
+            <div class="flex gap-2">
+                <input type="number" id="bahan-baru-qty" class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
+                <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
             </div>
-        </div>
-        <div id="info-bahan-stok" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
-            <div class="flex justify-between mb-1"><span class="text-gray-500 text-xs">Stok Saat Ini:</span><b id="label-sisa-bahan" class="text-blue-700">-</b></div>
-            <div class="flex justify-between"><span class="text-gray-500 text-xs">Harga Modal:</span><b id="label-harga-bahan" class="text-green-700">-</b></div>
+            <button type="button" onclick="simpanBahanBaru('stok')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
         </div>
     </div>
-
-    <div class="bg-white p-4 rounded-xl shadow border-t-4 border-red-400">
-        <h2 class="font-bold text-gray-700 mb-2 text-sm text-red-600">🗑️ Hapus Data</h2>
-        <p class="text-xs text-gray-500 mb-3">Pilih aroma dari dropdown di atas, lalu hapus di sini.</p>
-        <div class="flex gap-2">
-            <button onclick="hapusBibitTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Aroma Terpilih</button>
-            <button onclick="hapusBahanTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Bahan Terpilih</button>
-        </div>
+    <div id="info-bahan-stok" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+        <div class="flex justify-between mb-1"><span class="text-gray-500 text-xs">Stok Saat Ini:</span><b id="label-sisa-bahan" class="text-blue-700">-</b></div>
+        <div class="flex justify-between"><span class="text-gray-500 text-xs">Harga Modal:</span><b id="label-harga-bahan" class="text-green-700">-</b></div>
     </div>
 </div>
 
+<div class="bg-white p-4 rounded-xl shadow border-t-4 border-red-400">
+    <h2 class="font-bold text-gray-700 mb-2 text-sm text-red-600">🗑️ Hapus Data</h2>
+    <p class="text-xs text-gray-500 mb-3">Pilih aroma dari dropdown di atas, lalu hapus di sini.</p>
+    <div class="flex gap-2">
+        <button onclick="hapusBibitTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Aroma Terpilih</button>
+        <button onclick="hapusBahanTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Bahan Terpilih</button>
+    </div>
+</div>
+
+</div>
+
 <!-- PAGE: PEMBELIAN -->
+
 <div id="page-pembelian" class="p-4 max-w-md mx-auto hidden">
     <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-4 text-white">
         <h2 class="font-bold text-lg">🛍️ Manajemen Pembelian Stok</h2>
@@ -195,7 +194,6 @@
                 <button type="button" id="btn-tipe-bahan" onclick="pilihTipePembelian('bahan')" class="flex-1 py-2 text-xs font-bold rounded border-2 border-gray-300 text-gray-600">🧴 Botol / Absolute</button>
             </div>
         </div>
-        <!-- Form Beli Bibit -->
         <div id="form-beli-bibit">
             <div class="mb-3"><label class="text-xs font-bold text-gray-600 block mb-1">Aroma / Bibit:</label>
                 <select id="pb-bibit-nama" class="w-full border p-2 rounded text-sm bg-gray-50 mb-2" onchange="onPilihBibitPembelian()"><option value="_NEW_">➕ Aroma Baru (Belum Ada di Stok)</option></select>
@@ -216,7 +214,6 @@
             </div>
             <div class="mb-3"><label class="text-xs font-bold text-gray-600 block mb-1">Catatan (opsional):</label><input type="text" id="pb-bibit-catatan" class="w-full border p-2 rounded text-sm" placeholder="mis. Beli dari supplier X"></div>
         </div>
-        <!-- Form Beli Bahan -->
         <div id="form-beli-bahan" class="hidden">
             <div class="mb-3"><label class="text-xs font-bold text-gray-600 block mb-1">Item Bahan:</label>
                 <div class="flex gap-2 mb-2">
@@ -257,6 +254,7 @@
 </div>
 
 <!-- PAGE: CRM -->
+
 <div id="page-crm" class="p-4 max-w-md mx-auto hidden">
     <div class="bg-gradient-to-r from-[#a38d58] to-yellow-600 p-4 rounded-xl shadow mb-4 text-white">
         <h2 class="font-bold text-lg">👥 Database Pelanggan Pintar</h2>
@@ -266,6 +264,7 @@
 </div>
 
 <!-- PAGE: DASHBOARD -->
+
 <div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
     <div class="flex justify-between items-center border-b pb-1 mb-3">
         <h2 class="font-bold text-gray-700 text-sm">Laporan Keseluruhan (Global)</h2>
@@ -307,6 +306,7 @@
 </div>
 
 <!-- PAGE: RESTOCK -->
+
 <div id="page-restock" class="p-4 max-w-md mx-auto hidden">
     <div class="bg-red-50 p-4 rounded-xl shadow border-t-4 border-red-600 mb-6">
         <h2 class="font-bold text-red-700 mb-1">🚨 Peringatan Restock</h2>
@@ -318,6 +318,7 @@
 </div>
 
 <!-- PAGE: FOLLOW-UP -->
+
 <div id="page-followup" class="p-4 max-w-md mx-auto hidden">
     <div class="bg-green-50 p-4 rounded-xl shadow border-t-4 border-green-500 mb-6">
         <h2 class="font-bold text-green-700 mb-1">💬 Follow-Up WA (≥ 7 Hari)</h2>
@@ -326,7 +327,7 @@
     </div>
 </div>
 
-</div>
+</div><!-- /admin-content -->
 
 <!-- MODAL EDIT BIBIT -->
 
@@ -367,7 +368,26 @@
 
 <div id="print-section"></div>
 
-<script>
+<script type="module">
+// ============================================================
+// IMPORTS — Firebase v9 Modular SDK
+// ============================================================
+import { initializeApp }                                       from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider }             from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js";
+import {
+    getAuth, onAuthStateChanged,
+    signInWithEmailAndPassword, signOut
+}                                                              from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import {
+    getFirestore, enableIndexedDbPersistence,
+    collection, doc, getDoc, getDocs, addDoc, setDoc, updateDoc, deleteDoc,
+    query, where, orderBy, limit, startAfter,
+    onSnapshot, serverTimestamp
+}                                                              from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import {
+    getFunctions, httpsCallable
+}                                                              from "https://www.gstatic.com/firebasejs/10.8.1/firebase-functions.js";
+
 // ============================================================
 // UTILS
 // ============================================================
@@ -389,25 +409,25 @@ const firebaseConfig = {
     messagingSenderId: "894897183896",
     appId:             "1:894897183896:web:71372dc8cbb9056c7144ed"
 };
-firebase.initializeApp(firebaseConfig);
 
+const app       = initializeApp(firebaseConfig);
+const auth      = getAuth(app);
+const db        = getFirestore(app);
+const functions = getFunctions(app);
+
+// App Check
 try {
-    const appCheck = firebase.appCheck();
-    appCheck.activate(
-      new firebase.appCheck.ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
-      true // Mengizinkan auto-refresh token
-    );
+    initializeAppCheck(app, {
+        provider: new ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
+        isTokenAutoRefreshEnabled: true
+    });
 } catch (e) { console.warn("App Check gagal:", e); }
 
-const db         = firebase.firestore();
-const functions  = firebase.functions();
+// Callable Cloud Functions
+const fnSelesaikanPembelian = httpsCallable(functions, 'selesaikanPembelian');
+const fnTerimaPesanan       = httpsCallable(functions, 'terimaPesanan');
 
-// Callable Cloud Functions (server-side atomic)
-const fnSelesaikanPembelian = functions.httpsCallable('selesaikanPembelian');
-// v3: terimaPesanan dipindahkan ke Cloud Function — cegah race condition stok
-const fnTerimaPesanan = functions.httpsCallable('terimaPesanan');
-
-db.enablePersistence({ synchronizeTabs: false }).catch(err => console.warn('Persistence:', err.code));
+enableIndexedDbPersistence(db).catch(err => console.warn('Persistence:', err.code));
 
 // ============================================================
 // OFFLINE INDICATOR
@@ -415,15 +435,10 @@ db.enablePersistence({ synchronizeTabs: false }).catch(err => console.warn('Pers
 window.addEventListener('online',  () => $id('offline-banner').classList.remove('show'));
 window.addEventListener('offline', () => $id('offline-banner').classList.add('show'));
 
-// Helper: tampilkan error listener Firestore ke UI (bukan hanya console)
 function tampilkanErrorKoneksi(label, err) {
     console.error(label, err.message);
-    // Tampilkan offline-banner sebagai sinyal visual agar admin tahu ada masalah
     const banner = $id('offline-banner');
-    if (banner) {
-        banner.textContent = `⚠️ Gagal memuat ${label} — ${err.message}`;
-        banner.classList.add('show');
-    }
+    if (banner) { banner.textContent = `⚠️ Gagal memuat ${label} — ${err.message}`; banner.classList.add('show'); }
 }
 
 // ============================================================
@@ -441,21 +456,20 @@ const listeners = {};
 const namaBahanMap = { botol_35:"Botol 35 ml", botol_50:"Botol 50 ml", botol_100:"Botol 100 ml", abs_standar:"Absolute Standar", abs_khusus:"Absolute Khusus" };
 
 // ============================================================
-// IDLE SESSION TIMEOUT — 60 menit tanpa aktivitas → logout
+// IDLE SESSION TIMEOUT — 60 menit
 // ============================================================
 let idleTimer = null;
-const IDLE_TIMEOUT_MS = 60 * 60 * 1000; // 60 menit
+const IDLE_TIMEOUT_MS = 60 * 60 * 1000;
 
 function resetIdleTimer() {
     clearTimeout(idleTimer);
     idleTimer = setTimeout(() => {
-        if (firebase.auth().currentUser) {
+        if (auth.currentUser) {
             alert("Sesi berakhir karena tidak ada aktivitas. Silakan login kembali.");
-            firebase.auth().signOut();
+            signOut(auth);
         }
     }, IDLE_TIMEOUT_MS);
 }
-
 ['click', 'keydown', 'mousemove', 'touchstart'].forEach(ev =>
     document.addEventListener(ev, resetIdleTimer, { passive: true })
 );
@@ -463,26 +477,22 @@ function resetIdleTimer() {
 // ============================================================
 // AUTH
 // ============================================================
-firebase.auth().onAuthStateChanged(async user => {
+onAuthStateChanged(auth, async user => {
     if (user) {
         try {
-            // Cek apakah UID user ini ada di koleksi admins
-            const adminDoc = await db.collection("admins").doc(user.uid).get();
-            
-            if (adminDoc.exists) {
-                // Jika terbukti admin, buka dashboard
+            const adminDoc = await getDoc(doc(db, "admins", user.uid));
+            if (adminDoc.exists()) {
                 $id('login-screen').classList.add('hidden');
                 $id('admin-content').classList.remove('hidden');
                 if (!dataSudahDimuat) { initAdminData(); dataSudahDimuat = true; }
-                resetIdleTimer(); // mulai idle timer
+                resetIdleTimer();
             } else {
-                // Jika login tapi bukan admin, tendang keluar
                 alert("Akses Ditolak: Akun Anda tidak terdaftar sebagai Admin.");
-                firebase.auth().signOut();
+                signOut(auth);
             }
         } catch (error) {
             console.error("Gagal verifikasi admin:", error);
-            firebase.auth().signOut();
+            signOut(auth);
         }
     } else {
         $id('login-screen').classList.remove('hidden');
@@ -494,7 +504,6 @@ firebase.auth().onAuthStateChanged(async user => {
     }
 });
 
-
 function prosesLogin(e) {
     e.preventDefault();
     const email = $id('input-user').value.trim();
@@ -503,15 +512,15 @@ function prosesLogin(e) {
     const errEl = $id('login-error');
     btn.textContent = "Memeriksa..."; btn.disabled = true;
     errEl.classList.add('hidden');
-    firebase.auth().signInWithEmailAndPassword(email, pass)
+    signInWithEmailAndPassword(auth, email, pass)
         .then(() => { btn.textContent = "Masuk"; btn.disabled = false; })
-        .catch(err => {
+        .catch(() => {
             errEl.textContent = "Email atau password salah.";
             errEl.classList.remove('hidden');
             btn.textContent = "Masuk"; btn.disabled = false;
         });
 }
-function logoutAdmin() { if (confirm("Keluar dari sistem?")) firebase.auth().signOut(); }
+function logoutAdmin() { if (confirm("Keluar dari sistem?")) signOut(auth); }
 function togglePassword() { const p = $id('input-pass'); p.type = p.type === 'password' ? 'text' : 'password'; }
 
 // ============================================================
@@ -550,28 +559,24 @@ function gantiFilterPesanan(v) {
 }
 
 function subscribeQueryPesanan() {
-    // Query utama pakai orderBy("waktu") — butuh Composite Index di Firestore.
-    // Jika index belum ada, Firestore error dan onSnapshot tidak berjalan.
-    // Fallback: query tanpa orderBy, urutan diatur client-side.
-    let query, queryFallback;
+    let q, qFallback;
     if (filterAktif === 'on_proses') {
-        query         = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]).orderBy("waktu","desc").limit(30);
-        queryFallback = db.collection("pesanan").where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]).limit(30);
+        q         = query(collection(db,"pesanan"), where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]), orderBy("waktu","desc"), limit(30));
+        qFallback = query(collection(db,"pesanan"), where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]), limit(30));
     } else if (filterAktif === 'selesai') {
-        query         = db.collection("pesanan").where("status","==","Selesai").orderBy("waktu","desc").limit(30);
-        queryFallback = db.collection("pesanan").where("status","==","Selesai").limit(30);
+        q         = query(collection(db,"pesanan"), where("status","==","Selesai"), orderBy("waktu","desc"), limit(30));
+        qFallback = query(collection(db,"pesanan"), where("status","==","Selesai"), limit(30));
     } else {
-        query         = db.collection("pesanan").orderBy("waktu","desc").limit(30);
-        queryFallback = db.collection("pesanan").limit(30);
+        q         = query(collection(db,"pesanan"), orderBy("waktu","desc"), limit(30));
+        qFallback = query(collection(db,"pesanan"), limit(30));
     }
 
     let isInitialLoad = true;
 
-    function pasangListener(q) {
-        return q.onSnapshot(snap => {
+    function pasangListener(qRef) {
+        return onSnapshot(qRef, snap => {
             semuaDataPesanan = [];
-            snap.forEach(doc => semuaDataPesanan.push({ id: doc.id, data: doc.data() }));
-            // Urutkan client-side: dokumen waktu null (baru dibuat) tampil paling atas
+            snap.forEach(d => semuaDataPesanan.push({ id: d.id, data: d.data() }));
             semuaDataPesanan.sort((a, b) => {
                 const tA = a.data.waktu ? a.data.waktu.toMillis() : Infinity;
                 const tB = b.data.waktu ? b.data.waktu.toMillis() : Infinity;
@@ -590,7 +595,7 @@ function subscribeQueryPesanan() {
             if (err.code === 'failed-precondition' || (err.message && err.message.includes('index'))) {
                 console.warn("Index Firestore belum ada, pakai fallback query:", err.message);
                 if (listeners.pesanan) { listeners.pesanan(); delete listeners.pesanan; }
-                listeners.pesanan = pasangListener(queryFallback);
+                listeners.pesanan = pasangListener(qFallback);
             } else {
                 console.error("Gagal memuat pesanan:", err.message);
                 $id('daftar-pesanan').innerHTML = `<p class="text-center text-red-500 text-sm mt-4">⚠️ Gagal memuat: ${err.message}</p>`;
@@ -598,7 +603,7 @@ function subscribeQueryPesanan() {
         });
     }
 
-    listeners.pesanan = pasangListener(query);
+    listeners.pesanan = pasangListener(q);
 }
 
 function updateBadgePesanan(n) {
@@ -628,7 +633,6 @@ function renderDaftarPesanan(allData) {
         const items = Array.isArray(data.items) ? data.items : [{qty:1, aroma:data.aroma||"Unknown", kelas:data.kelas||"", ukuran:data.ukuran||"", hpp_total:data.total_hpp||0}];
         const pesananHPP = Number(data.total_hpp) || 0;
 
-        // Build detail HTML — collect to array then join (faster than +=)
         const detParts = items.map(i => {
             const info = [i.kelas ? escapeHTML(i.kelas) : "", i.ukuran ? `${i.ukuran}ml` : ""].filter(Boolean).join(" ");
             return `<p class="text-sm border-b pb-1 last:border-b-0 last:pb-0"><b>${i.qty||1}x</b> ${escapeHTML(i.aroma||"Unknown")}${info ? ` <span class="text-xs text-gray-500">(${info})</span>` : ''}</p>`;
@@ -664,10 +668,7 @@ function renderDaftarPesanan(allData) {
             </div>${actionButtons}`;
 
         card.querySelector('.btn-print')?.addEventListener('click', () => cetakStruk(data));
-        
-card.querySelector('.btn-terima')?.addEventListener('click', (e) => { 
-    terimaPesanan(id, e.currentTarget); 
-});
+        card.querySelector('.btn-terima')?.addEventListener('click', (e) => { terimaPesanan(id, e.currentTarget); });
         card.querySelector('.btn-tolak')?.addEventListener('click',  () => tolakPesanan(id));
         card.querySelector('.btn-selesai')?.addEventListener('click',() => tandaiMenungguLunas(id));
         card.querySelector('.btn-lunas-langsung')?.addEventListener('click', () => selesaikanPesananLangsung(id));
@@ -683,52 +684,42 @@ card.querySelector('.btn-terima')?.addEventListener('click', (e) => {
 // ============================================================
 // PESANAN — AKSI
 // ============================================================
-function terimaPesanan(pesananId) {
+function terimaPesanan(pesananId, btn) {
     if (!confirm("Terima pesanan? Stok akan dipotong server-side (atomic) dan status menjadi 'Diproses'.")) return;
     if (btn) { btn.disabled = true; btn.textContent = "Memproses..."; }
-
     fnTerimaPesanan({ pesananId })
         .then(() => alert("✅ Pesanan diterima & Stok berhasil dipotong!"))
-        .catch(err => {
-            alert("⚠️ Gagal: " + (err.message || err.details || "Error tidak diketahui"));
-        })
-        .finally(() => {
-            if (btn) { btn.disabled = false; btn.textContent = "Terima (Potong Stok)"; }
-        });
+        .catch(err => { alert("⚠️ Gagal: " + (err.message || err.details || "Error tidak diketahui")); })
+        .finally(() => { if (btn) { btn.disabled = false; btn.textContent = "Terima (Potong Stok)"; } });
 }
 
 function tolakPesanan(id) {
     const alasan = prompt("Alasan menolak pesanan:");
-    if (alasan && alasan.trim()) db.collection("pesanan").doc(id).update({ status: "Ditolak", alasan: escapeHTML(alasan.trim()) }).catch(e => alert(e.message));
+    if (alasan && alasan.trim()) updateDoc(doc(db, "pesanan", id), { status: "Ditolak", alasan: escapeHTML(alasan.trim()) }).catch(e => alert(e.message));
 }
 
 function tandaiMenungguLunas(id) {
     if (!confirm("Pesanan sudah diserahkan ke pembeli?\nStatus berubah ke 'Menunggu Lunas' sampai pembayaran dikonfirmasi.")) return;
-    db.collection("pesanan").doc(id).update({ status: "Menunggu Lunas" }).catch(e => alert("Gagal: " + e.message));
+    updateDoc(doc(db, "pesanan", id), { status: "Menunggu Lunas" }).catch(e => alert("Gagal: " + e.message));
 }
 
 function batalkanMenungguLunas(id) {
     if (!confirm("Kembalikan status ke 'Diproses'?")) return;
-    db.collection("pesanan").doc(id).update({ status: "Diproses" }).catch(e => alert("Gagal: " + e.message));
+    updateDoc(doc(db, "pesanan", id), { status: "Diproses" }).catch(e => alert("Gagal: " + e.message));
 }
 
 function selesaikanPesananLangsung(id) {
     if (!confirm("Serahkan ke pembeli DAN tandai LUNAS sekarang?\nOmset akan masuk ke Analitik.")) return;
-    db.collection("pesanan").doc(id).update({
-        status: "Selesai",
-        waktu_lunas: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => alert("🎉 Pesanan Selesai & LUNAS! Analitik diperbarui otomatis."))
-      .catch(e => alert("Gagal: " + e.message));
+    updateDoc(doc(db, "pesanan", id), { status: "Selesai", waktu_lunas: serverTimestamp() })
+        .then(() => alert("🎉 Pesanan Selesai & LUNAS! Analitik diperbarui otomatis."))
+        .catch(e => alert("Gagal: " + e.message));
 }
 
 function selesaikanPesanan(id) {
     if (!confirm("Konfirmasi pembayaran LUNAS? Omset masuk ke Analitik.")) return;
-    // Update status saja — Cloud Function rekapDataServer yang handle statistik & CRM
-    db.collection("pesanan").doc(id).update({
-        status: "Selesai",
-        waktu_lunas: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => alert("🎉 Pembayaran LUNAS! Pesanan selesai & Analitik diperbarui otomatis."))
-      .catch(e => alert("Gagal: " + e.message));
+    updateDoc(doc(db, "pesanan", id), { status: "Selesai", waktu_lunas: serverTimestamp() })
+        .then(() => alert("🎉 Pembayaran LUNAS! Pesanan selesai & Analitik diperbarui otomatis."))
+        .catch(e => alert("Gagal: " + e.message));
 }
 
 // ============================================================
@@ -800,15 +791,15 @@ function toggleFormKelasBaruInline() { $id('form-kelas-baru-inline').classList.t
 function simpanKelasBaruInline() {
     const val = $id('bibit-pilih').value;
     if (val === '_NEW_') return;
-    const namaBaru = $id('kelas-baru-nama').value.trim();
+    const namaBaru  = $id('kelas-baru-nama').value.trim();
     const modalBaru = parseInt($id('kelas-baru-modal').value) || 0;
     const stokBaru  = parseInt($id('kelas-baru-stok').value)  || 0;
     if (!namaBaru) return alert("Masukkan nama kelas baru!");
     const d = globalBibit.find(b => b.nama === val);
     if (!d || d.stok_kelas?.[namaBaru] !== undefined) return alert(`Kelas "${namaBaru}" sudah ada!`);
     const fS = { ...(d.stok_kelas||{}), [namaBaru]: stokBaru };
-    const fM = { ...(d.modal||{}), [namaBaru]: modalBaru };
-    db.collection("stok").doc(val).update({ stok_kelas: fS, modal: fM, sisa_ml: Object.values(fS).reduce((a,b)=>a+b,0), kelas_tersedia: Object.keys(fS) })
+    const fM = { ...(d.modal||{}),       [namaBaru]: modalBaru };
+    updateDoc(doc(db, "stok", val), { stok_kelas: fS, modal: fM, sisa_ml: Object.values(fS).reduce((a,b)=>a+b,0), kelas_tersedia: Object.keys(fS) })
         .then(() => { alert(`✅ Kelas "${namaBaru}" ditambahkan!`); $id('kelas-baru-nama').value=''; $id('kelas-baru-modal').value=''; $id('kelas-baru-stok').value=''; $id('form-kelas-baru-inline').classList.add('hidden'); })
         .catch(e => alert("Gagal: " + e.message));
 }
@@ -829,14 +820,14 @@ function simpanBibitDariStok() {
         if (sVal !== '') stokAdd[kelas] = parseInt(sVal);
     });
     if (!klsArr.length) return alert("Centang minimal 1 kelas!");
-    const docRef = db.collection("stok").doc(nama);
-    docRef.get().then(doc => {
-        let cS = (doc.exists && doc.data().stok_kelas) ? doc.data().stok_kelas : {};
-        let cM = (doc.exists && doc.data().modal) ? doc.data().modal : {};
+    const docRef = doc(db, "stok", nama);
+    getDoc(docRef).then(snap => {
+        let cS = (snap.exists() && snap.data().stok_kelas) ? snap.data().stok_kelas : {};
+        let cM = (snap.exists() && snap.data().modal) ? snap.data().modal : {};
         let fS = { ...cS }, fM = { ...cM, ...modObj };
         klsArr.forEach(k => { if (stokAdd[k] !== undefined) { if (stokAdd[k] < 0) { alert("Stok tidak boleh negatif!"); return; } fS[k] = stokAdd[k]; } });
         const total = Object.values(fS).reduce((a,b) => a+b, 0);
-        docRef.set({ nama, sisa_ml: total, stok_kelas: fS, modal: fM, kelas_tersedia: Object.keys(fS) }, { merge: true })
+        setDoc(docRef, { nama, sisa_ml: total, stok_kelas: fS, modal: fM, kelas_tersedia: Object.keys(fS) }, { merge: true })
             .then(() => { alert("✅ Stok Diupdate!"); if (isNew) { $id('bibit-nama').value = ''; renderKelasRows(null); } });
     });
 }
@@ -869,7 +860,7 @@ function simpanEditBibit(e) {
         if (sVal !== '' || mVal !== '' || d.stok_kelas?.[k] !== undefined) { fS[k] = parseInt(sVal)||0; fM[k] = parseInt(mVal)||0; }
     });
     const total = Object.values(fS).reduce((a,b) => a+b, 0);
-    db.collection("stok").doc(id).update({ sisa_ml: total, stok_kelas: fS, modal: fM, kelas_tersedia: Object.keys(fS) })
+    updateDoc(doc(db, "stok", id), { sisa_ml: total, stok_kelas: fS, modal: fM, kelas_tersedia: Object.keys(fS) })
         .then(() => { alert("✅ Data berhasil dikoreksi!"); tutupModalEdit(); }).catch(err => alert("Gagal: " + err.message));
 }
 
@@ -899,11 +890,11 @@ function bukaModalEditBahan(docId) {
 function tutupModalEditBahan() { $id('modal-edit-bahan').classList.add('hidden'); }
 function simpanEditBahan(e) {
     e.preventDefault();
-    const id = $id('edit-id-bahan').value;
+    const id    = $id('edit-id-bahan').value;
     const sisa  = parseInt($id('edit-sisa-bahan').value)  || 0;
     const harga = parseInt($id('edit-harga-bahan').value) || 0;
     if (sisa < 0 || harga < 0) return alert("Nilai tidak boleh negatif!");
-    db.collection("bahan").doc(id).update({ sisa, harga_satuan: harga })
+    updateDoc(doc(db, "bahan", id), { sisa, harga_satuan: harga })
         .then(() => { alert("✅ Data bahan diperbarui!"); tutupModalEditBahan(); })
         .catch(e => alert("Gagal: " + e.message));
 }
@@ -911,23 +902,21 @@ function simpanEditBahan(e) {
 function toggleFormBahanBaru() { $id('form-bahan-baru').classList.toggle('hidden'); }
 function toggleFormBahanBaruPembelian() { $id('form-bahan-baru-pembelian').classList.toggle('hidden'); }
 
-// Refactored: satu fungsi untuk simpan bahan baru dari dua konteks
 function simpanBahanBaru(source) {
     const pfx = source === 'pembelian' ? 'pb-bahan-baru' : 'bahan-baru';
     const newNama  = $id(`${pfx}-nama`).value.trim();
     const newQty   = parseInt($id(`${pfx}-qty`).value)   || 0;
     const newHarga = parseInt($id(`${pfx}-harga`).value) || 0;
-    if (!newNama)       return alert("Masukkan nama bahan!");
-    if (newQty   <= 0)  return alert("Stok awal harus lebih dari 0!");
-    if (newHarga <= 0)  return alert("Harga satuan harus lebih dari 0!");
+    if (!newNama)      return alert("Masukkan nama bahan!");
+    if (newQty   <= 0) return alert("Stok awal harus lebih dari 0!");
+    if (newHarga <= 0) return alert("Harga satuan harus lebih dari 0!");
     const newId = "item_" + Date.now();
-    db.collection("bahan").doc(newId).set({ id: newId, nama: newNama, sisa: newQty, harga_satuan: newHarga })
+    setDoc(doc(db, "bahan", newId), { id: newId, nama: newNama, sisa: newQty, harga_satuan: newHarga })
         .then(() => {
             alert(`✅ Bahan "${newNama}" berhasil ditambahkan!`);
             $id(`${pfx}-nama`).value = ''; $id(`${pfx}-qty`).value = ''; $id(`${pfx}-harga`).value = '';
             if (source === 'pembelian') {
                 $id('form-bahan-baru-pembelian').classList.add('hidden');
-                // Tambahkan option sementara supaya bahan baru langsung terpilih sebelum onSnapshot update
                 const selPb = $id('pb-bahan-id');
                 if (!selPb.querySelector(`option[value="${newId}"]`)) {
                     const opt = document.createElement('option');
@@ -935,8 +924,7 @@ function simpanBahanBaru(source) {
                     selPb.appendChild(opt);
                 }
                 selPb.value = newId; onPilihBahanPembelian();
-            }
-            else $id('form-bahan-baru').classList.add('hidden');
+            } else $id('form-bahan-baru').classList.add('hidden');
         }).catch(e => alert("Gagal: " + e.message));
 }
 
@@ -944,14 +932,14 @@ function hapusBibitTerpilih() {
     const val = $id('bibit-pilih').value;
     if (val === '_NEW_') return alert("Pilih aroma yang ingin dihapus.");
     if (!confirm(`Hapus aroma "${val}"? Tindakan ini permanen.`)) return;
-    db.collection("stok").doc(val).delete().then(() => alert("✅ Aroma dihapus.")).catch(e => alert("Gagal: " + e.message));
+    deleteDoc(doc(db, "stok", val)).then(() => alert("✅ Aroma dihapus.")).catch(e => alert("Gagal: " + e.message));
 }
 function hapusBahanTerpilih() {
     const id = $id('bahan-id').value;
     if (!id) return alert("Pilih bahan terlebih dahulu.");
     const nama = globalBahan.find(b => b.doc_id === id)?.nama || namaBahanMap[id] || id;
     if (!confirm(`Hapus "${nama}"? Tindakan ini permanen.`)) return;
-    db.collection("bahan").doc(id).delete().then(() => alert("✅ Bahan dihapus.")).catch(e => alert("Gagal: " + e.message));
+    deleteDoc(doc(db, "bahan", id)).then(() => alert("✅ Bahan dihapus.")).catch(e => alert("Gagal: " + e.message));
 }
 
 function cekRestock() {
@@ -965,7 +953,6 @@ function cekRestock() {
     wBibit.innerHTML = itemsBibit.length
         ? itemsBibit.map(item => { const kH = item.kelas ? ` <span class="text-[10px] text-gray-500">(${escapeHTML(item.kelas)})</span>` : ''; return `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(item.nama)}${kH}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${item.sisa} ml</span></div>`; }).join('')
         : '<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>';
-
     const LIMIT = { botol_35:{limit:6,unit:'pcs'}, botol_50:{limit:4,unit:'pcs'}, botol_100:{limit:3,unit:'pcs'}, abs_standar:{limit:200,unit:'ml'}, abs_khusus:{limit:200,unit:'ml'} };
     const itemsBahan = globalBahan.filter(b => { const cfg = LIMIT[b.doc_id]; return cfg && Number(b.sisa) < cfg.limit; })
         .map(b => ({ nama: b.nama || b.doc_id, sisa: Number(b.sisa), unit: LIMIT[b.doc_id].unit }))
@@ -973,15 +960,9 @@ function cekRestock() {
     wBahan.innerHTML = itemsBahan.length
         ? itemsBahan.map(item => `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(item.nama)}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${item.sisa} ${item.unit}</span></div>`).join('')
         : '<p class="text-xs italic text-gray-500">✅ Semua bahan aman.</p>';
-
-    // Update badge jumlah item kritis di tab Restock
     const totalKritis = itemsBibit.length + itemsBahan.length;
     const tabRestock = $id('tab-restock');
-    if (tabRestock) {
-        tabRestock.textContent = totalKritis > 0
-            ? `Restock 🚨 (${totalKritis})`
-            : 'Restock 🚨';
-    }
+    if (tabRestock) tabRestock.textContent = totalKritis > 0 ? `Restock 🚨 (${totalKritis})` : 'Restock 🚨';
 }
 
 // ============================================================
@@ -1034,7 +1015,7 @@ function onPilihBahanPembelian() {
 function buatOrderPembelian() {
     if (tipePembelianAktif === 'bibit') {
         const vB = $id('pb-bibit-nama').value, vK = $id('pb-bibit-kelas').value;
-        const namaBaru = $id('pb-bibit-nama-baru').value.trim().toUpperCase();
+        const namaBaru  = $id('pb-bibit-nama-baru').value.trim().toUpperCase();
         const kelasBaru = $id('pb-bibit-kelas-baru').value.trim();
         const qty = parseInt($id('pb-bibit-qty').value), harga = parseInt($id('pb-bibit-harga').value);
         const catatan = $id('pb-bibit-catatan').value.trim();
@@ -1044,7 +1025,7 @@ function buatOrderPembelian() {
         if (!qty || qty <= 0) return alert("Masukkan jumlah beli (ml)!");
         if (!harga || harga <= 0) return alert("Masukkan harga beli/ml!");
         const d = globalBibit.find(b => b.nama === namaAkhir);
-        db.collection("pembelian_stok").add({ tipe:'bibit', nama:namaAkhir, kelas:kelasAkhir, qty_ml:qty, harga_per_ml:harga, total_harga:qty*harga, modal_lama:d?.modal?.[kelasAkhir]||0, stok_lama:d?.stok_kelas?.[kelasAkhir]||0, catatan, status:'Diproses', waktu_buat:firebase.firestore.FieldValue.serverTimestamp() })
+        addDoc(collection(db, "pembelian_stok"), { tipe:'bibit', nama:namaAkhir, kelas:kelasAkhir, qty_ml:qty, harga_per_ml:harga, total_harga:qty*harga, modal_lama:d?.modal?.[kelasAkhir]||0, stok_lama:d?.stok_kelas?.[kelasAkhir]||0, catatan, status:'Diproses', waktu_buat:serverTimestamp() })
             .then(() => { alert(`✅ Order "${namaAkhir}" (${kelasAkhir}) ${qty}ml dibuat!`); ['pb-bibit-qty','pb-bibit-harga','pb-bibit-catatan','pb-bibit-nama-baru'].forEach(el => $id(el).value = ''); $id('info-modal-rata').classList.add('hidden'); })
             .catch(e => alert("Gagal: " + e.message));
     } else {
@@ -1055,13 +1036,12 @@ function buatOrderPembelian() {
         if (!harga || harga <= 0) return alert("Masukkan harga satuan!");
         const d = globalBahan.find(b => b.doc_id === idBahan);
         const namaTampil = d?.nama || namaBahanMap[idBahan] || idBahan;
-        db.collection("pembelian_stok").add({ tipe:'bahan', id_bahan:idBahan, nama:namaTampil, qty, harga_satuan:harga, total_harga:qty*harga, harga_lama:d?.harga_satuan||0, stok_lama:d?.sisa||0, catatan, status:'Diproses', waktu_buat:firebase.firestore.FieldValue.serverTimestamp() })
+        addDoc(collection(db, "pembelian_stok"), { tipe:'bahan', id_bahan:idBahan, nama:namaTampil, qty, harga_satuan:harga, total_harga:qty*harga, harga_lama:d?.harga_satuan||0, stok_lama:d?.sisa||0, catatan, status:'Diproses', waktu_buat:serverTimestamp() })
             .then(() => { alert(`✅ Order "${namaTampil}" ${qty} unit dibuat!`); ['pb-bahan-qty','pb-bahan-harga','pb-bahan-catatan'].forEach(el => $id(el).value = ''); })
             .catch(e => alert("Gagal: " + e.message));
     }
 }
 
-// Selesaikan pembelian via Cloud Function (server-side atomic Transaction)
 function selesaikanPembelian(orderId, order) {
     if (!confirm(`Konfirmasi barang tiba?\n\nItem: ${order.nama}${order.kelas?' ('+order.kelas+')':''}\nJumlah: ${order.qty_ml||order.qty}`)) return;
     fnSelesaikanPembelian({ orderId })
@@ -1071,7 +1051,8 @@ function selesaikanPembelian(orderId, order) {
 
 function batalkanPembelian(orderId) {
     if (!confirm("Batalkan order pembelian ini?")) return;
-    db.collection("pembelian_stok").doc(orderId).update({ status:'Batal', waktu_batal:firebase.firestore.FieldValue.serverTimestamp() }).then(() => alert("Order dibatalkan.")).catch(e => alert("Gagal: " + e.message));
+    updateDoc(doc(db, "pembelian_stok", orderId), { status:'Batal', waktu_batal:serverTimestamp() })
+        .then(() => alert("Order dibatalkan.")).catch(e => alert("Gagal: " + e.message));
 }
 
 function renderDaftarPembelian() {
@@ -1105,7 +1086,7 @@ function renderDaftarPembelian() {
 }
 
 // ============================================================
-// DASHBOARD — grafik update tanpa destroy (lebih efisien)
+// DASHBOARD
 // ============================================================
 function toggleDetailPengeluaran() { $id('detail-pengeluaran').classList.toggle('hidden'); }
 
@@ -1114,25 +1095,24 @@ function renderDashboard(stat) {
     const omset = stat.total_omset||0, hpp = stat.total_hpp||0;
     const labaKotor = omset - hpp, labaReal = labaKotor - totalPengeluaran;
     const margin = omset > 0 ? ((labaReal/omset)*100).toFixed(1) : 0;
-    $id('dash-omset').innerText           = fmt(omset);
-    $id('dash-hpp').innerText             = fmt(hpp);
-    $id('dash-qty').innerText             = stat.total_qty || 0;
-    $id('dash-pengeluaran').innerText     = fmt(totalPengeluaran);
-    $id('dash-pengeluaran-bibit').innerText = fmt(totalPengeluaranBibit);
-    $id('dash-pengeluaran-bahan').innerText = fmt(totalPengeluaranBahan);
-    $id('dash-jml-pembelian').innerText   = jmlTransaksiPembelian + ' transaksi';
-    $id('dash-laba').innerText            = fmt(labaKotor);
-    $id('dash-laba-real').innerText       = fmt(labaReal);
-    $id('dash-pengeluaran-mini').innerText= fmt(totalPengeluaran);
-    $id('dash-margin').innerText          = margin + '%';
-    $id('dash-laba-real').className       = labaReal >= 0 ? 'text-2xl font-bold text-[#a38d58]' : 'text-2xl font-bold text-red-400';
+    $id('dash-omset').innerText            = fmt(omset);
+    $id('dash-hpp').innerText              = fmt(hpp);
+    $id('dash-qty').innerText              = stat.total_qty || 0;
+    $id('dash-pengeluaran').innerText      = fmt(totalPengeluaran);
+    $id('dash-pengeluaran-bibit').innerText= fmt(totalPengeluaranBibit);
+    $id('dash-pengeluaran-bahan').innerText= fmt(totalPengeluaranBahan);
+    $id('dash-jml-pembelian').innerText    = jmlTransaksiPembelian + ' transaksi';
+    $id('dash-laba').innerText             = fmt(labaKotor);
+    $id('dash-laba-real').innerText        = fmt(labaReal);
+    $id('dash-pengeluaran-mini').innerText = fmt(totalPengeluaran);
+    $id('dash-margin').innerText           = margin + '%';
+    $id('dash-laba-real').className        = labaReal >= 0 ? 'text-2xl font-bold text-[#a38d58]' : 'text-2xl font-bold text-red-400';
     updateGrafik(stat.bulanan||{}, dataPengeluaranBulanan);
     updateGrafikLaba(stat.bulanan||{}, stat.hpp_bulanan||{}, dataPengeluaranBulanan);
     renderTopAroma(stat.terjual_aroma||{});
     renderBottomAroma(stat.terjual_aroma||{});
 }
 
-// Update chart in-place (tidak destroy/recreate setiap kali)
 function updateGrafik(bO, bP) {
     const lb = Array.from(new Set([...Object.keys(bO), ...Object.keys(bP)])).sort();
     const labels = lb.length ? lb : ['Belum ada'];
@@ -1210,19 +1190,10 @@ function cetakStruk(data) {
             return `<tr><td style="vertical-align:top;width:10%;padding-bottom:4px;">${i.qty||1}x</td><td style="vertical-align:top;width:60%;padding-bottom:4px;">${escapeHTML(i.aroma||'-')}<br><span style="font-size:9px;color:#555;">${escapeHTML(info)}</span></td><td style="vertical-align:top;width:30%;text-align:right;padding-bottom:4px;">${(i.subtotal||0).toLocaleString('id-ID')}</td></tr>`;
         }).join('');
         let wS = new Date().toLocaleString('id-ID');
-        try {
-            if (data.waktu) {
-                wS = (typeof data.waktu.toDate === 'function')
-                    ? data.waktu.toDate().toLocaleString('id-ID')
-                    : new Date(data.waktu.seconds * 1000).toLocaleString('id-ID');
-            }
-        } catch (e) { /* pakai default */ }
+        try { if (data.waktu) { wS = (typeof data.waktu.toDate === 'function') ? data.waktu.toDate().toLocaleString('id-ID') : new Date(data.waktu.seconds * 1000).toLocaleString('id-ID'); } } catch (e) {}
         $id('print-section').innerHTML = `<div style="text-align:center;margin-bottom:6px;font-family:monospace;"><div style="font-size:17px;font-weight:bold;letter-spacing:2px;">MI PERFUME</div><div style="font-size:9px;margin-top:1px;">-- Nota Pembelian --</div></div><div style="border-top:1px dashed #000;border-bottom:1px dashed #000;padding:3px 0;margin-bottom:5px;font-size:10px;font-family:monospace;">Pembeli : <b>${escapeHTML(data.nama||'-')}</b><br>Tanggal : ${wS}<br>Status  : <b>LUNAS</b></div><table style="width:100%;font-size:10px;border-collapse:collapse;font-family:monospace;">${iR}</table><div style="border-top:1px dashed #000;margin-top:5px;padding-top:5px;text-align:right;font-size:12px;font-family:monospace;"><b>TOTAL: Rp ${(data.total||0).toLocaleString('id-ID')}</b></div><div style="text-align:center;margin-top:10px;font-size:10px;font-family:monospace;">Terima kasih sudah berbelanja!<br><span style="font-size:9px;">Barang tidak dapat ditukar</span></div>`;
         requestAnimationFrame(() => requestAnimationFrame(() => window.print()));
-    } catch (err) {
-        console.error("cetakStruk error:", err);
-        alert("Gagal menyiapkan struk: " + err.message);
-    }
+    } catch (err) { console.error("cetakStruk error:", err); alert("Gagal menyiapkan struk: " + err.message); }
 }
 
 function exportCSV() {
@@ -1235,39 +1206,38 @@ function exportCSV() {
 }
 
 // ============================================================
-// SINKRON ULANG (manual fallback jika ada inkonsistensi)
+// SINKRON ULANG STATISTIK
 // ============================================================
 async function sinkronUlangStatistik(e) {
     if (!confirm("Hitung ulang seluruh statistik dari semua pesanan Selesai? Lanjutkan?")) return;
     const btn = e.target, orig = btn.innerText;
     btn.innerText = "⏳ Menghitung..."; btn.disabled = true;
     try {
-        // Paginate 500/batch agar tidak OOM/timeout jika pesanan ribuan
         let tO=0, tH=0, tQ=0, tA={}, bln={}, hppBln={};
         let lastDoc = null;
         const PAGE = 500;
         let page = 0;
         while (true) {
-            let q = db.collection("pesanan").where("status","==","Selesai").orderBy("waktu").limit(PAGE);
-            if (lastDoc) q = q.startAfter(lastDoc);
-            const snap = await q.get();
+            let constraints = [where("status","==","Selesai"), orderBy("waktu"), limit(PAGE)];
+            if (lastDoc) constraints.push(startAfter(lastDoc));
+            const snap = await getDocs(query(collection(db,"pesanan"), ...constraints));
             if (snap.empty) break;
             page++;
             btn.innerText = `⏳ Halaman ${page}...`;
-            snap.forEach(doc => {
-                const d = doc.data(), omset = Number(d.total)||0, hpp = Number(d.total_hpp)||0;
+            snap.forEach(d => {
+                const dd = d.data(), omset = Number(dd.total)||0, hpp = Number(dd.total_hpp)||0;
                 tO += omset; tH += hpp;
-                const tgl = d.waktu ? d.waktu.toDate() : new Date();
+                const tgl = dd.waktu ? dd.waktu.toDate() : new Date();
                 const b = tgl.toLocaleDateString("id-ID",{month:"short",year:"numeric"});
                 bln[b] = (bln[b]||0) + omset; hppBln[b] = (hppBln[b]||0) + hpp;
-                let items = d.items || [];
-                if (!Array.isArray(items)||!items.length) { if (d.aroma) items = [{aroma:d.aroma,qty:Number(d.qty)||1}]; }
+                let items = dd.items || [];
+                if (!Array.isArray(items)||!items.length) { if (dd.aroma) items = [{aroma:dd.aroma,qty:Number(dd.qty)||1}]; }
                 items.forEach(item => { const a=(item.aroma||"Unknown").toUpperCase().trim(), q=Number(item.qty)||1; tQ+=q; tA[a]=(tA[a]||0)+q; });
             });
             lastDoc = snap.docs[snap.docs.length - 1];
             if (snap.size < PAGE) break;
         }
-        await db.collection("statistik").doc("global").set({ total_omset:tO, total_hpp:tH, total_qty:tQ, bulanan:bln, hpp_bulanan:hppBln, terjual_aroma:tA }, { merge: true });
+        await setDoc(doc(db,"statistik","global"), { total_omset:tO, total_hpp:tH, total_qty:tQ, bulanan:bln, hpp_bulanan:hppBln, terjual_aroma:tA }, { merge: true });
         alert("✅ Sinkronisasi Berhasil!");
     } catch(err) { console.error(err); alert("Gagal: " + err.message); }
     btn.innerText = orig; btn.disabled = false;
@@ -1278,17 +1248,16 @@ async function sinkronUlangStatistik(e) {
 // ============================================================
 function initAdminData() {
     // Stok bibit — realtime
-    listeners.stok = db.collection("stok").orderBy("nama").onSnapshot(snap => {
+    listeners.stok = onSnapshot(query(collection(db,"stok"), orderBy("nama")), snap => {
         const selBibit = $id('bibit-pilih'), selPb = $id('pb-bibit-nama'), prevVal = selBibit.value;
         const optsBibit = ['<option value="_NEW_">➕ BUAT AROMA BARU...</option>'];
         const optsPb    = ['<option value="_NEW_">➕ Aroma Baru (Belum Ada di Stok)</option>'];
         globalBibit = [];
-        snap.forEach(doc => {
-            const data = doc.data(); data.doc_id = doc.id; globalBibit.push(data);
+        snap.forEach(d => {
+            const data = d.data(); data.doc_id = d.id; globalBibit.push(data);
             optsBibit.push(`<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`);
             optsPb.push(`<option value="${escapeHTML(data.nama)}">${escapeHTML(data.nama)}</option>`);
         });
-        // Set innerHTML sekali (bukan +=) untuk performa
         selBibit.innerHTML = optsBibit.join('');
         selPb.innerHTML    = optsPb.join('');
         if (prevVal && prevVal !== '_NEW_') selBibit.value = prevVal;
@@ -1296,16 +1265,16 @@ function initAdminData() {
         cekRestock();
     });
 
-    // Bahan — onSnapshot agar selalu fresh (bukan .get() sekali)
-    listeners.bahan = db.collection("bahan").onSnapshot(snap => {
+    // Bahan — realtime
+    listeners.bahan = onSnapshot(collection(db,"bahan"), snap => {
         globalBahan = [];
-        snap.forEach(doc => { const d = doc.data(); d.doc_id = doc.id; globalBahan.push(d); });
+        snap.forEach(d => { const data = d.data(); data.doc_id = d.id; globalBahan.push(data); });
         onPilihBahanStok();
-        const defaultIds = ['botol_35','botol_50','botol_100','abs_standar','abs_khusus'];
-        const defaultOpts  = '<option value="">-- Pilih Bahan --</option><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
+        const defaultIds  = ['botol_35','botol_50','botol_100','abs_standar','abs_khusus'];
+        const defaultOpts = '<option value="">-- Pilih Bahan --</option><option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
         const defaultOptsPb = '<option value="botol_35">Botol 35 ml</option><option value="botol_50">Botol 50 ml</option><option value="botol_100">Botol 100 ml</option><option value="abs_standar">Absolute Standar</option><option value="abs_khusus">Absolute Khusus</option>';
         const extra = globalBahan.filter(b => !defaultIds.includes(b.doc_id)).map(b => `<option value="${escapeHTML(b.doc_id)}">${escapeHTML(b.nama||b.doc_id)}</option>`).join('');
-        $id('bahan-id').innerHTML   = defaultOpts + extra;
+        $id('bahan-id').innerHTML    = defaultOpts + extra;
         $id('pb-bahan-id').innerHTML = defaultOptsPb + extra;
         cekRestock();
     }, err => tampilkanErrorKoneksi("data bahan", err));
@@ -1314,44 +1283,80 @@ function initAdminData() {
     subscribeQueryPesanan();
 
     // Pembelian stok
-    listeners.pembelian = db.collection("pembelian_stok").orderBy("waktu_buat","desc").limit(100).onSnapshot(snap => {
+    listeners.pembelian = onSnapshot(query(collection(db,"pembelian_stok"), orderBy("waktu_buat","desc"), limit(100)), snap => {
         semuaDataPembelian = [];
         totalPengeluaran = 0; totalPengeluaranBibit = 0; totalPengeluaranBahan = 0;
         jmlTransaksiPembelian = 0; dataPengeluaranBulanan = {};
-        snap.forEach(doc => {
-            const d = doc.data(); semuaDataPembelian.push({ id: doc.id, data: d });
-            if (d.status === 'Selesai') {
-                const n = d.total_harga || 0; totalPengeluaran += n; jmlTransaksiPembelian++;
-                if (d.tipe === 'bibit') totalPengeluaranBibit += n; else totalPengeluaranBahan += n;
-                const tgl = d.waktu_selesai ? d.waktu_selesai.toDate() : (d.waktu_buat ? d.waktu_buat.toDate() : new Date());
+        snap.forEach(d => {
+            const data = d.data(); semuaDataPembelian.push({ id: d.id, data });
+            if (data.status === 'Selesai') {
+                const n = data.total_harga || 0; totalPengeluaran += n; jmlTransaksiPembelian++;
+                if (data.tipe === 'bibit') totalPengeluaranBibit += n; else totalPengeluaranBahan += n;
+                const tgl = data.waktu_selesai ? data.waktu_selesai.toDate() : (data.waktu_buat ? data.waktu_buat.toDate() : new Date());
                 const key = tgl.toLocaleString('id-ID',{month:'short',year:'numeric'});
                 dataPengeluaranBulanan[key] = (dataPengeluaranBulanan[key]||0) + n;
             }
         });
         renderDaftarPembelian();
         if (cachedStatistik) renderDashboard(cachedStatistik);
-        else db.collection("statistik").doc("global").get().then(doc => { if (doc.exists) renderDashboard(doc.data()); });
+        else getDoc(doc(db,"statistik","global")).then(d => { if (d.exists()) renderDashboard(d.data()); });
     }, err => tampilkanErrorKoneksi("pembelian stok", err));
 
-    // Statistik — realtime, cache selalu fresh
-    listeners.statistik = db.collection("statistik").doc("global").onSnapshot(doc => {
-        if (doc.exists) { cachedStatistik = doc.data(); renderDashboard(doc.data()); }
+    // Statistik — realtime
+    listeners.statistik = onSnapshot(doc(db,"statistik","global"), d => {
+        if (d.exists()) { cachedStatistik = d.data(); renderDashboard(d.data()); }
     }, err => tampilkanErrorKoneksi("analitik", err));
 
-    // CRM — limit 100 (tidak load semua)
-    listeners.crm = db.collection("crm").orderBy("total_spent","desc").limit(100).onSnapshot(snap => {
+    // CRM
+    listeners.crm = onSnapshot(query(collection(db,"crm"), orderBy("total_spent","desc"), limit(100)), snap => {
         const crmList = [], followupList = [], now = new Date();
-        snap.forEach(doc => {
-            const d = doc.data(); d.aromas = new Set(d.aromas || []); crmList.push(d);
-            if (d.terakhir_order && d.no_wa) {
-                const diff = Math.floor((now - d.terakhir_order.toDate()) / 86400000);
-                if (diff >= 7) followupList.push({ nama: d.nama, no_wa: d.no_wa, hari_lalu: diff, aroma: Array.from(d.aromas).join(', ') });
+        snap.forEach(d => {
+            const data = d.data(); data.aromas = new Set(data.aromas || []); crmList.push(data);
+            if (data.terakhir_order && data.no_wa) {
+                const diff = Math.floor((now - data.terakhir_order.toDate()) / 86400000);
+                if (diff >= 7) followupList.push({ nama: data.nama, no_wa: data.no_wa, hari_lalu: diff, aroma: Array.from(data.aromas).join(', ') });
             }
         });
         renderCRM(crmList.slice(0,20));
         renderFollowUp(followupList);
     }, err => tampilkanErrorKoneksi("CRM", err));
 }
+
+// ============================================================
+// EXPOSE ke HTML (inline handlers)
+// ============================================================
+window.prosesLogin              = prosesLogin;
+window.logoutAdmin              = logoutAdmin;
+window.togglePassword           = togglePassword;
+window.switchTab                = switchTab;
+window.aktifkanNotif            = aktifkanNotif;
+window.gantiFilterPesanan       = gantiFilterPesanan;
+window.onPilihBibitStok         = onPilihBibitStok;
+window.bukaModalEditBibitTerpilih = bukaModalEditBibitTerpilih;
+window.toggleFormKelasBaruInline = toggleFormKelasBaruInline;
+window.simpanKelasBaruInline    = simpanKelasBaruInline;
+window.simpanBibitDariStok      = simpanBibitDariStok;
+window.tutupModalEdit           = tutupModalEdit;
+window.simpanEditBibit          = simpanEditBibit;
+window.onPilihBahanStok         = onPilihBahanStok;
+window.bukaModalEditBahanDariStok = bukaModalEditBahanDariStok;
+window.tutupModalEditBahan      = tutupModalEditBahan;
+window.simpanEditBahan          = simpanEditBahan;
+window.toggleFormBahanBaru      = toggleFormBahanBaru;
+window.toggleFormBahanBaruPembelian = toggleFormBahanBaruPembelian;
+window.simpanBahanBaru          = simpanBahanBaru;
+window.hapusBibitTerpilih       = hapusBibitTerpilih;
+window.hapusBahanTerpilih       = hapusBahanTerpilih;
+window.pilihTipePembelian       = pilihTipePembelian;
+window.onPilihBibitPembelian    = onPilihBibitPembelian;
+window.onPilihKelasPembelian    = onPilihKelasPembelian;
+window.onPilihBahanPembelian    = onPilihBahanPembelian;
+window.buatOrderPembelian       = buatOrderPembelian;
+window.renderDaftarPembelian    = renderDaftarPembelian;
+window.toggleDetailPengeluaran  = toggleDetailPengeluaran;
+window.sinkronUlangStatistik    = sinkronUlangStatistik;
+window.exportCSV                = exportCSV;
+
 </script>
 
 </body>
