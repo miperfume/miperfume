@@ -79,7 +79,6 @@ self.addEventListener(‘fetch’, event => {
 const { request } = event;
 const url = new URL(request.url);
 
-```
 // Abaikan bukan GET
 if (request.method !== 'GET') return;
 
@@ -100,7 +99,6 @@ if (url.origin === self.location.origin) {
 
 // Untuk CDN eksternal (Tailwind, dll) — Stale-while-revalidate
 event.respondWith(staleWhileRevalidate(request));
-```
 
 });
 
@@ -132,7 +130,6 @@ async function cacheFirstThenNetwork(request) {
 const cached = await caches.match(request);
 if (cached) return cached;
 
-```
 try {
     const networkResponse = await fetch(request);
     if (networkResponse.ok) {
@@ -145,7 +142,6 @@ try {
     // Kembalikan response kosong agar tidak error fatal
     return new Response('', { status: 404, statusText: 'Offline' });
 }
-```
 
 }
 
@@ -157,7 +153,6 @@ async function staleWhileRevalidate(request) {
 const cache  = await caches.open(RUNTIME_CACHE);
 const cached = await cache.match(request);
 
-```
 const fetchPromise = fetch(request).then(networkResponse => {
     if (networkResponse.ok) {
         cache.put(request, networkResponse.clone());
@@ -166,7 +161,6 @@ const fetchPromise = fetch(request).then(networkResponse => {
 }).catch(() => cached); // Jika offline, gunakan cache
 
 return cached || fetchPromise;
-```
 
 }
 
@@ -177,8 +171,6 @@ self.addEventListener(‘push’, event => {
 if (!event.data) return;
 let data = {};
 try { data = event.data.json(); } catch { data = { title: ‘MI Perfume’, body: event.data.text() }; }
-
-```
 const options = {
     body:    data.body  || 'Ada update pesanan kamu!',
     icon:    data.icon  || '/icon.PNG',
@@ -194,7 +186,6 @@ const options = {
 event.waitUntil(
     self.registration.showNotification(data.title || 'MI Perfume', options)
 );
-```
 
 });
 
@@ -202,7 +193,6 @@ self.addEventListener(‘notificationclick’, event => {
 event.notification.close();
 if (event.action === ‘dismiss’) return;
 
-```
 const targetUrl = event.notification.data?.url || '/';
 event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
@@ -217,7 +207,6 @@ event.waitUntil(
             return clients.openWindow(targetUrl);
         })
 );
-```
 
 });
 
