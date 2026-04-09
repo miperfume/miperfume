@@ -73,7 +73,6 @@ cache.put(event.request, networkResponse.clone());
 }
 }).catch(() => {}); // gagal update = tidak masalah
 
-```
     return cachedResponse;
   }
 
@@ -103,7 +102,6 @@ cache.put(event.request, networkResponse.clone());
       }
     });
 })
-```
 
 );
 });
