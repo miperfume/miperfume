@@ -10,7 +10,7 @@
 
 <meta name="application-name" content="MI Perfume">
 <meta name="description" content="Sistem Pemesanan dan Manajemen MI Perfume">
-<meta name="theme-color" content="#a38d58" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#9c9e4a" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1f2937" media="(prefers-color-scheme: dark)">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -74,7 +74,7 @@ function showToast(msg, type = 'info', duration = 3000) {
         container.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;width:90%;max-width:360px;pointer-events:none';
         document.body.appendChild(container);
     }
-    const colors = { success:'background:#22c55e', error:'background:#ef4444', info:'background:#a38d58', warning:'background:#f59e0b' };
+    const colors = { success:'background:#22c55e', error:'background:#ef4444', info:'background:#9c9e4a', warning:'background:#f59e0b' };
     const icons  = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
     const toast  = document.createElement('div');
     toast.style.cssText = `${colors[type]||colors.info};color:white;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);pointer-events:auto;opacity:0;transition:opacity 0.25s,transform 0.25s;transform:translateY(-8px);max-width:100%;text-align:center;line-height:1.4`;
@@ -461,7 +461,7 @@ function loadRiwayat() {
                     <span>Total</span>
                     <span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
                 </div>
-                ${showBayar ? '<button class="mt-3 w-full bg-[#a38d58] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
+                ${showBayar ? '<button class="mt-3 w-full bg-[#9c9e4a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
             card.querySelector('.js-bayar')?.addEventListener('click', bukaQris);
             frag.appendChild(card);
         });
@@ -546,10 +546,10 @@ function showUpdateBanner(newWorker) {
     if (document.getElementById('update-banner')) return;
     const banner = document.createElement('div');
     banner.id = 'update-banner';
-    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-[#a38d58] text-white text-sm font-bold p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
+    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-[#9c9e4a] text-white text-sm font-bold p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
     banner.innerHTML = `
         <span>🔄 Versi baru tersedia!</span>
-        <button id="btn-update-now" class="bg-white text-[#a38d58] px-3 py-1 rounded-lg text-xs font-bold active:scale-95">
+        <button id="btn-update-now" class="bg-white text-[#9c9e4a] px-3 py-1 rounded-lg text-xs font-bold active:scale-95">
             Update
         </button>`;
     document.body.appendChild(banner);
@@ -619,7 +619,7 @@ function showInstallBanner() {
 
     const banner = document.createElement('div');
     banner.id = 'install-banner';
-    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-white dark:bg-gray-800 border border-[#a38d58] text-sm p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
+    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-white dark:bg-gray-800 border border-[#9c9e4a] text-sm p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
     banner.innerHTML = `
         <div class="flex items-center gap-2">
             <img src="icon.PNG" class="w-8 h-8 rounded-md object-contain" alt="Icon">
@@ -628,7 +628,7 @@ function showInstallBanner() {
             </span>
         </div>
         <div class="flex gap-2">
-            <button id="btn-install-yes" class="bg-[#a38d58] text-white px-3 py-1 rounded-lg text-xs font-bold active:scale-95">Pasang</button>
+            <button id="btn-install-yes" class="bg-[#9c9e4a] text-white px-3 py-1 rounded-lg text-xs font-bold active:scale-95">Pasang</button>
             <button id="btn-install-no" class="bg-gray-100 dark:bg-gray-700 dark:text-white text-gray-600 px-3 py-1 rounded-lg text-xs active:scale-95">Nanti</button>
         </div>`;
     document.body.appendChild(banner);
@@ -674,9 +674,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </script>
 
 <style>
-    .text-gold { color: #a38d58; }
-    .bg-gold   { background-color: #a38d58; }
-    .tab-active { border-bottom: 3px solid #a38d58; color: #a38d58; font-weight: bold; }
+    .text-gold { color: #9c9e4a; }
+    .bg-gold   { background-color: #9c9e4a; }
+    .tab-active { border-bottom: 3px solid #9c9e4a; color: #9c9e4a; font-weight: bold; }
 </style>
 
 </head>
@@ -687,8 +687,8 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 <div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
     <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
     <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
-        <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
-        <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
+        <div class="border-4 border-[#9c9e4a] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
+        <p class="text-[#9c9e4a] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
     </div>
 </div>
 
@@ -696,7 +696,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
     <div class="flex items-center gap-3">
         <img src="icon.PNG" alt="Logo" class="h-12 w-12 object-contain rounded-md">
         <div class="flex flex-col">
-            <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
+            <h1 class="text-xl font-bold text-[#9c9e4a] leading-tight">MI Perfume</h1>
             <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
         </div>
     </div>
@@ -709,7 +709,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </div>
 
 <div id="page-pesan" class="p-4 max-w-md mx-auto">
-    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#a38d58] mb-4">
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#9c9e4a] mb-4">
         <div class="mb-3">
             <label class="block text-sm font-bold mb-1">Nama Pemesan</label>
             <input type="text" id="nama" required maxlength="100"
@@ -770,9 +770,9 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 </div>
 
 <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
-    <h2 class="font-bold text-[#a38d58] mb-3 flex justify-between">
+    <h2 class="font-bold text-[#9c9e4a] mb-3 flex justify-between">
         <span>🛒 Keranjang</span>
-        <span id="badge-qty" class="bg-[#a38d58] text-white px-2 rounded-full text-xs">0</span>
+        <span id="badge-qty" class="bg-[#9c9e4a] text-white px-2 rounded-full text-xs">0</span>
     </h2>
     <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
         <p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>
@@ -798,7 +798,7 @@ if (window.matchMedia('(display-mode: standalone)').matches) {
 <div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden flex-col items-center justify-center p-4 backdrop-blur-sm">
     <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
         <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none" aria-label="Tutup">&times;</button>
-        <h3 class="font-bold text-[#a38d58] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
+        <h3 class="font-bold text-[#9c9e4a] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
         <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
             onerror="this.onerror=null; this.src='https://via.placeholder.com/300?text=QRIS+Tidak+Ditemukan';">
         <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
