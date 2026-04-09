@@ -18,22 +18,22 @@
 <!-- Open Graph -->
 <meta property="og:title" content="MI Perfume — Pemesanan Online">
 <meta property="og:description" content="Pesan parfum refill berkualitas dengan mudah dan cepat">
-<meta property="og:image" content="/logo.jpeg">
+<meta property="og:image" content="logo.jpeg">
 <meta property="og:type" content="website">
 
 <!-- Icons -->
-<link rel="apple-touch-icon" href="/logo.jpeg">
-<link rel="icon" type="image/jpeg" href="/logo.jpeg">
+<link rel="apple-touch-icon" href="logo.jpeg">
+<link rel="icon" type="image/jpeg" href="logo.jpeg">
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script>tailwind.config = { darkMode: 'class' }</script>
-<link rel="stylesheet" href="/style.css">
+<link rel="stylesheet" href="style.css">
 
 <!-- PWA: Service Worker Registration -->
 <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            navigator.serviceWorker.register('sw.js', { scope: '/' })
                 .then(reg => {
                     console.log('[PWA] SW terdaftar, scope:', reg.scope);
 
@@ -135,7 +135,7 @@
 <!-- PWA INSTALL BANNER -->
 
 <div id="install-banner" class="hidden fixed bottom-24 left-4 right-4 z-[90] bg-gray-800 text-white rounded-xl shadow-2xl p-3 flex items-center gap-3 border border-[#a38d58]">
-    <img src="/logo.jpeg" class="h-10 w-10 rounded-lg shrink-0 object-cover" alt="MI Perfume">
+    <img src="logo.jpeg" class="h-10 w-10 rounded-lg shrink-0 object-cover" alt="MI Perfume">
     <div class="flex-1 min-w-0">
         <p class="text-xs font-bold">Simpan MI Perfume ke Home Screen</p>
         <p class="text-[10px] text-gray-400">Akses cepat tanpa buka browser</p>
@@ -147,7 +147,7 @@
 <!-- Splash -->
 
 <div id="splash" class="fixed inset-0 z-[100] bg-white transition-opacity duration-700">
-    <img src="/loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
+    <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
     <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
         <div class="border-4 border-[#a38d58] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
         <p class="text-[#a38d58] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
@@ -156,7 +156,7 @@
 
 <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
     <div class="flex items-center gap-3">
-        <img src="/logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md">
+        <img src="logo.jpeg" alt="Logo" class="h-12 w-12 object-contain rounded-md">
         <div class="flex flex-col">
             <h1 class="text-xl font-bold text-[#a38d58] leading-tight">MI Perfume</h1>
             <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
@@ -268,7 +268,7 @@
     </div>
 </div>
 
-<script type="module" src="/app.js"></script>
+<script type="module" src="app.js"></script>
 
 </body>
 </html>
