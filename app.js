@@ -92,18 +92,13 @@ const HARGA_SUPER_PREMI = { “35”: 100000, “50”: 175000, “100”: 28000
 // ============================================================
 // SPLASH
 // ============================================================
-let _splashClosed = false;
 function closeSplash() {
-if (_splashClosed) return;
-_splashClosed = true;
 const el = $id(‘splash’);
 if (!el) return;
-el.style.transition    = ‘opacity 0.5s’;
-el.style.opacity       = ‘0’;
-el.style.pointerEvents = ‘none’;
-setTimeout(() => { el.style.display = ‘none’; }, 600);
+el.classList.add(‘opacity-0’, ‘pointer-events-none’);
+setTimeout(() => { el.style.display = ‘none’; }, 700);
 }
-const splashFallback = setTimeout(closeSplash, 3000);
+const splashFallback = setTimeout(closeSplash, 8000);
 
 // ============================================================
 // AUTH
@@ -228,7 +223,7 @@ return total;
 }
 
 // ============================================================
-// KERANJANG — dengan sessionStorage agar tidak hilang saat refresh
+// KERANJANG – dengan sessionStorage agar tidak hilang saat refresh
 // ============================================================
 function simpanKeranjang() {
 try { sessionStorage.setItem(‘mi_keranjang’, JSON.stringify(keranjang)); } catch(e) {}
@@ -248,7 +243,7 @@ const kelas  = $id(‘kelas’).value;
 const ukuran = parseInt($id(‘ukuran’).value);
 const qty    = parseInt($id(‘qty’).value);
 
-if (qty < 1 || qty > 50) return showToast(“Jumlah harus antara 1–50.”, ‘warning’);
+if (qty < 1 || qty > 50) return showToast(“Jumlah harus antara 1-50.”, ‘warning’);
 
 const butuhBibit = (ukuran * 0.5) * qty;
 const idBotol    = ‘botol_’ + ukuran;
@@ -435,7 +430,7 @@ container.appendChild(frag);
 }, err => {
 console.error(“Gagal load riwayat:”, err);
 if (err.message?.includes(“requires an index”))
-console.warn(“Buat composite index: pesanan — buyer_id ASC, waktu DESC”);
+console.warn(“Buat composite index: pesanan – buyer_id ASC, waktu DESC”);
 });
 
 }
