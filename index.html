@@ -8,7 +8,7 @@
 
 ```
 <!-- PWA: Manifest & Theme -->
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#a38d58">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -35,7 +35,7 @@
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             // Path absolut agar scope / berfungsi dari subfolder manapun
-            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+            navigator.serviceWorker.register('sw.js', { scope: './' })
                 .then(reg => {
                     console.log('[PWA] SW terdaftar, scope:', reg.scope);
                     reg.addEventListener('updatefound', () => {
