@@ -1,0 +1,44 @@
+{
+  "name": "MI Perfume",
+  "short_name": "MI Perfume",
+  "description": "Toko Parfum Refill Online - Pesan & Kelola dengan mudah",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#a38d58",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Pesan Parfum",
+      "short_name": "Pesan",
+      "description": "Buka halaman pemesanan",
+      "url": "/",
+      "icons": [{ "src": "/logo.jpeg", "sizes": "96x96" }]
+    },
+    {
+      "name": "Admin Dashboard",
+      "short_name": "Admin",
+      "description": "Buka dashboard admin",
+      "url": "/admin/",
+      "icons": [{ "src": "/logo.jpeg", "sizes": "96x96" }]
+    }
+  ],
+  "categories": ["shopping", "lifestyle"],
+  "prefer_related_applications": false
+}
