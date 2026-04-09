@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Admin - MI Perfume</title>
+
+<!-- PWA: Manifest & Theme -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#a38d58">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="MI Perfume">
+
+<!-- Icons -->
+<link rel="apple-touch-icon" href="/logo.jpeg">
+<link rel="icon" type="image/jpeg" href="/logo.jpeg">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<link rel="stylesheet" href="/admin.css">
+
+<!-- Firebase v9 Modular SDK via CDN -->
+<script type="module" src="/admin.js"></script>
+
+<!-- PWA: Service Worker + Install Prompt -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js', { scope: '/' })
+                .then(reg => {
+                    console.log('[PWA] SW terdaftar, scope:', reg.scope);
+
+                    // Deteksi update SW baru
+                    reg.addEventListener('updatefound', () => {
+                        const newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateBanner();
+                            }
+                        });
+                    });
+                })
+                .catch(err => console.warn('[PWA] SW gagal:', err));
+        });
+
+        let refreshing = false;
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) { refreshing = true; location.reload(); }
+        });
+    }
+
+    // ── Online / Offline ──
+    function updateOnlineStatus() {
+        const banner = document.getElementById('offline-banner');
+        if (!banner) return;
+        banner.style.display = navigator.onLine ? 'none' : 'flex';
+    }
+    window.addEventListener('online',  updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+
+    // ── Install prompt ──
+    let deferredInstallPrompt = null;
+    window.addEventListener('beforeinstallprompt', e => {
+        e.preventDefault();
+        deferredInstallPrompt = e;
+
+        // Tampilkan banner install setelah 3 detik jika belum terinstall
+        setTimeout(() => {
+            const banner = document.getElementById('install-banner');
+            if (banner && !sessionStorage.getItem('admin-install-dismissed')) {
+                banner.classList.remove('hidden');
+            }
+            // Tampilkan juga tombol di header
+            const btnHeader = document.getElementById('btn-install-header');
+            if (btnHeader) btnHeader.classList.remove('hidden');
+        }, 3000);
+    });
+
+    window.installPWA = function () {
+        if (!deferredInstallPrompt) return;
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(result => {
+            console.log('[PWA] Install choice:', result.outcome);
+            deferredInstallPrompt = null;
+            document.getElementById('install-banner')?.classList.add('hidden');
+            document.getElementById('btn-install-header')?.classList.add('hidden');
+        });
+    };
+
+    window.dismissInstallAdmin = function () {
+        sessionStorage.setItem('admin-install-dismissed', '1');
+        document.getElementById('install-banner')?.classList.add('hidden');
+    };
+
+    window.addEventListener('appinstalled', () => {
+        document.getElementById('install-banner')?.classList.add('hidden');
+        document.getElementById('btn-install-header')?.classList.add('hidden');
+        deferredInstallPrompt = null;
+        console.log('[PWA] App berhasil diinstall!');
+    });
+
+    // ── Update banner ──
+    function showUpdateBanner() {
+        const el = document.getElementById('update-banner');
+        if (el) el.classList.remove('hidden');
+    }
+
+    window.applyUpdate = function () {
+        navigator.serviceWorker.getRegistration().then(reg => {
+            reg?.waiting?.postMessage({ type: 'SKIP_WAITING' });
+        });
+    };
+</script>
+
+</head>
+<body class="bg-gray-100 text-gray-800 pb-20">
+
+<audio id="notif-sound" src="https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3" preload="auto" style="display:none;"></audio>
+
+<!-- UPDATE BANNER -->
+
+<div id="update-banner" class="hidden fixed top-0 left-0 right-0 z-[110] bg-[#a38d58] text-white text-xs font-bold py-2 px-4 flex items-center justify-between gap-2">
+    <span>🔄 Versi baru tersedia!</span>
+    <button onclick="applyUpdate()" class="bg-white text-[#a38d58] px-3 py-1 rounded font-bold text-xs">Update Sekarang</button>
+</div>
+
+<!-- OFFLINE BANNER -->
+
+<div id="offline-banner" class="fixed top-0 left-0 right-0 z-[100] bg-red-600 text-white text-xs font-bold py-2 px-4 items-center justify-center gap-2" style="display:none;">
+    ⚠️ Koneksi terputus — data mungkin belum terbaru
+</div>
+
+<!-- PWA INSTALL BANNER -->
+
+<div id="install-banner" class="hidden fixed bottom-20 left-4 right-4 z-[90] bg-gray-800 text-white rounded-xl shadow-2xl p-3 flex items-center gap-3 border border-[#a38d58]">
+    <img src="/logo.jpeg" class="h-10 w-10 rounded-lg shrink-0 object-cover" alt="MI Perfume">
+    <div class="flex-1 min-w-0">
+        <p class="text-xs font-bold">Install MI Perfume</p>
+        <p class="text-[10px] text-gray-400">Akses cepat tanpa buka browser</p>
+    </div>
+    <button onclick="installPWA()" class="bg-[#a38d58] text-white text-xs font-bold px-3 py-2 rounded-lg shrink-0">Install</button>
+    <button onclick="dismissInstallAdmin()" class="text-gray-400 text-base px-1 shrink-0">✕</button>
+</div>
+
+<!-- LOGIN -->
+
+<div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gray-100 px-4">
+    <div class="bg-white p-8 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
+        <img src="/logo.jpeg" class="h-16 w-auto mx-auto mb-2 rounded" alt="Logo MI Perfume">
+        <h1 class="text-2xl font-bold text-center text-[#a38d58] mb-4">Admin System</h1>
+        <div id="form-login">
+            <div class="mb-4">
+                <input type="email" id="input-user" required class="w-full border p-3 rounded" placeholder="Email Admin" autocomplete="email">
+            </div>
+            <div class="mb-6 relative">
+                <input type="password" id="input-pass" required class="w-full border p-3 rounded" placeholder="Password" autocomplete="current-password">
+                <button type="button" onclick="togglePassword()" class="absolute inset-y-0 right-3">👁️</button>
+            </div>
+            <button type="button" id="btn-login" onclick="prosesLogin()" class="w-full bg-gold text-white font-bold py-3 rounded">Masuk</button>
+        </div>
+        <p id="login-error" class="text-xs text-red-500 text-center mt-3 hidden"></p>
+    </div>
+</div>
+
+<!-- MAIN CONTENT -->
+
+<div id="admin-content" class="hidden">
+
+<header class="bg-gray-800 text-white p-3 sticky top-0 z-20 flex justify-between items-center">
+    <div class="flex items-center gap-2">
+        <img src="/logo.jpeg" class="h-8 w-8 rounded object-cover" alt="Logo MI Perfume">
+        <h1 class="font-bold text-[#a38d58]">MI Perfume</h1>
+    </div>
+    <div class="flex items-center gap-2">
+        <button id="btn-install-header" onclick="installPWA()" class="hidden text-[10px] bg-[#a38d58] px-2 py-1 rounded">📲 Install</button>
+        <button onclick="logoutAdmin()" class="text-xs bg-red-500 px-3 py-1 rounded">Logout</button>
+    </div>
+</header>
+
+<!-- TAB BAR -->
+<div class="flex bg-white shadow-sm mb-4 sticky top-[56px] z-10 overflow-x-auto hide-scrollbar">
+    <button id="tab-pesanan"   class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap"    onclick="switchTab('pesanan')">Pesanan</button>
+    <button id="tab-stok"      class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok</button>
+    <button id="tab-pembelian" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('pembelian')">Pembelian 🛍️</button>
+    <button id="tab-crm"       class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('crm')">CRM 👥</button>
+    <button id="tab-dashboard" class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('dashboard')">Analitik</button>
+    <button id="tab-restock"   class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('restock')">Restock 🚨</button>
+    <button id="tab-followup"  class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('followup')">Follow-Up 💬</button>
+</div>
+
+<!-- PAGE: PESANAN -->
+<div id="page-pesanan" class="p-4 max-w-md mx-auto space-y-4">
+    <div class="bg-blue-50 p-3 rounded-lg border border-blue-200 text-center mb-2">
+        <p class="text-xs text-blue-700 mb-1">Agar notifikasi berbunyi saat ditutup:</p>
+        <button onclick="aktifkanNotif()" class="text-xs bg-blue-600 text-white px-3 py-1 rounded shadow">🔔 Aktifkan Izin Notifikasi</button>
+    </div>
+    <div class="bg-white p-3 rounded-xl shadow-sm border border-gray-100 flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-gray-600">Tampilkan:</span>
+            <div class="filter-select-wrapper">
+                <select id="filter-pesanan" onchange="gantiFilterPesanan(this.value)" class="border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 py-1.5 pl-3 pr-7 rounded-lg shadow-sm">
+                    <option value="on_proses">🔄 On Proses</option>
+                    <option value="selesai">✅ Selesai</option>
+                    <option value="semua">📋 Semua (maks. 30)</option>
+                </select>
+            </div>
+        </div>
+        <div id="badge-jumlah-pesanan" class="text-[10px] font-bold bg-[#a38d58] text-white px-2 py-1 rounded-full badge-count hidden">0</div>
+    </div>
+    <div id="daftar-pesanan"></div>
+</div>
+
+<!-- PAGE: STOK -->
+<div id="page-stok" class="p-4 max-w-md mx-auto hidden">
+    <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]">
+        <h2 class="font-bold text-gray-700 mb-3 text-sm">💧 Restock / Tambah Bibit</h2>
+        <div class="mb-3">
+            <div class="flex gap-2 items-center mb-2">
+                <select id="bibit-pilih" class="flex-1 border p-2 rounded text-sm bg-gray-50" onchange="onPilihBibitStok()">
+                    <option value="_NEW_">➕ BUAT AROMA BARU...</option>
+                </select>
+                <button type="button" id="btn-edit-bibit" onclick="bukaModalEditBibitTerpilih()" class="hidden text-xs bg-[#a38d58] text-white px-3 py-2 rounded font-bold shadow whitespace-nowrap">✏️ Edit</button>
+            </div>
+            <input type="text" id="bibit-nama" class="w-full border p-2 rounded text-sm uppercase mb-2" placeholder="Ketik nama aroma baru...">
+        </div>
+        <div class="mb-3 bg-gray-50 p-2 rounded border">
+            <div class="flex justify-between items-center mb-2">
+                <label class="text-xs font-bold text-gray-600">Kelas & Stok (ml):</label>
+                <button type="button" id="btn-tambah-kelas-custom" onclick="toggleFormKelasBaruInline()" class="text-xs text-[#a38d58] border border-dashed border-[#a38d58] px-2 py-0.5 rounded">➕ Kelas Baru</button>
+            </div>
+            <div id="kelas-rows-container" class="grid grid-cols-1 gap-2 text-xs"></div>
+            <div id="form-kelas-baru-inline" class="hidden mt-2 bg-yellow-50 border border-yellow-200 rounded p-2">
+                <div class="flex gap-2 mb-1.5">
+                    <input type="text"   id="kelas-baru-nama"  class="flex-1 border p-1.5 rounded text-xs" placeholder="Nama kelas baru">
+                    <input type="number" id="kelas-baru-modal" class="w-24 border p-1.5 rounded text-xs"  placeholder="Modal/ml">
+                    <input type="number" id="kelas-baru-stok"  class="w-20 border p-1.5 rounded text-xs"  placeholder="Stok ml">
+                </div>
+                <button type="button" onclick="simpanKelasBaruInline()" class="w-full bg-yellow-500 text-white text-xs py-1.5 rounded font-bold">Tambah Kelas Ini</button>
+            </div>
+        </div>
+        <button type="button" id="btn-simpan-bibit-inline" onclick="simpanBibitDariStok()" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit Baru</button>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
+        <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Stok Botol & Absolute</h2>
+        <div class="flex gap-2 mb-3 items-center">
+            <select id="bahan-id" required class="flex-1 border p-2 rounded text-sm" onchange="onPilihBahanStok()">
+                <option value="">-- Pilih Bahan --</option>
+            </select>
+            <button type="button" id="btn-edit-bahan-stok" onclick="bukaModalEditBahanDariStok()" class="hidden text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">✏️ Edit</button>
+            <button type="button" onclick="toggleFormBahanBaru()" class="text-xs bg-gray-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
+        </div>
+        <div id="form-bahan-baru" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-3">
+            <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Bahan / Botol Baru</p>
+            <div class="space-y-2">
+                <input type="text"   id="bahan-baru-nama"  class="w-full border p-2 rounded text-sm" placeholder="Nama bahan (mis. Botol 200 ml)">
+                <div class="flex gap-2">
+                    <input type="number" id="bahan-baru-qty"   class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
+                    <input type="number" id="bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
+                </div>
+                <button type="button" onclick="simpanBahanBaru('stok')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan Bahan Baru</button>
+            </div>
+        </div>
+        <div id="info-bahan-stok" class="hidden bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm">
+            <div class="flex justify-between mb-1"><span class="text-gray-500 text-xs">Stok Saat Ini:</span><b id="label-sisa-bahan" class="text-blue-700">-</b></div>
+            <div class="flex justify-between"><span class="text-gray-500 text-xs">Harga Modal:</span><b id="label-harga-bahan" class="text-green-700">-</b></div>
+        </div>
+    </div>
+
+    <div class="bg-white p-4 rounded-xl shadow border-t-4 border-red-400">
+        <h2 class="font-bold text-gray-700 mb-2 text-sm text-red-600">🗑️ Hapus Data</h2>
+        <p class="text-xs text-gray-500 mb-3">Pilih aroma dari dropdown di atas, lalu hapus di sini.</p>
+        <div class="flex gap-2">
+            <button onclick="hapusBibitTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Aroma Terpilih</button>
+            <button onclick="hapusBahanTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Bahan Terpilih</button>
+        </div>
+    </div>
+</div>
+
+<!-- PAGE: PEMBELIAN -->
+<div id="page-pembelian" class="p-4 max-w-md mx-auto hidden">
+    <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-4 text-white">
+        <h2 class="font-bold text-lg">🛍️ Manajemen Pembelian Stok</h2>
+        <p class="text-xs text-gray-300 mt-1">Catat pembelian bibit & bahan. Stok otomatis update saat pesanan tiba.</p>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow mb-5 border-t-4 border-[#a38d58]">
+        <h3 class="font-bold text-gray-700 text-sm mb-3">➕ Buat Order Pembelian Baru</h3>
+        <div class="mb-3">
+            <label class="text-xs font-bold text-gray-600 block mb-1">Tipe Item:</label>
+            <div class="flex gap-2">
+                <button type="button" id="btn-tipe-bibit" onclick="pilihTipePembelian('bibit')" class="flex-1 py-2 text-xs font-bold rounded border-2 border-[#a38d58] bg-[#a38d58] text-white">💧 Bibit / Aroma</button>
+                <button type="button" id="btn-tipe-bahan" onclick="pilihTipePembelian('bahan')" class="flex-1 py-2 text-xs font-bold rounded border-2 border-gray-300 text-gray-600">🧴 Botol / Absolute</button>
+            </div>
+        </div>
+        <!-- Form Beli Bibit -->
+        <div id="form-beli-bibit">
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-600 block mb-1">Aroma / Bibit:</label>
+                <select id="pb-bibit-nama" class="w-full border p-2 rounded text-sm bg-gray-50 mb-2" onchange="onPilihBibitPembelian()">
+                    <option value="_NEW_">➕ Aroma Baru (Belum Ada di Stok)</option>
+                </select>
+                <input type="text" id="pb-bibit-nama-baru" class="w-full border p-2 rounded text-sm uppercase hidden" placeholder="Ketik nama aroma baru...">
+            </div>
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-600 block mb-1">Kelas:</label>
+                <select id="pb-bibit-kelas" class="w-full border p-2 rounded text-sm bg-gray-50" onchange="onPilihKelasPembelian()">
+                    <option value="">-- Pilih Kelas --</option>
+                    <option value="Standar">Standar</option>
+                    <option value="Premium">Premium</option>
+                    <option value="Super Premium">Super Premium</option>
+                    <option value="Diamond">Diamond</option>
+                    <option value="_NEW_">➕ Kelas Baru</option>
+                </select>
+                <input type="text" id="pb-bibit-kelas-baru" class="w-full border p-2 rounded text-sm mt-2 hidden" placeholder="Nama kelas baru...">
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <div><label class="text-xs font-bold text-gray-600 block mb-1">Jumlah Beli (ml):</label><input type="number" id="pb-bibit-qty" class="w-full border p-2 rounded text-sm" placeholder="mis. 500"></div>
+                <div><label class="text-xs font-bold text-gray-600 block mb-1">Harga Beli/ml (Rp):</label><input type="number" id="pb-bibit-harga" class="w-full border p-2 rounded text-sm" placeholder="mis. 150"></div>
+            </div>
+            <div id="info-modal-rata" class="hidden bg-yellow-50 border border-yellow-200 p-2 rounded text-xs text-yellow-800 mb-3">
+                <p>📊 Modal saat ini: <b id="modal-lama-text">-</b></p>
+                <p>➡️ Modal rata-rata baru dihitung otomatis saat Selesai.</p>
+            </div>
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-600 block mb-1">Catatan (opsional):</label>
+                <input type="text" id="pb-bibit-catatan" class="w-full border p-2 rounded text-sm" placeholder="mis. Beli dari supplier X">
+            </div>
+        </div>
+        <!-- Form Beli Bahan -->
+        <div id="form-beli-bahan" class="hidden">
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-600 block mb-1">Item Bahan:</label>
+                <div class="flex gap-2 mb-2">
+                    <select id="pb-bahan-id" class="flex-1 border p-2 rounded text-sm bg-gray-50" onchange="onPilihBahanPembelian()">
+                        <option value="botol_35">Botol 35 ml</option>
+                        <option value="botol_50">Botol 50 ml</option>
+                        <option value="botol_100">Botol 100 ml</option>
+                        <option value="abs_standar">Absolute Standar</option>
+                        <option value="abs_khusus">Absolute Khusus</option>
+                    </select>
+                    <button type="button" onclick="toggleFormBahanBaruPembelian()" class="text-xs bg-blue-600 text-white px-2 py-1.5 rounded font-bold whitespace-nowrap shadow">➕ Baru</button>
+                </div>
+                <div id="form-bahan-baru-pembelian" class="hidden bg-blue-50 border border-blue-200 rounded-lg p-3 mb-2">
+                    <p class="text-xs font-bold text-blue-800 mb-2">➕ Tambah Botol / Absolute Baru</p>
+                    <div class="space-y-2">
+                        <input type="text" id="pb-bahan-baru-nama" class="w-full border p-2 rounded text-sm" placeholder="Nama bahan">
+                        <div class="flex gap-2">
+                            <input type="number" id="pb-bahan-baru-qty"   class="flex-1 border p-2 rounded text-sm" placeholder="Stok awal">
+                            <input type="number" id="pb-bahan-baru-harga" class="flex-1 border p-2 rounded text-sm" placeholder="Harga satuan (Rp)">
+                        </div>
+                        <button type="button" onclick="simpanBahanBaru('pembelian')" class="w-full bg-blue-600 text-white py-2 rounded text-sm font-bold shadow">Simpan & Gunakan</button>
+                    </div>
+                </div>
+                <div id="info-stok-bahan-pb" class="bg-blue-50 border border-blue-200 rounded-lg p-2 text-xs hidden">
+                    <div class="flex justify-between"><span>Stok: <b id="info-sisa-bahan-pb" class="text-blue-700">-</b></span><span>Harga: <b id="info-harga-bahan-pb">-</b></span></div>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mb-3">
+                <div><label class="text-xs font-bold text-gray-600 block mb-1">Jumlah Beli:</label><input type="number" id="pb-bahan-qty" class="w-full border p-2 rounded text-sm" placeholder="mis. 100"></div>
+                <div><label class="text-xs font-bold text-gray-600 block mb-1">Harga Satuan (Rp):</label><input type="number" id="pb-bahan-harga" class="w-full border p-2 rounded text-sm" placeholder="mis. 5000"></div>
+            </div>
+            <div class="mb-3">
+                <label class="text-xs font-bold text-gray-600 block mb-1">Catatan (opsional):</label>
+                <input type="text" id="pb-bahan-catatan" class="w-full border p-2 rounded text-sm" placeholder="mis. Beli dari toko Y">
+            </div>
+        </div>
+        <button onclick="buatOrderPembelian()" class="w-full bg-[#a38d58] text-white py-2.5 rounded text-sm font-bold shadow mt-1">📋 Buat Order & Tandai "Sedang Diproses"</button>
+    </div>
+    <div>
+        <div class="flex justify-between items-center mb-3 border-b pb-2">
+            <h3 class="font-bold text-gray-700 text-sm">📋 Riwayat Order Pembelian</h3>
+            <select id="filter-pembelian" onchange="renderDaftarPembelian()" class="border border-gray-200 bg-gray-50 text-xs font-semibold text-gray-700 py-1.5 pl-3 pr-4 rounded-lg shadow-sm">
+                <option value="aktif">🔄 Sedang Diproses</option>
+                <option value="selesai">✅ Selesai</option>
+                <option value="batal">❌ Dibatalkan</option>
+                <option value="semua">📋 Semua</option>
+            </select>
+        </div>
+        <div id="daftar-pembelian" class="space-y-3"></div>
+    </div>
+</div>
+
+<!-- PAGE: CRM -->
+<div id="page-crm" class="p-4 max-w-md mx-auto hidden">
+    <div class="bg-gradient-to-r from-[#a38d58] to-yellow-600 p-4 rounded-xl shadow mb-4 text-white">
+        <h2 class="font-bold text-lg">👥 Database Pelanggan Pintar</h2>
+        <p class="text-xs text-yellow-100 mt-1">Daftar pelanggan dari seluruh masa, siap difollow-up.</p>
+    </div>
+    <div id="daftar-crm" class="space-y-3"></div>
+</div>
+
+<!-- PAGE: DASHBOARD -->
+<div id="page-dashboard" class="p-4 max-w-md mx-auto hidden">
+    <div class="flex justify-between items-center border-b pb-1 mb-3">
+        <h2 class="font-bold text-gray-700 text-sm">Laporan Keseluruhan (Global)</h2>
+        <div class="flex gap-2">
+            <button onclick="sinkronUlangStatistik(event)" class="bg-yellow-500 text-white text-xs px-2 py-1 rounded shadow">🔄 Sinkron</button>
+            <button onclick="exportCSV()" class="bg-green-600 text-white text-xs px-2 py-1 rounded shadow">📥 CSV</button>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 gap-3 mb-3">
+        <div class="bg-white p-3 rounded-xl shadow border-l-4 border-[#a38d58]"><p class="text-[10px] text-gray-500">OMSET PENJUALAN</p><p id="dash-omset" class="text-md font-bold">Rp 0</p></div>
+        <div class="bg-white p-3 rounded-xl shadow border-l-4 border-orange-400"><p class="text-[10px] text-gray-500">HPP PENJUALAN</p><p id="dash-hpp" class="text-md font-bold text-orange-600">Rp 0</p></div>
+    </div>
+    <div class="bg-white p-3 rounded-xl shadow border-l-4 border-red-500 mb-3">
+        <div class="flex justify-between items-start">
+            <div><p class="text-[10px] text-gray-500">PENGELUARAN PEMBELIAN STOK</p><p id="dash-pengeluaran" class="text-md font-bold text-red-600">Rp 0</p></div>
+            <button onclick="toggleDetailPengeluaran()" class="text-[10px] text-gray-400 underline mt-1">Detail ▾</button>
+        </div>
+        <div id="detail-pengeluaran" class="hidden mt-2 pt-2 border-t border-gray-100 grid grid-cols-2 gap-2">
+            <div class="bg-red-50 p-2 rounded"><p class="text-[9px] text-gray-400">Bibit / Aroma</p><p id="dash-pengeluaran-bibit" class="text-xs font-bold text-red-700">Rp 0</p></div>
+            <div class="bg-red-50 p-2 rounded"><p class="text-[9px] text-gray-400">Botol & Bahan</p><p id="dash-pengeluaran-bahan" class="text-xs font-bold text-red-700">Rp 0</p></div>
+            <div class="bg-gray-50 p-2 rounded col-span-2"><p class="text-[9px] text-gray-400">Jumlah Transaksi Pembelian Selesai</p><p id="dash-jml-pembelian" class="text-xs font-bold text-gray-700">0 transaksi</p></div>
+        </div>
+    </div>
+    <div class="bg-gradient-to-r from-gray-800 to-gray-700 p-4 rounded-xl shadow mb-3 text-white">
+        <div class="flex justify-between items-start mb-3">
+            <div><p class="text-xs text-gray-300 mb-1">LABA BERSIH REAL</p><p id="dash-laba-real" class="text-2xl font-bold text-[#a38d58]">Rp 0</p><p class="text-[9px] text-gray-400 mt-1">Omset − HPP − Pengeluaran Stok</p></div>
+            <div class="text-right"><p class="text-[10px] text-gray-400">Total Botol</p><p id="dash-qty" class="text-lg font-bold">0</p></div>
+        </div>
+        <div class="grid grid-cols-3 gap-2 border-t border-gray-600 pt-3">
+            <div class="text-center"><p class="text-[9px] text-gray-400">Laba Kotor</p><p id="dash-laba" class="text-xs font-bold text-yellow-300">Rp 0</p></div>
+            <div class="text-center border-x border-gray-600"><p class="text-[9px] text-gray-400">Pengeluaran</p><p id="dash-pengeluaran-mini" class="text-xs font-bold text-red-400">Rp 0</p></div>
+            <div class="text-center"><p class="text-[9px] text-gray-400">Margin</p><p id="dash-margin" class="text-xs font-bold text-green-300">0%</p></div>
+        </div>
+    </div>
+    <div class="bg-white p-4 rounded-xl shadow mb-4"><h3 class="text-xs font-bold text-gray-600 mb-2">📊 Omset vs Pengeluaran per Bulan</h3><div class="relative h-56"><canvas id="grafikOmset"></canvas></div></div>
+    <div class="bg-white p-4 rounded-xl shadow mb-6"><h3 class="text-xs font-bold text-gray-600 mb-2">📈 Laba Bersih per Bulan</h3><div class="relative h-48"><canvas id="grafikLaba"></canvas></div></div>
+    <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-[#a38d58]"><h2 class="text-sm font-bold mb-3">Top 20 Laris 🚀</h2><div id="daftar-aroma" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
+    <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-red-400"><h2 class="text-sm font-bold mb-3 text-red-600">20 Kurang Laris 🔻</h2><div id="daftar-aroma-bawah" class="space-y-2 max-h-60 overflow-y-auto pr-2"></div></div>
+</div>
+
+<!-- PAGE: RESTOCK -->
+<div id="page-restock" class="p-4 max-w-md mx-auto hidden">
+    <div class="bg-red-50 p-4 rounded-xl shadow border-t-4 border-red-600 mb-6">
+        <h2 class="font-bold text-red-700 mb-1">🚨 Peringatan Restock</h2>
+        <h3 class="text-xs font-bold text-gray-700 mb-2 mt-3">💧 Bibit (&lt; 30 ml)</h3>
+        <div id="restock-bibit" class="space-y-2 mb-4"></div>
+        <h3 class="text-xs font-bold text-gray-700 mb-2 mt-3">🧴 Bahan Baku & Botol (Menipis)</h3>
+        <div id="restock-bahan" class="space-y-2"></div>
+    </div>
+</div>
+
+<!-- PAGE: FOLLOW-UP -->
+<div id="page-followup" class="p-4 max-w-md mx-auto hidden">
+    <div class="bg-green-50 p-4 rounded-xl shadow border-t-4 border-green-500 mb-6">
+        <h2 class="font-bold text-green-700 mb-1">💬 Follow-Up WA (≥ 7 Hari)</h2>
+        <p class="text-xs text-green-700 mb-4 border-b border-green-200 pb-2">Otomatis deteksi pelanggan lama.</p>
+        <div id="daftar-followup" class="space-y-3 mt-3"></div>
+    </div>
+</div>
+```
+
+</div><!-- /admin-content -->
+
+<!-- MODAL EDIT BIBIT -->
+
+<div id="modal-edit" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white p-5 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-[#a38d58]">
+        <h2 class="font-bold text-gray-800 mb-4">✏️ Edit Data (Timpa Nilai)</h2>
+        <p id="edit-nama-bibit" class="text-sm font-bold text-[#a38d58] mb-3"></p>
+        <div id="form-edit-bibit">
+            <input type="hidden" id="edit-id-bibit">
+            <div id="edit-container-kelas" class="space-y-3 mb-4 max-h-60 overflow-y-auto"></div>
+            <div class="flex gap-2">
+                <button type="button" onclick="tutupModalEdit()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded text-sm font-bold">Batal</button>
+                <button type="button" onclick="simpanEditBibit()" class="flex-1 bg-gold text-white py-2 rounded text-sm font-bold">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL EDIT BAHAN -->
+
+<div id="modal-edit-bahan" class="fixed inset-0 z-50 hidden bg-black bg-opacity-50 flex items-center justify-center p-4">
+    <div class="bg-white p-5 rounded-xl shadow-lg max-w-sm w-full border-t-4 border-blue-500">
+        <h2 class="font-bold text-gray-800 mb-1">✏️ Edit Bahan</h2>
+        <p id="edit-nama-bahan" class="text-sm font-bold text-blue-600 mb-4"></p>
+        <div id="form-edit-bahan">
+            <input type="hidden" id="edit-id-bahan">
+            <div class="space-y-3 mb-4">
+                <div><label class="text-xs font-bold text-gray-600 block mb-1">Stok Saat Ini</label><input type="number" id="edit-sisa-bahan" class="w-full border p-2 rounded text-sm"></div>
+                <div><label class="text-xs font-bold text-gray-600 block mb-1">Harga Satuan (Rp)</label><input type="number" id="edit-harga-bahan" class="w-full border p-2 rounded text-sm"></div>
+            </div>
+            <div class="flex gap-2">
+                <button type="button" onclick="tutupModalEditBahan()" class="flex-1 bg-gray-200 text-gray-700 py-2 rounded text-sm font-bold">Batal</button>
+                <button type="button" onclick="simpanEditBahan()" class="flex-1 bg-blue-600 text-white py-2 rounded text-sm font-bold">Simpan</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="print-section"></div>
+
+</body>
+</html>
