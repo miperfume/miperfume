@@ -2,13 +2,13 @@
   "name": "MI Perfume",
   "short_name": "MI Perfume",
   "description": "Sistem Pemesanan dan Manajemen MI Perfume",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "/index.html?utm_source=pwa",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#f3f4f6",
+  "background_color": "#ffffff",
   "theme_color": "#9c9e4a",
   "lang": "id",
+  "scope": "/",
   "categories": ["shopping", "lifestyle"],
   "icons": [
     {
@@ -25,5 +25,13 @@
     }
   ],
   "screenshots": [],
-  "prefer_related_applications": false
+  "shortcuts": [
+    {
+      "name": "Pesan Sekarang",
+      "short_name": "Pesan",
+      "description": "Langsung ke halaman pemesanan",
+      "url": "/index.html#pesan",
+      "icons": [{ "src": "icon.PNG", "sizes": "192x192" }]
+    }
+  ]
 }
