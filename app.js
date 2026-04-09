@@ -1,7 +1,7 @@
 import { initializeApp }                          from “https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js”;
 import { initializeAppCheck, ReCaptchaV3Provider,
 getToken }                               from “https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js”;
-import { getFirestore, enableIndexedDbPersistence,
+import { getFirestore,
 collection, query, where, orderBy, limit,
 addDoc, getDocs, onSnapshot,
 serverTimestamp }                        from “https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js”;
@@ -43,9 +43,6 @@ isTokenAutoRefreshEnabled: true
 } catch (e) {
 console.warn(“App Check gagal dimuat:”, e);
 }
-
-// Offline persistence
-enableIndexedDbPersistence(db).catch(err => console.warn(‘Persistence:’, err.code));
 
 // ============================================================
 // STATE
@@ -430,8 +427,6 @@ console.error(“Gagal load riwayat:”, err);
 if (err.message?.includes(“requires an index”))
 console.warn(“Buat composite index: pesanan — buyer_id ASC, waktu DESC”);
 });
-
-```
 }
 
 // ============================================================
@@ -445,4 +440,3 @@ window.updateKelasOptions   = updateKelasOptions;
 window.hitungSubTotal       = hitungSubTotal;
 window.tambahKeKeranjang    = tambahKeKeranjang;
 window.kirimPesananAkhir    = kirimPesananAkhir;
-```
