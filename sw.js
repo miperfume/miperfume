@@ -7,7 +7,7 @@
 - - CDN (Tailwind, Chart.js, dll)         → Stale-While-Revalidate
     */
 
-const CACHE_VERSION = ‘v1’;
+const CACHE_VERSION = ‘v2’; // FIX: bump versi agar cache lama dihapus
 const CACHE_SHELL   = `mi-perfume-shell-${CACHE_VERSION}`;
 const CACHE_CDN     = `mi-perfume-cdn-${CACHE_VERSION}`;
 
@@ -143,6 +143,13 @@ return response;
 }).catch(() => null);
 return cached || await fetchPromise || new Response(‘Offline’, { status: 503 });
 }
+
+/* ─── SKIP WAITING (untuk update banner) ─── */
+self.addEventListener(‘message’, event => {
+if (event.data?.type === ‘SKIP_WAITING’) {
+self.skipWaiting();
+}
+});
 
 /* ─── PUSH NOTIFICATION ─── */
 self.addEventListener(‘push’, event => {
