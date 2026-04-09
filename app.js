@@ -13,7 +13,12 @@ signInAnonymously }                      from “https://www.gstatic.com/firebas
 // ============================================================
 function escapeHTML(str) {
 if (!str) return ‘’;
-return str.toString().replace(/[&<>’”]/g, t => ({’&’:’&’,’<’:’<’,’>’:’>’,”’”:’’’,’”’:’”’}[t] || t));
+return String(str)
+.replace(/&/g, ‘&’)
+.replace(/</g, ‘<’)
+.replace(/>/g, ‘>’)
+.replace(/”/g, ‘"’)
+.replace(/’/g, ‘'’);
 }
 function $id(id) { return document.getElementById(id); }
 
