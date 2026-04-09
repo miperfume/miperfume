@@ -18,7 +18,8 @@ serverTimestamp
 // ============================================================
 function escapeHTML(str) {
 if (!str) return ‘’;
-return str.toString().replace(/[&<>’”]/g, t => ({’&’:’&’,’<’:’<’,’>’:’>’,”’”:”’”,’”’:’”’}[t] || t));
+// SESUDAH (ganti semua dengan straight quotes)
+return str.toString().replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
 }
 function $id(id) { return document.getElementById(id); }
 
