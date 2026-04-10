@@ -1,11 +1,11 @@
 // ============================================================
 // sw.js — Service Worker MI Perfume
 // Strategi: Cache-first untuk aset statis, Network-first untuk Firebase
-// v4 — Firebase CDN di-cache (stale-while-revalidate), fix regex bug
+// v5 — Fix regex bug & fix message channel closed
 // ============================================================
 
-const CACHE_NAME    = ‘mi-perfume-v4’;
-const RUNTIME_CACHE = ‘mi-perfume-runtime-v4’;
+const CACHE_NAME    = ‘mi-perfume-v5’;
+const RUNTIME_CACHE = ‘mi-perfume-runtime-v5’;
 
 // Aset yang di-cache saat install (pre-cache)
 const PRECACHE_ASSETS = [
@@ -23,8 +23,7 @@ const PRECACHE_ASSETS = [
 ];
 
 // Firebase CDN (SDK JS ~500KB) — stale-while-revalidate
-// Pertama kali diunduh dari network, lalu disimpan cache.
-// Login berikutnya pakai cache lokal → jauh lebih cepat.
+// FIX: Karakter / di dalam regex harus di-escape dengan backslash
 const FIREBASE_CDN_PATTERN = /gstatic.com/firebasejs//;
 
 // URL yang TIDAK boleh di-cache (selalu network — data realtime Firebase)
@@ -88,37 +87,36 @@ const { request } = event;
 const url = new URL(request.url);
 
 // Abaikan bukan GET
-if (request.method !== ‘GET’) return;
+if (request.method !== 'GET') return;
 
 // Bypass pola Firebase data — selalu ambil dari network
 if (BYPASS_PATTERNS.some(p => p.test(request.url))) return;
 
 // Firebase CDN (SDK JS) — stale-while-revalidate
-// Ini yang paling berpengaruh ke kecepatan login
 if (FIREBASE_CDN_PATTERN.test(request.url)) {
-event.respondWith(staleWhileRevalidate(request));
-return;
+    event.respondWith(staleWhileRevalidate(request));
+    return;
 }
 
 // Untuk navigasi (HTML) — Network first, fallback ke cache
-if (request.mode === ‘navigate’) {
-event.respondWith(networkFirstThenCache(request, url));
-return;
+if (request.mode === 'navigate') {
+    event.respondWith(networkFirstThenCache(request, url));
+    return;
 }
 
 // Untuk aset lokal (gambar, manifest, css) — Cache first
 if (url.origin === self.location.origin) {
-event.respondWith(cacheFirstThenNetwork(request));
-return;
+    event.respondWith(cacheFirstThenNetwork(request));
+    return;
 }
 
 // Untuk CDN eksternal lainnya — Stale-while-revalidate
 event.respondWith(staleWhileRevalidate(request));
+
 });
 
 // ============================================================
 // STRATEGI: Network first → fallback cache
-// Untuk halaman HTML agar selalu dapat versi terbaru
 // ============================================================
 async function networkFirstThenCache(request, url) {
 try {
@@ -138,42 +136,40 @@ return caches.match(isAdmin ? ‘/miperfume/admin/index.html’ : ‘/miperfume/
 
 // ============================================================
 // STRATEGI: Cache first → fallback network
-// Untuk aset statis (gambar, icon, css) agar cepat
 // ============================================================
 async function cacheFirstThenNetwork(request) {
 const cached = await caches.match(request);
 if (cached) return cached;
-
 try {
-const networkResponse = await fetch(request);
-if (networkResponse.ok) {
-const cache = await caches.open(RUNTIME_CACHE);
-cache.put(request, networkResponse.clone());
-}
-return networkResponse;
+    const networkResponse = await fetch(request);
+    if (networkResponse.ok) {
+        const cache = await caches.open(RUNTIME_CACHE);
+        cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
 } catch (err) {
-console.warn(’[SW] Aset tidak tersedia offline:’, request.url);
-return new Response(’’, { status: 404, statusText: ‘Offline’ });
+    console.warn('[SW] Aset tidak tersedia offline:', request.url);
+    return new Response('', { status: 404, statusText: 'Offline' });
 }
+
 }
 
 // ============================================================
 // STRATEGI: Stale-while-revalidate
-// Untuk Firebase CDN & CDN eksternal lain
-// Tampilkan cache lama langsung, update di background
 // ============================================================
 async function staleWhileRevalidate(request) {
 const cache  = await caches.open(RUNTIME_CACHE);
 const cached = await cache.match(request);
 
 const fetchPromise = fetch(request).then(networkResponse => {
-if (networkResponse.ok) {
-cache.put(request, networkResponse.clone());
-}
-return networkResponse;
+    if (networkResponse.ok) {
+        cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
 }).catch(() => cached);
 
 return cached || fetchPromise;
+
 }
 
 // ============================================================
@@ -231,11 +227,12 @@ console.log(’[SW] Background sync pesanan dijalankan’);
 
 // ============================================================
 // MESSAGE — Skip waiting dari update banner
+// FIX: Gunakan event.waitUntil() agar SW tidak mati sebelum selesai
 // ============================================================
 self.addEventListener(‘message’, event => {
 if (event.data?.type === ‘SKIP_WAITING’) {
-self.skipWaiting();
+event.waitUntil(self.skipWaiting());
 }
 });
 
-console.log(’[SW] sw.js MI Perfume v4 dimuat ✅’);
+console.log(’[SW] sw.js MI Perfume v5 dimuat ✅’);
