@@ -503,13 +503,16 @@ const auth      = getAuth(app);
 const db        = initializeFirestore(app, { localCache: persistentLocalCache() });
 const functions = getFunctions(app);
 
-// App Check
-try {
-    initializeAppCheck(app, {
-        provider: new ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
-        isTokenAutoRefreshEnabled: true
-    });
-} catch (e) { console.warn("App Check gagal:", e); }
+// App Check — delay agar tidak blokir login & callable functions
+setTimeout(() => {
+    try {
+        initializeAppCheck(app, {
+            provider: new ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
+            isTokenAutoRefreshEnabled: true
+        });
+    } catch (e) { console.warn("App Check gagal:", e); }
+}, 2000);
+
 
 // Callable Cloud Functions
 const fnSelesaikanPembelian = httpsCallable(functions, 'selesaikanPembelian');
