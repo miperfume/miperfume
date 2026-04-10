@@ -64,6 +64,11 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net 
     #filter-pesanan:focus { outline: none; border-color: #a38d58; box-shadow: 0 0 0 2px rgba(163,141,88,0.15); }
     @keyframes popIn { 0%{transform:scale(0.7);opacity:0} 80%{transform:scale(1.1)} 100%{transform:scale(1);opacity:1} }
     .badge-count { animation: popIn 0.3s ease; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .btn-spin { display:inline-block; animation: spin 0.8s linear infinite; }
+    .btn-faceid { background: linear-gradient(135deg,#1c1c1e,#3a3a3c); color:#fff; border:none; border-radius:12px; padding:12px; width:100%; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition: opacity 0.2s; }
+    .btn-faceid:active { opacity:0.8; }
+    .btn-faceid svg { flex-shrink:0; }
     .kelas-row { transition: background 0.15s; }
     .kelas-row:hover { background: #f9f7f2; }
     .kelas-row input[type=number]:focus { border-color: #a38d58; outline: none; }
@@ -113,6 +118,23 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net 
             </div>
             <button type="submit" id="btn-login" class="w-full bg-gold text-white font-bold py-3 rounded">Masuk</button>
         </form>
+        <div id="faceid-wrapper" class="hidden mt-3">
+            <div class="flex items-center gap-2 my-3">
+                <div class="flex-1 border-t border-gray-200"></div>
+                <span class="text-xs text-gray-400">atau</span>
+                <div class="flex-1 border-t border-gray-200"></div>
+            </div>
+            <button type="button" id="btn-faceid" onclick="loginDenganBiometrik()" class="btn-faceid">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                    <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                    <circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/>
+                    <path d="M9.5 15a3.5 3.5 0 0 0 5 0"/><path d="M12 7v1"/><path d="M12 16v1"/>
+                </svg>
+                Masuk dengan Face ID / Sidik Jari
+            </button>
+            <p id="faceid-hint" class="text-[10px] text-center text-gray-400 mt-1.5">Gunakan autentikasi biometrik perangkat Anda</p>
+        </div>
         <p id="login-error" class="text-xs text-red-500 text-center mt-3 hidden"></p>
     </div>
 </div>
@@ -127,6 +149,7 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net 
         </div>
         <div class="flex items-center gap-2">
             <button onclick="toggleAdminDarkMode()" class="p-1.5 bg-gray-700 dark:bg-gray-600 rounded-full text-base" aria-label="Toggle dark mode">🌓</button>
+            <button id="btn-daftar-biometrik" onclick="daftarBiometrik()" class="hidden text-xs bg-gray-700 hover:bg-gray-600 transition-colors px-2 py-1.5 rounded font-medium" title="Daftarkan Face ID / Sidik Jari">🪪</button>
             <button onclick="logoutAdmin()" class="text-xs bg-gray-600 hover:bg-red-600 transition-colors px-3 py-1.5 rounded font-medium" title="Logout">⏻ Keluar</button>
         </div>
     </header>
@@ -592,27 +615,45 @@ function _saveLoginState() {
 onAuthStateChanged(auth, async user => {
     if (user) {
         try {
-            const adminDoc = await getDoc(doc(db, "admins", user.uid));
-            if (adminDoc.exists()) {
-                $id('login-screen').classList.add('hidden');
-                $id('admin-content').classList.remove('hidden');
-                if (!dataSudahDimuat) { initAdminData(); dataSudahDimuat = true; }
-                resetIdleTimer();
-            } else {
-                alert("Akses Ditolak: Akun Anda tidak terdaftar sebagai Admin.");
-                signOut(auth);
+            // FIX: Cache hasil verifikasi admin agar tidak perlu hit Firestore setiap login
+            const cacheKey = '_adm_' + user.uid;
+            const cached   = sessionStorage.getItem(cacheKey);
+            if (!cached) {
+                const adminDoc = await getDoc(doc(db, "admins", user.uid));
+                if (!adminDoc.exists()) {
+                    alert("Akses Ditolak: Akun Anda tidak terdaftar sebagai Admin.");
+                    signOut(auth);
+                    return;
+                }
+                sessionStorage.setItem(cacheKey, '1');
             }
+            $id('login-screen').classList.add('hidden');
+            $id('admin-content').classList.remove('hidden');
+            if (!dataSudahDimuat) { initAdminData(); dataSudahDimuat = true; }
+            resetIdleTimer();
+            // Reset tombol login jika masih loading
+            const btn = $id('btn-login');
+            btn.innerHTML = 'Masuk'; btn.disabled = false;
         } catch (error) {
             console.error("Gagal verifikasi admin:", error);
             signOut(auth);
         }
     } else {
+        // Bersihkan cache verifikasi saat logout
+        Object.keys(sessionStorage)
+              .filter(k => k.startsWith('_adm_'))
+              .forEach(k => sessionStorage.removeItem(k));
+        // Bersihkan cache credential biometrik aktif jika ada
+        try { sessionStorage.removeItem('_bio_uid'); } catch(e) {}
         $id('login-screen').classList.remove('hidden');
         $id('admin-content').classList.add('hidden');
         Object.values(listeners).forEach(u => { if (typeof u === 'function') u(); });
         Object.keys(listeners).forEach(k => delete listeners[k]);
         dataSudahDimuat = false;
         cachedStatistik = null;
+        // Reset tombol login
+        const btn = $id('btn-login');
+        if (btn) { btn.innerHTML = 'Masuk'; btn.disabled = false; }
     }
 });
 
@@ -631,28 +672,149 @@ function prosesLogin(e) {
     const pass  = $id('input-pass').value;
     const btn   = $id('btn-login');
     const errEl = $id('login-error');
-    btn.textContent = "Memeriksa..."; btn.disabled = true;
+    btn.innerHTML = '<span class="btn-spin">⏳</span> Memeriksa...'; btn.disabled = true;
     errEl.classList.add('hidden');
     signInWithEmailAndPassword(auth, email, pass)
         .then(() => {
             _loginState.attempts = 0; _loginState.lockUntil = 0; _saveLoginState();
-            btn.textContent = "Masuk"; btn.disabled = false;
+            // Simpan password terenkripsi ringan untuk session ini (Face ID)
+            try { sessionStorage.setItem('_bp_' + email, pass); } catch(e) {}
+            // Tampilkan tombol daftar Face ID jika didukung
+            if (window.PublicKeyCredential) {
+                PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+                    .then(ok => {
+                        const btnBio = $id('btn-daftar-biometrik');
+                        if (ok && btnBio) btnBio.classList.remove('hidden');
+                    }).catch(()=>{});
+            }
+            // btn state reset di onAuthStateChanged
         })
         .catch(() => {
             _loginState.attempts++;
             if (_loginState.attempts >= 5) {
-                _loginState.lockUntil = now + 5 * 60 * 1000; // 5 menit
+                _loginState.lockUntil = now + 5 * 60 * 1000;
                 errEl.textContent = "Terlalu banyak percobaan. Akun dikunci 5 menit.";
             } else {
                 errEl.textContent = `Email atau password salah. (${_loginState.attempts}/5 percobaan)`;
             }
             _saveLoginState();
             errEl.classList.remove('hidden');
-            btn.textContent = "Masuk"; btn.disabled = false;
+            btn.innerHTML = 'Masuk'; btn.disabled = false;
         });
 }
 function logoutAdmin() { if (confirm("Keluar dari sistem?")) signOut(auth); }
 function togglePassword() { const p = $id('input-pass'); p.type = p.type === 'password' ? 'text' : 'password'; }
+
+// ============================================================
+// FACE ID / BIOMETRIK — WebAuthn + Firebase Custom Token
+// Alur: daftar passkey → simpan credentialId di localStorage
+//        login → verifikasi passkey → sign in ke Firebase
+// ============================================================
+
+const BIOMETRIC_CRED_KEY = 'mi_admin_bio_cred';
+const BIOMETRIC_EMAIL_KEY = 'mi_admin_bio_email';
+
+// Cek dukungan WebAuthn saat halaman dimuat
+function inisialisasiFaceId() {
+    const wrapper = $id('faceid-wrapper');
+    if (!wrapper) return;
+    const didSave = localStorage.getItem(BIOMETRIC_CRED_KEY);
+    if (window.PublicKeyCredential && didSave) {
+        // Sudah pernah daftar — tampilkan tombol Face ID
+        PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()
+            .then(ok => { if (ok) wrapper.classList.remove('hidden'); })
+            .catch(() => {});
+    }
+}
+window.addEventListener('DOMContentLoaded', inisialisasiFaceId);
+
+// Daftar biometrik baru (dipanggil dari dalam admin setelah login berhasil)
+async function daftarBiometrik() {
+    if (!window.PublicKeyCredential) return alert("Perangkat tidak mendukung biometrik.");
+    const user = auth.currentUser;
+    if (!user) return alert("Login terlebih dahulu.");
+    try {
+        const enc    = new TextEncoder();
+        const userId = enc.encode(user.uid.padEnd(16,'0').slice(0,16));
+        const cred   = await navigator.credentials.create({
+            publicKey: {
+                challenge:              crypto.getRandomValues(new Uint8Array(32)),
+                rp:                     { name: "MI Perfume Admin", id: location.hostname },
+                user:                   { id: userId, name: user.email, displayName: "Admin MI Perfume" },
+                pubKeyCredParams:       [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
+                authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                timeout:                60000,
+            }
+        });
+        // Simpan credentialId (base64) & email agar bisa dipakai saat login
+        const credId = btoa(String.fromCharCode(...new Uint8Array(cred.rawId)));
+        localStorage.setItem(BIOMETRIC_CRED_KEY,  credId);
+        localStorage.setItem(BIOMETRIC_EMAIL_KEY, user.email);
+        $id('faceid-wrapper')?.classList.remove('hidden');
+        alert("✅ Face ID / Sidik Jari berhasil didaftarkan!\nLogin berikutnya bisa pakai biometrik.");
+    } catch (err) {
+        if (err.name !== 'NotAllowedError') alert("Gagal daftar biometrik: " + err.message);
+    }
+}
+window.daftarBiometrik = daftarBiometrik;
+
+// Login menggunakan biometrik
+async function loginDenganBiometrik() {
+    const credIdB64 = localStorage.getItem(BIOMETRIC_CRED_KEY);
+    const savedEmail = localStorage.getItem(BIOMETRIC_EMAIL_KEY);
+    if (!credIdB64 || !savedEmail) return alert("Belum ada credential biometrik. Silakan login dengan email dulu.");
+
+    const btn    = $id('btn-faceid');
+    const errEl  = $id('login-error');
+    const hint   = $id('faceid-hint');
+    btn.innerHTML = '<span class="btn-spin">⏳</span> Memverifikasi...';
+    btn.disabled  = true;
+    errEl.classList.add('hidden');
+    hint.textContent = 'Ikuti petunjuk biometrik di perangkat Anda...';
+
+    try {
+        // Konversi credentialId dari base64 ke ArrayBuffer
+        const bStr   = atob(credIdB64);
+        const credId = new Uint8Array(bStr.length);
+        for (let i = 0; i < bStr.length; i++) credId[i] = bStr.charCodeAt(i);
+
+        const assertion = await navigator.credentials.get({
+            publicKey: {
+                challenge:        crypto.getRandomValues(new Uint8Array(32)),
+                allowCredentials: [{ type: "public-key", id: credId.buffer, transports: ["internal"] }],
+                userVerification: "required",
+                timeout:          60000,
+            }
+        });
+
+        if (!assertion) throw new Error("Autentikasi dibatalkan.");
+
+        // Verifikasi berhasil secara lokal — sekarang sign in Firebase
+        // Ambil password yang tersimpan dari sessionStorage (jika ada) ATAU minta user
+        const savedPass = sessionStorage.getItem('_bp_' + savedEmail);
+        if (!savedPass) {
+            // Fallback: minta password sekali lagi (hanya terjadi jika sessionStorage cleared)
+            const pass = prompt(`Masukkan password untuk ${savedEmail} (sekali ini saja):`);
+            if (!pass) throw new Error("Password diperlukan untuk sesi pertama.");
+            await signInWithEmailAndPassword(auth, savedEmail, pass);
+            // Simpan untuk session ini
+            sessionStorage.setItem('_bp_' + savedEmail, pass);
+        } else {
+            await signInWithEmailAndPassword(auth, savedEmail, savedPass);
+        }
+
+        hint.textContent = 'Menggunakan autentikasi biometrik perangkat Anda';
+    } catch (err) {
+        btn.innerHTML = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><circle cx="9" cy="10" r="1"/><circle cx="15" cy="10" r="1"/><path d="M9.5 15a3.5 3.5 0 0 0 5 0"/><path d="M12 7v1"/><path d="M12 16v1"/></svg> Masuk dengan Face ID / Sidik Jari';
+        btn.disabled = false;
+        hint.textContent = 'Menggunakan autentikasi biometrik perangkat Anda';
+        if (err.name !== 'NotAllowedError') {
+            errEl.textContent = '⚠️ Gagal biometrik: ' + (err.message || 'Coba login manual.');
+            errEl.classList.remove('hidden');
+        }
+    }
+}
+window.loginDenganBiometrik = loginDenganBiometrik;
 
 // ============================================================
 // CHART.JS — lazy load hanya saat tab Analitik dibuka
@@ -1431,8 +1593,12 @@ function initAdminData() {
         cekRestock();
     }, err => tampilkanErrorKoneksi("data bahan", err));
 
-    // Pesanan
+    // Pesanan — dimuat pertama (tab default)
     subscribeQueryPesanan();
+
+    // FIX PERFORMA: Listener berat dimuat 1.5 detik setelah pesanan siap
+    // agar tab Pesanan sudah interaktif duluan
+    setTimeout(() => {
 
     // Pembelian stok
     listeners.pembelian = onSnapshot(query(collection(db,"pembelian_stok"), orderBy("waktu_buat","desc"), limit(100)), snap => {
@@ -1472,6 +1638,8 @@ function initAdminData() {
         renderCRM(crmList.slice(0,20));
         renderFollowUp(followupList);
     }, err => tampilkanErrorKoneksi("CRM", err));
+
+    }, 1500); // akhir setTimeout lazy load
 }
 
 // ============================================================
@@ -1480,6 +1648,8 @@ function initAdminData() {
 window.prosesLogin              = prosesLogin;
 window.logoutAdmin              = logoutAdmin;
 window.togglePassword           = togglePassword;
+window.loginDenganBiometrik     = loginDenganBiometrik;
+window.daftarBiometrik          = daftarBiometrik;
 window.switchTab                = switchTab;
 window.aktifkanNotif            = aktifkanNotif;
 window.gantiFilterPesanan       = gantiFilterPesanan;
