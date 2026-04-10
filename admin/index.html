@@ -1007,11 +1007,23 @@ function renderDaftarPesanan(allData) {
 function terimaPesanan(pesananId, btn) {
     if (!confirm("Terima pesanan? Stok akan dipotong server-side (atomic) dan status menjadi 'Diproses'.")) return;
     if (btn) { btn.disabled = true; btn.textContent = "Memproses..."; }
+    
+    // Debug: pastikan pesananId ada
+    alert("DEBUG — pesananId: " + pesananId + "\nfnTerimaPesanan: " + typeof fnTerimaPesanan);
+    
     fnTerimaPesanan({ pesananId })
-        .then(() => alert("✅ Pesanan diterima & Stok berhasil dipotong!"))
-        .catch(err => { alert("⚠️ Gagal: " + (err.message || err.details || "Error tidak diketahui")); })
+        .then(result => alert("✅ Berhasil: " + JSON.stringify(result)))
+        .catch(err => {
+            alert(
+                "❌ Error!\n" +
+                "code: " + err.code + "\n" +
+                "message: " + err.message + "\n" +
+                "details: " + JSON.stringify(err.details)
+            );
+        })
         .finally(() => { if (btn) { btn.disabled = false; btn.textContent = "Terima (Potong Stok)"; } });
 }
+
 
 function tolakPesanan(id) {
     const alasan = prompt("Alasan menolak pesanan:");
