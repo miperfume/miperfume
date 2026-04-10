@@ -4,8 +4,8 @@
 // v5 — Fix regex bug & fix message channel closed
 // ============================================================
 
-const CACHE_NAME    = ‘mi-perfume-v5’;
-const RUNTIME_CACHE = ‘mi-perfume-runtime-v5’;
+const CACHE_NAME    = 'mi-perfume-v5';
+const RUNTIME_CACHE = 'mi-perfume-runtime-v5';
 
 // Aset yang di-cache saat install (pre-cache)
 const PRECACHE_ASSETS = [
