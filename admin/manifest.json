@@ -1,1 +1,28 @@
+{
+  "name": "MI Perfume Admin",
+  "short_name": "Admin MI",
+  "description": "Panel Admin MI Perfume — Manajemen Pesanan, Stok & Analitik",
+  "start_url": "/admin/?utm_source=pwa",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#1f2937",
+  "theme_color": "#1f2937",
+  "lang": "id",
+  "scope": "/admin/",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "../logo.jpeg",
+      "sizes": "192x192",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "../logo.jpeg",
+      "sizes": "512x512",
+      "type": "image/jpeg",
+      "purpose": "any maskable"
+    }
+  ]
+}
 
