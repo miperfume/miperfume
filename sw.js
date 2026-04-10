@@ -1,10 +1,11 @@
 // ============================================================
 // sw.js — Service Worker MI Perfume
 // Strategi: Cache-first untuk aset statis, Network-first untuk Firebase
+// v4 — Firebase CDN di-cache (stale-while-revalidate), fix regex bug
 // ============================================================
 
-const CACHE_NAME    = ‘mi-perfume-v3’;
-const RUNTIME_CACHE = ‘mi-perfume-runtime-v3’;
+const CACHE_NAME    = ‘mi-perfume-v4’;
+const RUNTIME_CACHE = ‘mi-perfume-runtime-v4’;
 
 // Aset yang di-cache saat install (pre-cache)
 const PRECACHE_ASSETS = [
@@ -21,14 +22,18 @@ const PRECACHE_ASSETS = [
 ‘/miperfume/logo.jpeg’,
 ];
 
-// URL yang TIDAK boleh di-cache (selalu network)
+// Firebase CDN (SDK JS ~500KB) — stale-while-revalidate
+// Pertama kali diunduh dari network, lalu disimpan cache.
+// Login berikutnya pakai cache lokal → jauh lebih cepat.
+const FIREBASE_CDN_PATTERN = /gstatic.com/firebasejs//;
+
+// URL yang TIDAK boleh di-cache (selalu network — data realtime Firebase)
 const BYPASS_PATTERNS = [
 /firestore.googleapis.com/,
 /firebase.googleapis.com/,
 /identitytoolkit.googleapis.com/,
 /securetoken.googleapis.com/,
 /recaptcha/,
-/gstatic.com/firebasejs//,
 ];
 
 // ============================================================
@@ -85,8 +90,15 @@ const url = new URL(request.url);
 // Abaikan bukan GET
 if (request.method !== ‘GET’) return;
 
-// Bypass pola Firebase & eksternal sensitif
+// Bypass pola Firebase data — selalu ambil dari network
 if (BYPASS_PATTERNS.some(p => p.test(request.url))) return;
+
+// Firebase CDN (SDK JS) — stale-while-revalidate
+// Ini yang paling berpengaruh ke kecepatan login
+if (FIREBASE_CDN_PATTERN.test(request.url)) {
+event.respondWith(staleWhileRevalidate(request));
+return;
+}
 
 // Untuk navigasi (HTML) — Network first, fallback ke cache
 if (request.mode === ‘navigate’) {
@@ -100,9 +112,8 @@ event.respondWith(cacheFirstThenNetwork(request));
 return;
 }
 
-// Untuk CDN eksternal — Stale-while-revalidate
+// Untuk CDN eksternal lainnya — Stale-while-revalidate
 event.respondWith(staleWhileRevalidate(request));
-
 });
 
 // ============================================================
@@ -120,7 +131,6 @@ return networkResponse;
 } catch {
 const cached = await caches.match(request);
 if (cached) return cached;
-// Fallback sesuai path — admin ke admin, customer ke index
 const isAdmin = url && url.pathname.startsWith(’/miperfume/admin’);
 return caches.match(isAdmin ? ‘/miperfume/admin/index.html’ : ‘/miperfume/index.html’);
 }
@@ -145,12 +155,12 @@ return networkResponse;
 console.warn(’[SW] Aset tidak tersedia offline:’, request.url);
 return new Response(’’, { status: 404, statusText: ‘Offline’ });
 }
-
 }
 
 // ============================================================
 // STRATEGI: Stale-while-revalidate
-// Untuk CDN eksternal — tampilkan cache lama, update di background
+// Untuk Firebase CDN & CDN eksternal lain
+// Tampilkan cache lama langsung, update di background
 // ============================================================
 async function staleWhileRevalidate(request) {
 const cache  = await caches.open(RUNTIME_CACHE);
@@ -164,7 +174,6 @@ return networkResponse;
 }).catch(() => cached);
 
 return cached || fetchPromise;
-
 }
 
 // ============================================================
@@ -185,17 +194,14 @@ actions: [
 { action: ‘dismiss’, title: ‘Tutup’ }
 ]
 };
-
 event.waitUntil(
 self.registration.showNotification(data.title || ‘MI Perfume’, options)
 );
-
 });
 
 self.addEventListener(‘notificationclick’, event => {
 event.notification.close();
 if (event.action === ‘dismiss’) return;
-
 const targetUrl = event.notification.data?.url || ‘/’;
 event.waitUntil(
 clients.matchAll({ type: ‘window’, includeUncontrolled: true })
@@ -208,7 +214,6 @@ return client.focus();
 return clients.openWindow(targetUrl);
 })
 );
-
 });
 
 // ============================================================
@@ -224,4 +229,13 @@ async function syncPendingOrders() {
 console.log(’[SW] Background sync pesanan dijalankan’);
 }
 
-console.log(’[SW] sw.js MI Perfume v3 dimuat ✅’);
+// ============================================================
+// MESSAGE — Skip waiting dari update banner
+// ============================================================
+self.addEventListener(‘message’, event => {
+if (event.data?.type === ‘SKIP_WAITING’) {
+self.skipWaiting();
+}
+});
+
+console.log(’[SW] sw.js MI Perfume v4 dimuat ✅’);
