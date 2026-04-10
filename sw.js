@@ -9,18 +9,19 @@ const RUNTIME_CACHE = 'mi-perfume-runtime-v5';
 
 // Aset yang di-cache saat install (pre-cache)
 const PRECACHE_ASSETS = [
-‘/miperfume/’,
-‘/miperfume/index.html’,
-‘/miperfume/manifest.json’,
-‘/miperfume/icon.PNG’,
-‘/miperfume/loading.png’,
-‘/miperfume/qris.PNG’,
-‘/miperfume/admin/’,
-‘/miperfume/admin/index.html’,
-‘/miperfume/admin/manifest.json’,
-‘/miperfume/dist/output.css’,
-‘/miperfume/logo.jpeg’,
+  '/miperfume/',
+  '/miperfume/index.html',
+  '/miperfume/manifest.json',
+  '/miperfume/icon.PNG',
+  '/miperfume/loading.png',
+  '/miperfume/qris.PNG',
+  '/miperfume/admin/',
+  '/miperfume/admin/index.html',
+  '/miperfume/admin/manifest.json',
+  '/miperfume/dist/output.css',
+  '/miperfume/logo.jpeg',
 ];
+
 
 // Firebase CDN (SDK JS ~500KB) — stale-while-revalidate
 // FIX: Karakter / di dalam regex harus di-escape dengan backslash
