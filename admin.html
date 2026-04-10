@@ -206,7 +206,6 @@ function subscribeQueryPesanan() {
 const pesananCol = collection(db, “pesanan”);
 let q, qFallback;
 
-```
 if (filterAktif === 'on_proses') {
     q         = query(pesananCol, where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]), orderBy("waktu","desc"), limit(30));
     qFallback = query(pesananCol, where("status","in",["Menunggu Diproses","Diproses","Menunggu Lunas"]), limit(30));
@@ -251,7 +250,6 @@ function pasangListener(qr) {
 }
 
 listeners.pesanan = pasangListener(q);
-```
 
 }
 
@@ -279,7 +277,6 @@ if (data.status === “Selesai”)         { sC = “bg-green-100 text-green-700
 if (data.status === “Ditolak”)         { sC = “bg-red-100 text-red-700”;      bK = “border-red-400”; }
 if (data.status === “Menunggu Lunas”)  { sC = “bg-yellow-100 text-yellow-800”; bK = “border-yellow-500”; }
 
-```
     const items = Array.isArray(data.items) ? data.items : [{qty:1, aroma:data.aroma||"Unknown", kelas:data.kelas||"", ukuran:data.ukuran||"", hpp_total:data.total_hpp||0}];
     const pesananHPP = Number(data.total_hpp) || 0;
 
@@ -329,7 +326,6 @@ if (data.status === “Menunggu Lunas”)  { sC = “bg-yellow-100 text-yellow-8
     frag.appendChild(card);
 });
 container.appendChild(frag);
-```
 
 }
 
@@ -340,7 +336,6 @@ function terimaPesanan(pesananId, btn) {
 if (!confirm(“Terima pesanan? Stok akan dipotong server-side (atomic) dan status menjadi ‘Diproses’.”)) return;
 if (btn) { btn.disabled = true; btn.textContent = “Memproses…”; }
 
-```
 fnTerimaPesanan({ pesananId })
     .then(() => alert("✅ Pesanan diterima & Stok berhasil dipotong!"))
     .catch(err => {
@@ -349,7 +344,6 @@ fnTerimaPesanan({ pesananId })
     .finally(() => {
         if (btn) { btn.disabled = false; btn.textContent = "Terima (Potong Stok)"; }
     });
-```
 
 }
 
@@ -614,7 +608,6 @@ wBibit.innerHTML = itemsBibit.length
 ? itemsBibit.map(item => { const kH = item.kelas ? ` <span class="text-[10px] text-gray-500">(${escapeHTML(item.kelas)})</span>` : ‘’; return `<div class="bg-white border border-red-200 p-2 rounded flex justify-between"><span class="text-sm font-bold">${escapeHTML(item.nama)}${kH}</span><span class="text-xs bg-red-100 text-red-700 px-2 rounded-full font-bold">Sisa: ${item.sisa} ml</span></div>`; }).join(’’)
 : ‘<p class="text-xs italic text-gray-500">✅ Semua bibit aman.</p>’;
 
-```
 const LIMIT = { botol_35:{limit:6,unit:'pcs'}, botol_50:{limit:4,unit:'pcs'}, botol_100:{limit:3,unit:'pcs'}, abs_standar:{limit:200,unit:'ml'}, abs_khusus:{limit:200,unit:'ml'} };
 const itemsBahan = globalBahan.filter(b => { const cfg = LIMIT[b.doc_id]; return cfg && Number(b.sisa) < cfg.limit; })
     .map(b => ({ nama: b.nama || b.doc_id, sisa: Number(b.sisa), unit: LIMIT[b.doc_id].unit }))
@@ -626,7 +619,6 @@ wBahan.innerHTML = itemsBahan.length
 const totalKritis = itemsBibit.length + itemsBahan.length;
 const tabRestock = $id('tab-restock');
 if (tabRestock) tabRestock.textContent = totalKritis > 0 ? `Restock 🚨 (${totalKritis})` : 'Restock 🚨';
-```
 
 }
 
@@ -938,7 +930,6 @@ window.onPilihBibitStok();
 cekRestock();
 });
 
-```
 // Bahan — onSnapshot
 listeners.bahan = onSnapshot(collection(db, "bahan"), snap => {
     globalBahan = [];
@@ -994,7 +985,6 @@ listeners.crm = onSnapshot(query(collection(db, "crm"), orderBy("total_spent","d
     renderCRM(crmList.slice(0,20));
     renderFollowUp(followupList);
 }, err => tampilkanErrorKoneksi("CRM", err));
-```
 
 }
 
@@ -1131,7 +1121,6 @@ listeners.crm = onSnapshot(query(collection(db, "crm"), orderBy("total_spent","d
         <button type="button" id="btn-simpan-bibit-inline" onclick="simpanBibitDariStok()" class="w-full bg-gray-800 text-white py-2 rounded text-sm font-bold shadow">Simpan Data Bibit Baru</button>
     </div>
 
-```
 <div class="bg-white p-4 rounded-xl shadow mb-6 border-t-4 border-blue-500">
     <h2 class="font-bold text-gray-700 mb-3 text-sm">🧴 Stok Botol & Absolute</h2>
     <div class="flex gap-2 mb-3 items-center">
@@ -1166,7 +1155,6 @@ listeners.crm = onSnapshot(query(collection(db, "crm"), orderBy("total_spent","d
         <button onclick="hapusBahanTerpilih()" class="flex-1 bg-red-50 text-red-600 border border-red-200 py-2 rounded text-xs font-bold">Hapus Bahan Terpilih</button>
     </div>
 </div>
-```
 
 </div>
 
