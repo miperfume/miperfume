@@ -24,7 +24,7 @@ const PRECACHE_ASSETS = [
 
 // Firebase CDN (SDK JS ~500KB) — stale-while-revalidate
 // FIX: Karakter / di dalam regex harus di-escape dengan backslash
-const FIREBASE_CDN_PATTERN = /gstatic.com/firebasejs//;
+const FIREBASE_CDN_PATTERN = /gstatic\.com\/firebasejs\//;
 
 // URL yang TIDAK boleh di-cache (selalu network — data realtime Firebase)
 const BYPASS_PATTERNS = [
