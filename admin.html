@@ -35,9 +35,12 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net 
 (function(){
     try {
         const saved = localStorage.getItem('mi_admin_theme');
-        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (saved === 'dark') {
             document.documentElement.classList.add('dark');
+        } else if (saved === 'light') {
+            document.documentElement.classList.remove('dark');
         }
+        // Sengaja tidak ikut system preference agar user bisa switch manual
     } catch(e) {}
 })();
 </script>
@@ -130,7 +133,7 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net 
 
 <!-- TAB BAR -->
 
-<div class="tab-bar-wrapper sticky top-[56px] z-10">
+<div class="tab-bar-wrapper sticky top-[52px] z-10">
 <div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 overflow-x-auto hide-scrollbar">
     <button id="tab-pesanan"   class="py-3 px-4 tab-active text-xs font-bold whitespace-nowrap"    onclick="switchTab('pesanan')">Pesanan</button>
     <button id="tab-stok"      class="py-3 px-4 text-gray-500 text-xs font-bold whitespace-nowrap" onclick="switchTab('stok')">Stok</button>
