@@ -47,9 +47,12 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' www.gstatic.com w
 (function(){
     try {
         const saved = localStorage.getItem('mi_theme');
-        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        if (saved === 'dark') {
             document.documentElement.classList.add('dark');
+        } else if (saved === 'light') {
+            document.documentElement.classList.remove('dark');
         }
+        // Sengaja tidak ikut system preference agar user bisa switch manual
     } catch(e) {}
 })();
 </script>
