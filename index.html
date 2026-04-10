@@ -25,7 +25,7 @@
 <!-- Content Security Policy -->
 
 <meta http-equiv="Content-Security-Policy"
-content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com www.gstatic.com www.google.com www.googleapis.com; connect-src 'self' *.googleapis.com *.firebaseio.com *.firebasestorage.googleapis.com firebaseinstallations.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: via.placeholder.com; frame-src 'none';">
+content="default-src 'self'; script-src 'self' 'unsafe-inline' www.gstatic.com www.google.com www.googleapis.com; connect-src 'self' *.googleapis.com *.firebaseio.com *.firebasestorage.googleapis.com firebaseinstallations.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: via.placeholder.com; frame-src 'none';">
 
 <!-- Open Graph / Share -->
 
@@ -40,11 +40,10 @@ content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.c
 <link rel="apple-touch-icon" href="icon.PNG">
 <link rel="icon" type="image/png" href="icon.PNG">
 
-<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="dist/output.css">
 
 <script>
 // Apply dark mode BEFORE render to prevent flash
-tailwind.config = { darkMode: 'class' };
 (function(){
     try {
         const saved = localStorage.getItem('mi_theme');
