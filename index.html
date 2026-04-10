@@ -2,9 +2,12 @@
 
 <html lang="id" class="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Pesan - MI Perfume</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Pesan - MI Perfume</title>
+
+<!-- PWA Meta Tags -->
+
 <meta name="application-name" content="MI Perfume">
 <meta name="description" content="Sistem Pemesanan dan Manajemen MI Perfume">
 <meta name="theme-color" content="#9c9e4a" media="(prefers-color-scheme: light)">
@@ -13,663 +16,822 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="MI Perfume">
+
+<!-- PWA Splash Screens iOS -->
+
 <meta name="apple-touch-fullscreen" content="yes">
 <link rel="apple-touch-startup-image" href="loading.png">
+
+<!-- Content Security Policy -->
+
 <meta http-equiv="Content-Security-Policy"
-  content="default-src 'self'; script-src 'self' 'unsafe-inline' www.gstatic.com www.google.com www.googleapis.com; connect-src 'self' *.googleapis.com *.firebaseio.com *.firebasestorage.googleapis.com firebaseinstallations.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: via.placeholder.com; frame-src 'none';">
+content="default-src 'self'; script-src 'self' 'unsafe-inline' cdn.tailwindcss.com www.gstatic.com www.google.com www.googleapis.com; connect-src 'self' *.googleapis.com *.firebaseio.com *.firebasestorage.googleapis.com firebaseinstallations.googleapis.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: via.placeholder.com; frame-src 'none';">
+
+<!-- Open Graph / Share -->
+
 <meta property="og:type"        content="website">
 <meta property="og:title"       content="MI Perfume — Pesan Parfum Online">
 <meta property="og:description" content="Pesan parfum refill berkualitas dari MI Perfume langsung dari HP kamu.">
 <meta property="og:image"       content="icon.PNG">
+
+<!-- Manifest & Icons -->
+
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icon.PNG">
 <link rel="icon" type="image/png" href="icon.PNG">
-<link rel="stylesheet" href="tailwind.css">
+
+<script src="https://cdn.tailwindcss.com"></script>
+
 <script>
-(function(){try{var s=localStorage.getItem('mi_theme')||localStorage.getItem('mi_admin_theme');if(s==='dark'||(s===null&&window.matchMedia('(prefers-color-scheme:dark)').matches)){document.documentElement.classList.add('dark')}}catch(e){}})();
+// Apply dark mode BEFORE render to prevent flash
+tailwind.config = { darkMode: 'class' };
+(function(){
+    try {
+        const saved = localStorage.getItem('mi_theme');
+        if (saved === 'dark' || (!saved && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        }
+    } catch(e) {}
+})();
 </script>
-<script type="module">import {initializeApp}from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import {initializeAppCheck,ReCaptchaV3Provider}from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js";
+
+<!-- Firebase v9 Modular SDK (ESM via CDN) -->
+
+<script type="module">
+import { initializeApp }                           from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+import { initializeAppCheck, ReCaptchaV3Provider } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app-check.js";
 import {
-getAuth,onAuthStateChanged,signInAnonymously
-}from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    getAuth, onAuthStateChanged, signInAnonymously
+}                                                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import {
-initializeFirestore,persistentLocalCache,
-collection,addDoc,getDocs,query,
-where,orderBy,limit,onSnapshot,
-serverTimestamp
-}from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-function escapeHTML(str){
-if(!str)return '';
-return str.toString().replace(/[&<>'"]/g,t =>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t]|| t));
+    initializeFirestore, persistentLocalCache,
+    collection, addDoc, getDocs, query,
+    where, orderBy, limit, onSnapshot,
+    serverTimestamp
+}                                                  from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+// ============================================================
+// UTILS
+// ============================================================
+function escapeHTML(str) {
+    if (!str) return '';
+    return str.toString().replace(/[&<>'"]/g, t => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[t] || t));
 }
-function $id(id){return document.getElementById(id);}
+function $id(id) { return document.getElementById(id); }
+
 // ============================================================
 // TOAST NOTIFICATION
 // ============================================================
-function showToast(msg,type = 'info',duration = 3000){
-let container = document.getElementById('toast-container');
-if(!container){
-container = document.createElement('div');
-container.id = 'toast-container';
-container.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;width:90%;max-width:360px;pointer-events:none';
-document.body.appendChild(container);
+function showToast(msg, type = 'info', duration = 3000) {
+    let container = document.getElementById('toast-container');
+    if (!container) {
+        container = document.createElement('div');
+        container.id = 'toast-container';
+        container.style.cssText = 'position:fixed;top:80px;left:50%;transform:translateX(-50%);z-index:9999;display:flex;flex-direction:column;align-items:center;gap:8px;width:90%;max-width:360px;pointer-events:none';
+        document.body.appendChild(container);
+    }
+    const colors = { success:'background:#22c55e', error:'background:#ef4444', info:'background:#9c9e4a', warning:'background:#f59e0b' };
+    const icons  = { success:'✅', error:'❌', info:'ℹ️', warning:'⚠️' };
+    const toast  = document.createElement('div');
+    toast.style.cssText = `${colors[type]||colors.info};color:white;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);pointer-events:auto;opacity:0;transition:opacity 0.25s,transform 0.25s;transform:translateY(-8px);max-width:100%;text-align:center;line-height:1.4`;
+    toast.textContent = `${icons[type]||''} ${msg}`;
+    container.appendChild(toast);
+    requestAnimationFrame(() => { toast.style.opacity='1'; toast.style.transform='translateY(0)'; });
+    setTimeout(() => {
+        toast.style.opacity='0'; toast.style.transform='translateY(-8px)';
+        setTimeout(() => toast.remove(), 300);
+    }, duration);
 }
-const colors ={success:'background:#22c55e',error:'background:#ef4444',info:'background:#9c9e4a',warning:'background:#f59e0b'};
-const icons ={success:'✅',error:'❌',info:'ℹ️',warning:'⚠️'};
-const toast = document.createElement('div');
-toast.style.cssText = `${colors[type]||colors.info};color:white;padding:10px 16px;border-radius:12px;font-size:13px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.18);pointer-events:auto;opacity:0;transition:opacity 0.25s,transform 0.25s;transform:translateY(-8px);max-width:100%;text-align:center;line-height:1.4`;
-toast.textContent = `${icons[type]||''}${msg}`;
-container.appendChild(toast);
-requestAnimationFrame(()=>{toast.style.opacity='1';toast.style.transform='translateY(0)';});
-setTimeout(()=>{
-toast.style.opacity='0';toast.style.transform='translateY(-8px)';
-setTimeout(()=> toast.remove(),300);
-},duration);
-}
+
 // ============================================================
 // FIREBASE INIT
 // ============================================================
-const firebaseConfig ={
-apiKey: "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
-authDomain: "mi-perfume-1989.firebaseapp.com",
-projectId: "mi-perfume-1989",
-storageBucket: "mi-perfume-1989.firebasestorage.app",
-messagingSenderId: "894897183896",
-appId: "1:894897183896:web:71372dc8cbb9056c7144ed"
+const firebaseConfig = {
+    apiKey:            "AIzaSyDlrX84TqRgJS902PdjH8awCQacO6hzStY",
+    authDomain:        "mi-perfume-1989.firebaseapp.com",
+    projectId:         "mi-perfume-1989",
+    storageBucket:     "mi-perfume-1989.firebasestorage.app",
+    messagingSenderId: "894897183896",
+    appId:             "1:894897183896:web:71372dc8cbb9056c7144ed"
 };
-const app = initializeApp(firebaseConfig);
+
+const app  = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-// Offline persistence modern(persistentLocalCache menggantikan enableIndexedDbPersistence)
-const db = initializeFirestore(app,{
-localCache: persistentLocalCache()
+// Offline persistence modern (persistentLocalCache menggantikan enableIndexedDbPersistence)
+const db   = initializeFirestore(app, {
+    localCache: persistentLocalCache()
 });
-// App Check(reCAPTCHA v3)
-try{
-initializeAppCheck(app,{
-provider: new ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
-isTokenAutoRefreshEnabled: true
-});
-}catch(e){
+
+// App Check (reCAPTCHA v3)
+try {
+    initializeAppCheck(app, {
+        provider:              new ReCaptchaV3Provider('6LcVZaksAAAAAK-1biVskyePDhfKM68quPw0TcGr'),
+        isTokenAutoRefreshEnabled: true
+    });
+} catch (e) {
+    console.warn("App Check gagal dimuat:", e);
 }
+
 // ============================================================
 // STATE
 // ============================================================
-let buyerId = "";
-let keranjang =[];
-let dataStok ={};
-let dataBahan ={};
-let rawAromas =[];
+let buyerId         = "";
+let keranjang       = [];
+let dataStok        = {};
+let dataBahan       = {};
+let rawAromas       = [];
 let riwayatListener = null;
-let stokListener = null;
+let stokListener    = null;
 let stokSudahDimuat = false;
+
 // Harga
-const HARGA_PER_ML ={Standar: 1000,Premium: 2000,"Super Premium": 3000,Diamond: 4000};
-const HARGA_SUPER_PREMI ={"35": 100000,"50": 175000,"100": 280000};
+const HARGA_PER_ML      = { Standar: 1000, Premium: 2000, "Super Premium": 3000, Diamond: 4000 };
+const HARGA_SUPER_PREMI = { "35": 100000, "50": 175000, "100": 280000 };
+
 // ============================================================
 // SPLASH
 // ============================================================
-function closeSplash(){
-const el = $id('splash');
-if(el)el.classList.add('opacity-0','pointer-events-none');
+function closeSplash() {
+    const el = $id('splash');
+    if (el) el.classList.add('opacity-0', 'pointer-events-none');
 }
-const splashFallback = setTimeout(closeSplash,5000);
+const splashFallback = setTimeout(closeSplash, 5000);
+
 // ============================================================
 // AUTH — anonymous login untuk buyer_id
 // ============================================================
-onAuthStateChanged(auth,user =>{
-if(user){
-buyerId = user.uid;
-loadBahan();
-loadRiwayat();
-if(!stokListener){
-const stokQuery = query(collection(db,"stok"),orderBy("nama"));
-stokListener = onSnapshot(stokQuery,snap =>{
-rawAromas =[];dataStok ={};
-snap.forEach(doc =>{
-const d = doc.data();
-dataStok[d.nama]={
-sisa_ml: d.sisa_ml || 0,
-stok_kelas: d.stok_kelas ||{},
-modal: d.modal ||{},
-kelas_tersedia: d.kelas_tersedia ||["Standar"]
-};
-rawAromas.push(d);
+onAuthStateChanged(auth, user => {
+    if (user) {
+        buyerId = user.uid;
+        loadBahan();
+        loadRiwayat();
+
+        if (!stokListener) {
+            const stokQuery = query(collection(db, "stok"), orderBy("nama"));
+            stokListener = onSnapshot(stokQuery, snap => {
+                rawAromas = []; dataStok = {};
+                snap.forEach(doc => {
+                    const d = doc.data();
+                    dataStok[d.nama] = {
+                        sisa_ml:        d.sisa_ml        || 0,
+                        stok_kelas:     d.stok_kelas     || {},
+                        modal:          d.modal          || {},
+                        kelas_tersedia: d.kelas_tersedia || ["Standar"]
+                    };
+                    rawAromas.push(d);
+                });
+                renderAromaOptions("");
+                if (!stokSudahDimuat) {
+                    stokSudahDimuat = true;
+                    clearTimeout(splashFallback);
+                    setTimeout(closeSplash, 300);
+                }
+            }, err => {
+                console.error("Gagal load stok:", err);
+                clearTimeout(splashFallback);
+                closeSplash();
+            });
+        }
+    } else {
+        signInAnonymously(auth).catch(err => {
+            console.error("Gagal login anonim:", err);
+            showToast("Terjadi kesalahan sistem, silakan muat ulang halaman.", 'error', 5000);
+        });
+    }
 });
-renderAromaOptions("");
-if(!stokSudahDimuat){
-stokSudahDimuat = true;
-clearTimeout(splashFallback);
-setTimeout(closeSplash,300);
-}
-},err =>{
-clearTimeout(splashFallback);
-closeSplash();
-});
-}
-}else{
-signInAnonymously(auth).catch(err =>{
-showToast("Terjadi kesalahan sistem,silakan muat ulang halaman.",'error',5000);
-});
-}
-});
+
 // ============================================================
-// DATA BAHAN — get()sekali saja
+// DATA BAHAN — get() sekali saja
 // ============================================================
-async function loadBahan(){
-try{
-const snap = await getDocs(collection(db,"bahan"));
-snap.forEach(doc =>{
-dataBahan[doc.id]={
-sisa: doc.data().sisa || 0,
-harga_satuan: doc.data().harga_satuan || 0
-};
-});
-}catch(err){
+async function loadBahan() {
+    try {
+        const snap = await getDocs(collection(db, "bahan"));
+        snap.forEach(doc => {
+            dataBahan[doc.id] = {
+                sisa:         doc.data().sisa         || 0,
+                harga_satuan: doc.data().harga_satuan || 0
+            };
+        });
+    } catch (err) {
+        console.error("Gagal load bahan:", err);
+    }
 }
-}
+
 // ============================================================
 // RENDER AROMA
 // ============================================================
-function renderAromaOptions(filterText){
-const sel = $id('aroma');
-const oldVal = sel.value;
-const queryText = filterText.toLowerCase();
-const parts =['<option value="" disabled selected>Pilih Aroma...</option>'];
-rawAromas.forEach(d =>{
-if(!d.nama.toLowerCase().includes(queryText))return;
-parts.push(d.sisa_ml >= 17.5
-? `<option value="${escapeHTML(d.nama)}">${escapeHTML(d.nama)}(Tersedia)</option>`
-: `<option value="${escapeHTML(d.nama)}" disabled>${escapeHTML(d.nama)}(Kosong)</option>`);
-});
-sel.innerHTML = parts.join('');
-if(oldVal && sel.querySelector(`option[value="${CSS.escape(oldVal)}"]`))sel.value = oldVal;
+function renderAromaOptions(filterText) {
+    const sel    = $id('aroma');
+    const oldVal = sel.value;
+    const queryText = filterText.toLowerCase();
+    const parts  = ['<option value="" disabled selected>Pilih Aroma...</option>'];
+    rawAromas.forEach(d => {
+        if (!d.nama.toLowerCase().includes(queryText)) return;
+        parts.push(d.sisa_ml >= 17.5
+            ? `<option value="${escapeHTML(d.nama)}">${escapeHTML(d.nama)} (Tersedia)</option>`
+            : `<option value="${escapeHTML(d.nama)}" disabled>${escapeHTML(d.nama)} (Kosong)</option>`);
+    });
+    sel.innerHTML = parts.join('');
+    if (oldVal && sel.querySelector(`option[value="${CSS.escape(oldVal)}"]`)) sel.value = oldVal;
 }
+
 let _filterTimer = null;
-function filterAromaDebounced(){
-clearTimeout(_filterTimer);
-_filterTimer = setTimeout(()=> renderAromaOptions($id('search-aroma').value),120);
+function filterAromaDebounced() {
+    clearTimeout(_filterTimer);
+    _filterTimer = setTimeout(() => renderAromaOptions($id('search-aroma').value), 120);
 }
+
 // ============================================================
 // KELAS & HARGA
 // ============================================================
-function updateKelasOptions(){
-const aroma = $id('aroma').value,sel = $id('kelas');
-const parts =['<option value="" disabled selected>Pilih Kelas...</option>'];
-if(aroma && dataStok[aroma]){
-dataStok[aroma].kelas_tersedia.forEach(k =>{
-const label = k === "Super Premium"
-? "Harga Khusus Promo"
-: `Rp ${(HARGA_PER_ML[k]||0).toLocaleString()}/ml`;
-parts.push(`<option value="${escapeHTML(k)}">${escapeHTML(k)}(${label})</option>`);
-});
+function updateKelasOptions() {
+    const aroma = $id('aroma').value, sel = $id('kelas');
+    const parts = ['<option value="" disabled selected>Pilih Kelas...</option>'];
+    if (aroma && dataStok[aroma]) {
+        dataStok[aroma].kelas_tersedia.forEach(k => {
+            const label = k === "Super Premium"
+                ? "Harga Khusus Promo"
+                : `Rp ${(HARGA_PER_ML[k]||0).toLocaleString()}/ml`;
+            parts.push(`<option value="${escapeHTML(k)}">${escapeHTML(k)} (${label})</option>`);
+        });
+    }
+    sel.innerHTML = parts.join('');
+    hitungSubTotal();
 }
-sel.innerHTML = parts.join('');
-hitungSubTotal();
+
+function hitungHarga(kelas, ukuran, qty) {
+    if (!kelas || !ukuran || !qty) return 0;
+    const uk = parseInt(ukuran);
+    if (kelas === "Super Premium")
+        return (HARGA_SUPER_PREMI[String(ukuran)] || HARGA_PER_ML["Super Premium"] * uk) * qty;
+    let total = (HARGA_PER_ML[kelas] || 0) * uk * qty;
+    if (kelas === "Standar" && uk === 35) total -= Math.floor(qty / 3) * 5000;
+    return total;
 }
-function hitungHarga(kelas,ukuran,qty){
-if(!kelas || !ukuran || !qty)return 0;
-const uk = parseInt(ukuran);
-if(kelas === "Super Premium")
-return (HARGA_SUPER_PREMI[String(ukuran)]|| HARGA_PER_ML["Super Premium"]* uk)* qty;
-let total =(HARGA_PER_ML[kelas]|| 0)* uk * qty;
-if(kelas === "Standar" && uk === 35)total -= Math.floor(qty / 3)* 5000;
-return total;
+
+function hitungSubTotal() {
+    const total = hitungHarga($id('kelas').value, $id('ukuran').value, parseInt($id('qty').value) || 0);
+    $id('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID');
+    return total;
 }
-function hitungSubTotal(){
-const total = hitungHarga($id('kelas').value,$id('ukuran').value,parseInt($id('qty').value)|| 0);
-$id('subtotal-item').innerText = 'Rp ' + total.toLocaleString('id-ID');
-return total;
-}
+
 // ============================================================
 // KERANJANG — dengan sessionStorage agar tidak hilang saat refresh
 // ============================================================
-function simpanKeranjang(){
-try{sessionStorage.setItem('mi_keranjang',JSON.stringify(keranjang));}catch(e){}
+function simpanKeranjang() {
+    try { sessionStorage.setItem('mi_keranjang', JSON.stringify(keranjang)); } catch(e) {}
 }
-function muatKeranjang(){
-try{
-const data = sessionStorage.getItem('mi_keranjang');
-if(data)keranjang = JSON.parse(data);
-}catch(e){keranjang =[];}
+function muatKeranjang() {
+    try {
+        const data = sessionStorage.getItem('mi_keranjang');
+        if (data) keranjang = JSON.parse(data);
+    } catch(e) { keranjang = []; }
 }
-muatKeranjang();// muat saat halaman pertama kali buka
-function tambahKeKeranjang(e){
-e.preventDefault();
-const aroma = $id('aroma').value;
-const kelas = $id('kelas').value;
-const ukuran = parseInt($id('ukuran').value);
-const qty = parseInt($id('qty').value);
-if(qty < 1 || qty > 50)return showToast("Jumlah harus antara 1–50.",'warning');
-const butuhBibit =(ukuran * 0.5)* qty;
-const idBotol = 'botol_' + ukuran;
-const idAbs =(kelas === 'Super Premium' || kelas === 'Diamond')? 'abs_khusus' : 'abs_standar';
-const butuhAbs =(ukuran * 0.5)* qty;
-const cartBibit = keranjang.filter(i => i.aroma===aroma && i.kelas===kelas).reduce((s,i)=> s+i.bibit,0);
-const cartBotol = keranjang.filter(i => i.id_botol===idBotol).reduce((s,i)=> s+i.qty,0);
-const cartAbs = keranjang.filter(i => i.id_absolute===idAbs).reduce((s,i)=> s+i.absolute_ml,0);
-const stokBibit = dataStok[aroma]?.stok_kelas?.[kelas]!== undefined
-? dataStok[aroma].stok_kelas[kelas]
-:(dataStok[aroma]?.sisa_ml || 0);
-if((butuhBibit + cartBibit)> stokBibit)
-return showToast(`Bibit ${aroma}(${kelas})tidak cukup. Tersedia: ${stokBibit}ml,Butuh: ${butuhBibit+cartBibit}ml`,'error',4000);
-if((qty + cartBotol)>(dataBahan[idBotol]?.sisa || 0))
-return showToast(`Stok Botol ${ukuran}ml kurang.`,'error');
-if((butuhAbs + cartAbs)>(dataBahan[idAbs]?.sisa || 0))
-return showToast(`Stok Absolute kelas ini kurang.`,'error');
-const subtotal = hitungHarga(kelas,ukuran,qty);
-keranjang.push({
-aroma,kelas,ukuran,qty,subtotal,
-bibit: butuhBibit,
-id_botol: idBotol,
-id_absolute: idAbs,
-absolute_ml: butuhAbs,
-hpp_total: butuhBibit *(dataStok[aroma]?.modal?.[kelas]|| 0)
-+ qty *(dataBahan[idBotol]?.harga_satuan || 0)
-+ butuhAbs *(dataBahan[idAbs]?.harga_satuan || 0),
-});
-simpanKeranjang();
-renderKeranjang();
-showToast(`${aroma}(${ukuran}ml)ditambahkan!`,'success');
-$id('qty').value = 1;
-$id('subtotal-item').innerText = 'Rp 0';
-$id('kelas').value = "";
-$id('ukuran').value = "";
-$id('search-aroma').value = "";
-filterAromaDebounced();
+muatKeranjang(); // muat saat halaman pertama kali buka
+function tambahKeKeranjang(e) {
+    e.preventDefault();
+    const aroma  = $id('aroma').value;
+    const kelas  = $id('kelas').value;
+    const ukuran = parseInt($id('ukuran').value);
+    const qty    = parseInt($id('qty').value);
+
+    if (qty < 1 || qty > 50) return showToast("Jumlah harus antara 1–50.", 'warning');
+
+    const butuhBibit = (ukuran * 0.5) * qty;
+    const idBotol    = 'botol_' + ukuran;
+    const idAbs      = (kelas === 'Super Premium' || kelas === 'Diamond') ? 'abs_khusus' : 'abs_standar';
+    const butuhAbs   = (ukuran * 0.5) * qty;
+
+    const cartBibit = keranjang.filter(i => i.aroma===aroma && i.kelas===kelas).reduce((s,i) => s+i.bibit, 0);
+    const cartBotol = keranjang.filter(i => i.id_botol===idBotol).reduce((s,i) => s+i.qty, 0);
+    const cartAbs   = keranjang.filter(i => i.id_absolute===idAbs).reduce((s,i) => s+i.absolute_ml, 0);
+
+    const stokBibit = dataStok[aroma]?.stok_kelas?.[kelas] !== undefined
+        ? dataStok[aroma].stok_kelas[kelas]
+        : (dataStok[aroma]?.sisa_ml || 0);
+
+    if ((butuhBibit + cartBibit) > stokBibit)
+        return showToast(`Bibit ${aroma} (${kelas}) tidak cukup. Tersedia: ${stokBibit}ml, Butuh: ${butuhBibit+cartBibit}ml`, 'error', 4000);
+    if ((qty + cartBotol) > (dataBahan[idBotol]?.sisa || 0))
+        return showToast(`Stok Botol ${ukuran}ml kurang.`, 'error');
+    if ((butuhAbs + cartAbs) > (dataBahan[idAbs]?.sisa || 0))
+        return showToast(`Stok Absolute kelas ini kurang.`, 'error');
+
+    const subtotal = hitungHarga(kelas, ukuran, qty);
+    keranjang.push({
+        aroma, kelas, ukuran, qty, subtotal,
+        bibit:       butuhBibit,
+        id_botol:    idBotol,
+        id_absolute: idAbs,
+        absolute_ml: butuhAbs,
+        hpp_total:   butuhBibit * (dataStok[aroma]?.modal?.[kelas] || 0)
+                   + qty        * (dataBahan[idBotol]?.harga_satuan || 0)
+                   + butuhAbs   * (dataBahan[idAbs]?.harga_satuan   || 0),
+    });
+    simpanKeranjang();
+    renderKeranjang();
+    showToast(`${aroma} (${ukuran}ml) ditambahkan!`, 'success');
+    $id('qty').value          = 1;
+    $id('subtotal-item').innerText = 'Rp 0';
+    $id('kelas').value        = "";
+    $id('ukuran').value       = "";
+    $id('search-aroma').value = "";
+    filterAromaDebounced();
 }
-function hapusItem(idx){keranjang.splice(idx,1);simpanKeranjang();renderKeranjang();}
-function renderKeranjang(){
-const wadah = $id('isi-keranjang');
-wadah.innerHTML = '';
-let gt = 0,tq = 0;
-if(!keranjang.length){
-wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>';
-$id('btn-submit').disabled = true;
-}else{
-$id('btn-submit').disabled = false;
-const frag = document.createDocumentFragment();
-keranjang.forEach((item,idx)=>{
-gt += item.subtotal;tq += item.qty;
-const infoPromo =(item.kelas === "Standar" && item.ukuran === 35 && item.qty >= 3)
-? '<span class="text-[9px]text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : '';
-const row = document.createElement('div');
-row.className = 'bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1';
-row.innerHTML = `
-<div class="leading-tight">
-<p class="font-bold">${escapeHTML(item.aroma)}<span class="text-gold">x${item.qty}</span></p>
-<p class="text-xs text-gray-500 dark:text-gray-300">${escapeHTML(item.kelas)}${item.ukuran}ml</p>
-${infoPromo}
-</div>
-<div class="flex items-center gap-2">
-<p class="font-bold">Rp ${item.subtotal.toLocaleString()}</p>
-<button class="text-red-500 js-hapus-item" aria-label="Hapus">🗑️</button>
-</div>`;
-row.querySelector('.js-hapus-item').addEventListener('click',()=> hapusItem(idx));
-frag.appendChild(row);
-});
-wadah.appendChild(frag);
+
+function hapusItem(idx) { keranjang.splice(idx, 1); simpanKeranjang(); renderKeranjang(); }
+
+function renderKeranjang() {
+    const wadah = $id('isi-keranjang');
+    wadah.innerHTML = '';
+    let gt = 0, tq = 0;
+    if (!keranjang.length) {
+        wadah.innerHTML = '<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>';
+        $id('btn-submit').disabled = true;
+    } else {
+        $id('btn-submit').disabled = false;
+        const frag = document.createDocumentFragment();
+        keranjang.forEach((item, idx) => {
+            gt += item.subtotal; tq += item.qty;
+            const infoPromo = (item.kelas === "Standar" && item.ukuran === 35 && item.qty >= 3)
+                ? '<span class="text-[9px] text-green-500 bg-green-50 px-1 rounded block">Promo 3pcs Aktif</span>' : '';
+            const row = document.createElement('div');
+            row.className = 'bg-white dark:bg-gray-700 p-2 border dark:border-gray-600 flex justify-between items-center text-sm mb-1';
+            row.innerHTML = `
+                <div class="leading-tight">
+                    <p class="font-bold">${escapeHTML(item.aroma)} <span class="text-gold">x${item.qty}</span></p>
+                    <p class="text-xs text-gray-500 dark:text-gray-300">${escapeHTML(item.kelas)} ${item.ukuran}ml</p>
+                    ${infoPromo}
+                </div>
+                <div class="flex items-center gap-2">
+                    <p class="font-bold">Rp ${item.subtotal.toLocaleString()}</p>
+                    <button class="text-red-500 js-hapus-item" aria-label="Hapus">🗑️</button>
+                </div>`;
+            row.querySelector('.js-hapus-item').addEventListener('click', () => hapusItem(idx));
+            frag.appendChild(row);
+        });
+        wadah.appendChild(frag);
+    }
+    $id('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID');
+    $id('badge-qty').innerText   = tq;
 }
-$id('grand-total').innerText = 'Rp ' + gt.toLocaleString('id-ID');
-$id('badge-qty').innerText = tq;
-}
+
 // ============================================================
 // KIRIM PESANAN
 // ============================================================
-async function kirimPesananAkhir(){
-if(!buyerId)return showToast("Sistem keamanan sedang memuat. Mohon tunggu.",'warning');
-const nama = $id('nama').value.trim();
-const noWa = $id('no-wa').value.trim();
-if(!nama)return showToast("Harap isi Nama Pemesan!",'warning');
-if(nama.length > 100)return showToast("Nama terlalu panjang(maks. 100 karakter).",'warning');
-if(!keranjang.length)return showToast("Keranjang masih kosong!",'warning');
-const totalFinal = keranjang.reduce((s,i)=> s + i.subtotal,0);
-const totalHppRaw = keranjang.reduce((s,i)=> s +(i.hpp_total||0),0);
-const totalHppFinal = Math.min(totalHppRaw,totalFinal);
-const btn = $id('btn-submit');
-btn.textContent = "Memproses...";btn.disabled = true;
-const itemsBersih = keranjang.map(i =>({
-aroma: String(i.aroma),
-kelas: String(i.kelas),
-ukuran: Number(i.ukuran),
-qty: Number(i.qty)
-}));
-try{
-await addDoc(collection(db,"pesanan"),{
-buyer_id: buyerId,
-nama: escapeHTML(nama),
-no_wa: escapeHTML(noWa),
-items: itemsBersih,
-total: totalFinal,
-total_hpp: totalHppFinal,
-status: "Menunggu Diproses",
-waktu: serverTimestamp()
-});
-showToast("Pesanan Terkirim! Menunggu konfirmasi admin.",'success',4000);
-keranjang =[];simpanKeranjang();renderKeranjang();
-$id('nama').value = '';
-$id('no-wa').value = '';
-btn.textContent = "Kirim Pesanan Sekarang";
-switchTab('riwayat');
-}catch(err){
-showToast("Gagal mengirim: " + err.message,'error',5000);
-btn.disabled = false;
-btn.textContent = "Kirim Pesanan Sekarang";
+async function kirimPesananAkhir() {
+    if (!buyerId) return showToast("Sistem keamanan sedang memuat. Mohon tunggu.", 'warning');
+    const nama = $id('nama').value.trim();
+    const noWa = $id('no-wa').value.trim();
+    if (!nama)             return showToast("Harap isi Nama Pemesan!", 'warning');
+    if (nama.length > 100) return showToast("Nama terlalu panjang (maks. 100 karakter).", 'warning');
+    if (!keranjang.length) return showToast("Keranjang masih kosong!", 'warning');
+
+    const totalFinal    = keranjang.reduce((s, i) => s + i.subtotal, 0);
+    const totalHppRaw   = keranjang.reduce((s, i) => s + (i.hpp_total||0), 0);
+    const totalHppFinal = Math.min(totalHppRaw, totalFinal);
+
+    const btn = $id('btn-submit');
+    btn.textContent = "Memproses..."; btn.disabled = true;
+
+    const itemsBersih = keranjang.map(i => ({
+        aroma:  String(i.aroma),
+        kelas:  String(i.kelas),
+        ukuran: Number(i.ukuran),
+        qty:    Number(i.qty)
+    }));
+
+    try {
+        await addDoc(collection(db, "pesanan"), {
+            buyer_id:  buyerId,
+            nama:      escapeHTML(nama),
+            no_wa:     escapeHTML(noWa),
+            items:     itemsBersih,
+            total:     totalFinal,
+            total_hpp: totalHppFinal,
+            status:    "Menunggu Diproses",
+            waktu:     serverTimestamp()
+        });
+        showToast("Pesanan Terkirim! Menunggu konfirmasi admin.", 'success', 4000);
+        keranjang = []; simpanKeranjang(); renderKeranjang();
+        $id('nama').value  = '';
+        $id('no-wa').value = '';
+        btn.textContent = "Kirim Pesanan Sekarang";
+        switchTab('riwayat');
+    } catch (err) {
+        console.error("Kirim pesanan error:", err);
+        showToast("Gagal mengirim: " + err.message, 'error', 5000);
+        btn.disabled = false;
+        btn.textContent = "Kirim Pesanan Sekarang";
+    }
 }
-}
+
 // ============================================================
 // RIWAYAT
 // ============================================================
-function loadRiwayat(){
-if(riwayatListener)riwayatListener();
-if(!buyerId)return;
-const riwayatQuery = query(
-collection(db,"pesanan"),
-where("buyer_id","==",buyerId),
-orderBy("waktu","desc"),
-limit(20)
-);
-riwayatListener = onSnapshot(riwayatQuery,snap =>{
-const container = $id('daftar-riwayat');
-if(snap.empty){
-container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>';
-return;
+function loadRiwayat() {
+    if (riwayatListener) riwayatListener();
+    if (!buyerId) return;
+
+    const riwayatQuery = query(
+        collection(db, "pesanan"),
+        where("buyer_id", "==", buyerId),
+        orderBy("waktu", "desc"),
+        limit(20)
+    );
+
+    riwayatListener = onSnapshot(riwayatQuery, snap => {
+        const container = $id('daftar-riwayat');
+        if (snap.empty) {
+            container.innerHTML = '<p class="text-center text-gray-500 mt-5 italic text-sm">Belum ada riwayat pesanan</p>';
+            return;
+        }
+        const frag = document.createDocumentFragment();
+        snap.forEach(docSnap => {
+            const d      = docSnap.data();
+            const sColor = d.status==="Selesai"        ? "bg-green-100 text-green-700"
+                         : d.status==="Ditolak"        ? "bg-red-100 text-red-700"
+                         : d.status==="Diproses"       ? "bg-blue-100 text-blue-700"
+                         : d.status==="Menunggu Lunas" ? "bg-yellow-100 text-yellow-800"
+                         : "bg-yellow-100 text-yellow-700";
+            const tgl = d.waktu
+                ? d.waktu.toDate().toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
+                : 'Baru saja';
+            const itemsStr = (d.items||[]).map(i =>
+                `<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)} (${escapeHTML(i.kelas)})</p>`
+            ).join('');
+            const alasanTolak = (d.status==="Ditolak" && d.alasan)
+                ? `<p class="text-xs text-red-500 mt-1 italic">Alasan: ${escapeHTML(d.alasan)}</p>` : '';
+            const showBayar = (d.status === "Selesai" || d.status === "Menunggu Lunas");
+
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
+            card.innerHTML = `
+                <div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
+                    <span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
+                    <span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
+                </div>
+                <div class="mb-2">${itemsStr}</div>
+                ${alasanTolak}
+                <div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
+                    <span>Total</span>
+                    <span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
+                </div>
+                ${showBayar ? '<button class="mt-3 w-full bg-[#9c9e4a] text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
+            card.querySelector('.js-bayar')?.addEventListener('click', bukaQris);
+            frag.appendChild(card);
+        });
+        container.innerHTML = '';
+        container.appendChild(frag);
+    }, err => {
+        console.error("Gagal load riwayat:", err);
+        if (err.message?.includes("requires an index"))
+            console.warn("Buat composite index: pesanan — buyer_id ASC, waktu DESC");
+    });
 }
-const frag = document.createDocumentFragment();
-snap.forEach(docSnap =>{
-const d = docSnap.data();
-const sColor = d.status==="Selesai" ? "bg-green-100 text-green-700"
-: d.status==="Ditolak" ? "bg-red-100 text-red-700"
-: d.status==="Diproses" ? "bg-blue-100 text-blue-700"
-: d.status==="Menunggu Lunas" ? "bg-yellow-100 text-yellow-800"
-: "bg-yellow-100 text-yellow-700";
-const tgl = d.waktu
-? d.waktu.toDate().toLocaleDateString('id-ID',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'})
-: 'Baru saja';
-const itemsStr =(d.items||[]).map(i =>
-`<p class="text-xs"><span class="font-bold">${i.qty}x</span> ${escapeHTML(i.aroma)}(${escapeHTML(i.kelas)})</p>`
-).join('');
-const alasanTolak =(d.status==="Ditolak" && d.alasan)
-? `<p class="text-xs text-red-500 mt-1 italic">Alasan: ${escapeHTML(d.alasan)}</p>` : '';
-const showBayar =(d.status === "Selesai" || d.status === "Menunggu Lunas");
-const card = document.createElement('div');
-card.className = 'bg-white dark:bg-gray-700 border dark:border-gray-600 p-3 rounded-lg mb-2 shadow-sm';
-card.innerHTML = `
-<div class="flex justify-between border-b dark:border-gray-600 pb-2 mb-2">
-<span class="text-xs text-gray-500 dark:text-gray-400">${tgl}</span>
-<span class="text-xs font-bold px-2 rounded ${sColor}">${d.status}</span>
-</div>
-<div class="mb-2">${itemsStr}</div>
-${alasanTolak}
-<div class="flex justify-between items-center font-bold text-sm border-t dark:border-gray-600 pt-2 mt-2">
-<span>Total</span>
-<span class="text-gold">Rp ${(d.total||0).toLocaleString('id-ID')}</span>
-</div>
-${showBayar ? '<button class="mt-3 w-full bg-[#9c9e4a]text-white text-xs font-bold py-2 px-4 rounded shadow-sm active:scale-95 js-bayar">📱 Bayar dengan QRIS</button>' : ''}`;
-card.querySelector('.js-bayar')?.addEventListener('click',bukaQris);
-frag.appendChild(card);
-});
-container.innerHTML = '';
-container.appendChild(frag);
-},err =>{
-if(err.message?.includes("requires an index"))
-});
-}
+
 // ============================================================
 // TAB
 // ============================================================
-function switchTab(t){
-['pesan','riwayat'].forEach(id =>{
-$id('page-'+id).classList.add('hidden');
-$id('tab-'+id).classList.replace('tab-active','text-gray-500');
-});
-$id('page-'+t).classList.remove('hidden');
-$id('tab-'+t).classList.replace('text-gray-500','tab-active');
-if(t === 'riwayat' && buyerId && !riwayatListener)loadRiwayat();
+function switchTab(t) {
+    ['pesan','riwayat'].forEach(id => {
+        $id('page-'+id).classList.add('hidden');
+        $id('tab-'+id).classList.replace('tab-active','text-gray-500');
+    });
+    $id('page-'+t).classList.remove('hidden');
+    $id('tab-'+t).classList.replace('text-gray-500','tab-active');
+    if (t === 'riwayat' && buyerId && !riwayatListener) loadRiwayat();
 }
+
 // ============================================================
 // QRIS
 // ============================================================
-function bukaQris(){
-const m = $id('modal-qris');
-m.style.display = 'flex';
-m.style.flexDirection = 'column';
-m.style.alignItems = 'center';
-m.style.justifyContent = 'center';
+function bukaQris() {
+    const m = $id('modal-qris');
+    m.style.display = 'flex';
+    m.style.flexDirection = 'column';
+    m.style.alignItems = 'center';
+    m.style.justifyContent = 'center';
 }
-function tutupQris(){
-$id('modal-qris').style.display = 'none';
+function tutupQris() {
+    $id('modal-qris').style.display = 'none';
 }
+
 // ============================================================
 // DARK MODE — persist preference
 // ============================================================
-function toggleDarkMode(){
-const isDark = document.documentElement.classList.toggle('dark');
-try{localStorage.setItem('mi_theme',isDark ? 'dark' : 'light');}catch(e){}
+function toggleDarkMode() {
+    const isDark = document.documentElement.classList.toggle('dark');
+    try { localStorage.setItem('mi_theme', isDark ? 'dark' : 'light'); } catch(e) {}
 }
+
 // ============================================================
-// EXPOSE ke HTML(inline handlers)
+// EXPOSE ke HTML (inline handlers)
 // ============================================================
-window.switchTab = switchTab;
-window.bukaQris = bukaQris;
-window.tutupQris = tutupQris;
-window.tambahKeKeranjang = tambahKeKeranjang;
-window.kirimPesananAkhir = kirimPesananAkhir;
-window.updateKelasOptions = updateKelasOptions;
-window.hitungSubTotal = hitungSubTotal;
+window.switchTab           = switchTab;
+window.bukaQris            = bukaQris;
+window.tutupQris           = tutupQris;
+window.tambahKeKeranjang   = tambahKeKeranjang;
+window.kirimPesananAkhir   = kirimPesananAkhir;
+window.updateKelasOptions  = updateKelasOptions;
+window.hitungSubTotal      = hitungSubTotal;
 window.filterAromaDebounced = filterAromaDebounced;
-window.toggleDarkMode = toggleDarkMode;</script>
-<script>if('serviceWorker' in navigator){
-window.addEventListener('load',()=>{
-navigator.serviceWorker.register('/sw.js')
-.then(reg =>{
-reg.addEventListener('updatefound',()=>{
-const newWorker = reg.installing;
-newWorker.addEventListener('statechange',()=>{
-if(newWorker.state === 'installed' && navigator.serviceWorker.controller){
-showUpdateBanner(newWorker);
+window.toggleDarkMode      = toggleDarkMode;
+
+</script>
+
+<!-- PWA: Service Worker Registration, Install Prompt & Offline Indicator -->
+
+<script>
+// ============================================================
+// SERVICE WORKER REGISTRATION
+// ============================================================
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js')
+            .then(reg => {
+                console.log('✅ SW terdaftar:', reg.scope);
+
+                // Cek update SW baru
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            showUpdateBanner(newWorker);
+                        }
+                    });
+                });
+            })
+            .catch(err => console.warn('❌ SW gagal:', err));
+    });
 }
-});
-});
-})
-.catch(err =>
-});
+
+// ============================================================
+// BANNER UPDATE VERSI BARU
+// ============================================================
+function showUpdateBanner(newWorker) {
+    if (document.getElementById('update-banner')) return;
+    const banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-[#9c9e4a] text-white text-sm font-bold p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
+    banner.innerHTML = `
+        <span>🔄 Versi baru tersedia!</span>
+        <button id="btn-update-now" class="bg-white text-[#9c9e4a] px-3 py-1 rounded-lg text-xs font-bold active:scale-95">
+            Update
+        </button>`;
+    document.body.appendChild(banner);
+
+    document.getElementById('btn-update-now').addEventListener('click', () => {
+        // Kirim pesan ke SW baru agar langsung ambil alih
+        newWorker?.postMessage({ type: 'SKIP_WAITING' });
+        window.location.reload();
+    });
+
+    // Auto-hide setelah 12 detik jika tidak diklik
+    setTimeout(() => banner.remove(), 12000);
 }
-function showUpdateBanner(newWorker){
-if(document.getElementById('update-banner'))return;
-const banner = document.createElement('div');
-banner.id = 'update-banner';
-banner.className = 'fixed bottom-4 left-4 right-4 z-[300]bg-[#9c9e4a]text-white text-sm font-bold p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
-banner.innerHTML = `<span>🔄 Versi baru tersedia!</span><button id="btn-update-now" class="bg-white text-[#9c9e4a]px-3 py-1 rounded-lg text-xs font-bold active:scale-95"> Update </button>`;
-document.body.appendChild(banner);
-document.getElementById('btn-update-now').addEventListener('click',()=>{
-newWorker?.postMessage({type: 'SKIP_WAITING'});
-window.location.reload();
-});
-setTimeout(()=> banner.remove(),12000);
+
+// ============================================================
+// OFFLINE / ONLINE INDICATOR
+// ============================================================
+function tampilkanStatusJaringan(isOnline) {
+    let bar = document.getElementById('network-bar');
+    if (!bar) {
+        bar = document.createElement('div');
+        bar.id = 'network-bar';
+        bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;text-align:center;font-size:11px;font-weight:700;padding:4px 0;transition:transform 0.3s,opacity 0.3s;transform:translateY(-100%);opacity:0;letter-spacing:0.05em';
+        document.body.appendChild(bar);
+    }
+    if (isOnline) {
+        bar.textContent = '✅ Terhubung kembali';
+        bar.style.background = '#22c55e';
+        bar.style.color = '#fff';
+        bar.style.transform = 'translateY(0)';
+        bar.style.opacity = '1';
+        setTimeout(() => {
+            bar.style.transform = 'translateY(-100%)';
+            bar.style.opacity = '0';
+        }, 2500);
+    } else {
+        bar.textContent = '📵 Tidak ada koneksi internet';
+        bar.style.background = '#ef4444';
+        bar.style.color = '#fff';
+        bar.style.transform = 'translateY(0)';
+        bar.style.opacity = '1';
+    }
 }
-function tampilkanStatusJaringan(isOnline){
-let bar = document.getElementById('network-bar');
-if(!bar){
-bar = document.createElement('div');
-bar.id = 'network-bar';
-bar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9998;text-align:center;font-size:11px;font-weight:700;padding:4px 0;transition:transform 0.3s,opacity 0.3s;transform:translateY(-100%);opacity:0;letter-spacing:0.05em';
-document.body.appendChild(bar);
-}
-if(isOnline){
-bar.textContent = '✅ Terhubung kembali';
-bar.style.background = '#22c55e';
-bar.style.color = '#fff';
-bar.style.transform = 'translateY(0)';
-bar.style.opacity = '1';
-setTimeout(()=>{
-bar.style.transform = 'translateY(-100%)';
-bar.style.opacity = '0';
-},2500);
-}else{
-bar.textContent = '📵 Tidak ada koneksi internet';
-bar.style.background = '#ef4444';
-bar.style.color = '#fff';
-bar.style.transform = 'translateY(0)';
-bar.style.opacity = '1';
-}
-}
-window.addEventListener('online',()=> tampilkanStatusJaringan(true));
-window.addEventListener('offline',()=> tampilkanStatusJaringan(false));
-if(!navigator.onLine)tampilkanStatusJaringan(false);
+
+window.addEventListener('online',  () => tampilkanStatusJaringan(true));
+window.addEventListener('offline', () => tampilkanStatusJaringan(false));
+
+// Tampilkan langsung jika sudah offline saat halaman dibuka
+if (!navigator.onLine) tampilkanStatusJaringan(false);
+
+// ============================================================
+// PWA INSTALL PROMPT (Add to Home Screen)
+// ============================================================
 let deferredPrompt = null;
-window.addEventListener('beforeinstallprompt',(e)=>{
-e.preventDefault();
-deferredPrompt = e;
-setTimeout(showInstallBanner,3000);
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // Tunda sedikit agar tidak langsung muncul saat pertama buka
+    setTimeout(showInstallBanner, 3000);
 });
-function showInstallBanner(){
-if(window.matchMedia('(display-mode: standalone)').matches)return;
-if(document.getElementById('install-banner'))return;
-const banner = document.createElement('div');
-banner.id = 'install-banner';
-banner.className = 'fixed bottom-4 left-4 right-4 z-[300]bg-white dark:bg-gray-800 border border-[#9c9e4a]text-sm p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
-banner.innerHTML = `<div class="flex items-center gap-2"><img src="icon.PNG" class="w-8 h-8 rounded-md object-contain" alt="Icon"><span class="text-xs font-bold dark:text-white">Pasang MI Perfume<br><span class="font-normal text-gray-500 dark:text-gray-400">di layar utama HP kamu</span></span></div><div class="flex gap-2"><button id="btn-install-yes" class="bg-[#9c9e4a]text-white px-3 py-1 rounded-lg text-xs font-bold active:scale-95">Pasang</button><button id="btn-install-no" class="bg-gray-100 dark:bg-gray-700 dark:text-white text-gray-600 px-3 py-1 rounded-lg text-xs active:scale-95">Nanti</button></div>`;
-document.body.appendChild(banner);
-document.getElementById('btn-install-yes').addEventListener('click',async ()=>{
-banner.remove();
-if(deferredPrompt){
-deferredPrompt.prompt();
-const {outcome}= await deferredPrompt.userChoice;
-deferredPrompt = null;
+
+function showInstallBanner() {
+    // Jangan tampilkan jika sudah standalone (sudah diinstall)
+    if (window.matchMedia('(display-mode: standalone)').matches) return;
+    if (document.getElementById('install-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'install-banner';
+    banner.className = 'fixed bottom-4 left-4 right-4 z-[300] bg-white dark:bg-gray-800 border border-[#9c9e4a] text-sm p-3 rounded-xl shadow-xl flex justify-between items-center gap-2';
+    banner.innerHTML = `
+        <div class="flex items-center gap-2">
+            <img src="icon.PNG" class="w-8 h-8 rounded-md object-contain" alt="Icon">
+            <span class="text-xs font-bold dark:text-white">Pasang MI Perfume<br>
+                <span class="font-normal text-gray-500 dark:text-gray-400">di layar utama HP kamu</span>
+            </span>
+        </div>
+        <div class="flex gap-2">
+            <button id="btn-install-yes" class="bg-[#9c9e4a] text-white px-3 py-1 rounded-lg text-xs font-bold active:scale-95">Pasang</button>
+            <button id="btn-install-no" class="bg-gray-100 dark:bg-gray-700 dark:text-white text-gray-600 px-3 py-1 rounded-lg text-xs active:scale-95">Nanti</button>
+        </div>`;
+    document.body.appendChild(banner);
+
+    document.getElementById('btn-install-yes').addEventListener('click', async () => {
+        banner.remove();
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            console.log('Install outcome:', outcome);
+            deferredPrompt = null;
+        }
+    });
+    document.getElementById('btn-install-no').addEventListener('click', () => {
+        banner.remove();
+        // Simpan ke localStorage agar tidak muncul lagi hari ini
+        try { localStorage.setItem('mi_install_dismissed', Date.now()); } catch(e) {}
+    });
 }
+
+// Jangan tampilkan install banner jika baru dismiss < 24 jam
+try {
+    const dismissed = localStorage.getItem('mi_install_dismissed');
+    if (dismissed && Date.now() - parseInt(dismissed) < 86400000) {
+        // Sudah dismiss hari ini, skip
+        window.addEventListener('beforeinstallprompt', e => e.preventDefault());
+    }
+} catch(e) {}
+
+// Sembunyikan banner setelah berhasil dipasang
+window.addEventListener('appinstalled', () => {
+    document.getElementById('install-banner')?.remove();
+    deferredPrompt = null;
+    console.log('✅ PWA MI Perfume berhasil dipasang!');
 });
-document.getElementById('btn-install-no').addEventListener('click',()=>{
-banner.remove();
-try{localStorage.setItem('mi_install_dismissed',Date.now());}catch(e){}
-});
+
+// Log mode saat ini
+if (window.matchMedia('(display-mode: standalone)').matches) {
+    console.log('📱 Berjalan sebagai PWA standalone');
+} else {
+    console.log('🌐 Berjalan di browser biasa');
 }
-try{
-const dismissed = localStorage.getItem('mi_install_dismissed');
-if(dismissed && Date.now()- parseInt(dismissed)< 86400000){
-window.addEventListener('beforeinstallprompt',e => e.preventDefault());
-}
-}catch(e){}
-window.addEventListener('appinstalled',()=>{
-document.getElementById('install-banner')?.remove();
-deferredPrompt = null;
-});
-if(window.matchMedia('(display-mode: standalone)').matches){
-}else{
-}</script>
-<style>.text-gold{color:#9c9e4a}.bg-gold{background-color:#9c9e4a}.tab-active{border-bottom:3px solid #9c9e4a;color:#9c9e4a;font-weight:bold}</style>
+</script>
+
+<style>
+    .text-gold { color: #9c9e4a; }
+    .bg-gold   { background-color: #9c9e4a; }
+    .tab-active { border-bottom: 3px solid #9c9e4a; color: #9c9e4a; font-weight: bold; }
+</style>
+
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-100 pb-20 transition-colors">
+
+<!-- Splash -->
+
 <div id="splash" class="fixed inset-0 z-[100] bg-white dark:bg-gray-900 transition-opacity duration-700">
-<img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
-<div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
-<div class="border-4 border-[#9c9e4a] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
-<p class="text-[#9c9e4a] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
+    <img src="loading.png" alt="MI Perfume Loading" class="absolute inset-0 w-full h-full object-cover">
+    <div class="absolute bottom-12 left-0 right-0 flex flex-col items-center z-10">
+        <div class="border-4 border-[#9c9e4a] border-t-transparent rounded-full w-10 h-10 animate-spin drop-shadow-md"></div>
+        <p class="text-[#9c9e4a] mt-3 text-xs font-bold tracking-widest animate-pulse bg-white/80 px-3 py-1 rounded-full shadow-sm">MEMUAT TOKO...</p>
+    </div>
 </div>
-</div>
+
 <header class="bg-white dark:bg-gray-800 p-3 shadow-sm sticky top-0 z-20 flex justify-between items-center border-b dark:border-gray-700">
-<div class="flex items-center gap-3">
-<img src="icon.PNG" alt="Logo" class="h-12 w-12 object-contain rounded-md">
-<div class="flex flex-col">
-<h1 class="text-xl font-bold text-[#9c9e4a] leading-tight">MI Perfume</h1>
-<h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
-</div>
-</div>
-<button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg" aria-label="Toggle dark mode">🌓</button>
+    <div class="flex items-center gap-3">
+        <img src="icon.PNG" alt="Logo" class="h-12 w-12 object-contain rounded-md">
+        <div class="flex flex-col">
+            <h1 class="text-xl font-bold text-[#9c9e4a] leading-tight">MI Perfume</h1>
+            <h2 class="text-[11px] text-gray-500 dark:text-gray-400 font-medium tracking-wide uppercase">Pemesanan Online</h2>
+        </div>
+    </div>
+    <button onclick="toggleDarkMode()" class="p-2 bg-gray-100 dark:bg-gray-700 rounded-full shadow-inner text-lg" aria-label="Toggle dark mode">🌓</button>
 </header>
+
 <div class="flex bg-white dark:bg-gray-800 shadow-sm mb-4 sticky top-[73px] z-10">
-<button id="tab-pesan"    class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
-<button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm"                  onclick="switchTab('riwayat')">Riwayat</button>
+    <button id="tab-pesan"    class="flex-1 py-3 text-center tab-active text-sm dark:text-gray-200" onclick="switchTab('pesan')">Pesan Baru</button>
+    <button id="tab-riwayat" class="flex-1 py-3 text-center text-gray-500 text-sm"                  onclick="switchTab('riwayat')">Riwayat</button>
 </div>
+
 <div id="page-pesan" class="p-4 max-w-md mx-auto">
-<div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#9c9e4a] mb-4">
-<div class="mb-3">
-<label class="block text-sm font-bold mb-1">Nama Pemesan</label>
-<input type="text" id="nama" required maxlength="100"
+    <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow border-t-4 border-[#9c9e4a] mb-4">
+        <div class="mb-3">
+            <label class="block text-sm font-bold mb-1">Nama Pemesan</label>
+            <input type="text" id="nama" required maxlength="100"
                 class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="Nama Anda" autocomplete="name">
-</div>
-<div>
-<label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label>
-<input type="tel" id="no-wa" maxlength="20"
+        </div>
+        <div>
+            <label class="block text-sm font-bold mb-1">WhatsApp (Opsional)</label>
+            <input type="tel" id="no-wa" maxlength="20"
                 class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none" placeholder="0812..." autocomplete="tel">
-</div>
-</div>
+        </div>
+    </div>
+
 <div class="bg-white dark:bg-gray-800 p-4 rounded-xl shadow mb-4">
-<h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
-<form id="form-item" onsubmit="tambahKeKeranjang(event)">
-<div class="mb-3">
-<label class="block text-xs font-medium mb-1">Pilih Aroma</label>
-<input type="text" id="search-aroma" oninput="filterAromaDebounced()"
+    <h2 class="font-bold mb-3 border-b dark:border-gray-700 pb-2">➕ Tambah Parfum</h2>
+    <form id="form-item" onsubmit="tambahKeKeranjang(event)">
+        <div class="mb-3">
+            <label class="block text-xs font-medium mb-1">Pilih Aroma</label>
+            <input type="text" id="search-aroma" oninput="filterAromaDebounced()"
                 class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm mb-2"
                 placeholder="🔍 Ketik untuk mencari aroma...">
-<select id="aroma" required onchange="updateKelasOptions()"
+            <select id="aroma" required onchange="updateKelasOptions()"
                 class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm bg-gray-50 dark:bg-gray-700">
-<option value="" disabled selected>Memuat ketersediaan...</option>
-</select>
-</div>
-<div class="mb-3">
-<label class="block text-xs font-medium mb-1">Kelas</label>
-<select id="kelas" required onchange="hitungSubTotal()"
+                <option value="" disabled selected>Memuat ketersediaan...</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="block text-xs font-medium mb-1">Kelas</label>
+            <select id="kelas" required onchange="hitungSubTotal()"
                 class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm">
-<option value="" disabled selected>Pilih aroma dulu</option>
-</select>
-</div>
-<div class="grid grid-cols-2 gap-3 mb-4">
-<div>
-<label class="block text-xs font-medium mb-1">Ukuran</label>
-<select id="ukuran" required onchange="hitungSubTotal()"
+                <option value="" disabled selected>Pilih aroma dulu</option>
+            </select>
+        </div>
+        <div class="grid grid-cols-2 gap-3 mb-4">
+            <div>
+                <label class="block text-xs font-medium mb-1">Ukuran</label>
+                <select id="ukuran" required onchange="hitungSubTotal()"
                     class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm">
-<option value="" disabled selected>Pilih...</option>
-<option value="35">35 ml</option>
-<option value="50">50 ml</option>
-<option value="100">100 ml</option>
-</select>
-</div>
-<div>
-<label class="block text-xs font-medium mb-1">Jumlah</label>
-<input type="number" id="qty" required min="1" max="50" value="1" oninput="hitungSubTotal()"
+                    <option value="" disabled selected>Pilih...</option>
+                    <option value="35">35 ml</option>
+                    <option value="50">50 ml</option>
+                    <option value="100">100 ml</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-xs font-medium mb-1">Jumlah</label>
+                <input type="number" id="qty" required min="1" max="50" value="1" oninput="hitungSubTotal()"
                     class="w-full border dark:border-gray-600 dark:bg-gray-700 p-2 rounded outline-none text-sm text-center">
-</div>
-</div>
-<div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600">
-<span class="text-xs">Subtotal:</span>
-<span id="subtotal-item" class="font-bold text-gold">Rp 0</span>
-</div>
-<button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">
+            </div>
+        </div>
+        <div class="flex justify-between items-center bg-gray-50 dark:bg-gray-700 p-2 rounded mb-3 border dark:border-gray-600">
+            <span class="text-xs">Subtotal:</span>
+            <span id="subtotal-item" class="font-bold text-gold">Rp 0</span>
+        </div>
+        <button type="submit" class="w-full bg-gray-800 dark:bg-gray-600 text-white text-sm font-bold py-2 rounded shadow active:scale-95">
             Masukkan Keranjang
         </button>
-</form>
+    </form>
 </div>
+
 <div class="bg-[#fbf9f2] dark:bg-gray-800 p-4 rounded-xl shadow border border-[#e8dfc8] dark:border-gray-600">
-<h2 class="font-bold text-[#9c9e4a] mb-3 flex justify-between">
-<span>🛒 Keranjang</span>
-<span id="badge-qty" class="bg-[#9c9e4a] text-white px-2 rounded-full text-xs">0</span>
-</h2>
-<div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
-<p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>
-</div>
-<div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4">
-<span class="text-sm font-bold">Total:</span>
-<span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span>
-</div>
-<button id="btn-submit" onclick="kirimPesananAkhir()"
+    <h2 class="font-bold text-[#9c9e4a] mb-3 flex justify-between">
+        <span>🛒 Keranjang</span>
+        <span id="badge-qty" class="bg-[#9c9e4a] text-white px-2 rounded-full text-xs">0</span>
+    </h2>
+    <div id="isi-keranjang" class="space-y-2 mb-4 max-h-40 overflow-y-auto">
+        <p class="text-xs text-gray-400 italic text-center py-2">Keranjang kosong</p>
+    </div>
+    <div class="flex justify-between items-end border-t border-[#e8dfc8] dark:border-gray-700 pt-3 mb-4">
+        <span class="text-sm font-bold">Total:</span>
+        <span id="grand-total" class="text-xl font-bold text-gold">Rp 0</span>
+    </div>
+    <button id="btn-submit" onclick="kirimPesananAkhir()"
         class="w-full bg-gold text-white font-bold py-3 rounded-lg shadow active:scale-95 disabled:opacity-50" disabled>
         Kirim Pesanan Sekarang
     </button>
 </div>
+
 </div>
+
 <div id="page-riwayat" class="p-4 max-w-md mx-auto hidden">
-<div id="daftar-riwayat" class="space-y-3"></div>
+    <div id="daftar-riwayat" class="space-y-3"></div>
 </div>
+
+<!-- Modal QRIS -->
+
 <div id="modal-qris" class="fixed inset-0 z-[200] bg-black/80 hidden items-center justify-center p-4 backdrop-blur-sm" style="display:none">
-<div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
-<button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none" aria-label="Tutup">&times;</button>
-<h3 class="font-bold text-[#9c9e4a] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
-<img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
+    <div class="bg-white dark:bg-gray-800 p-5 rounded-xl max-w-xs w-full text-center relative shadow-2xl">
+        <button onclick="tutupQris()" class="absolute top-3 right-3 text-gray-400 hover:text-red-500 font-bold text-xl leading-none" aria-label="Tutup">&times;</button>
+        <h3 class="font-bold text-[#9c9e4a] text-lg mb-2 border-b dark:border-gray-700 pb-2">Pembayaran QRIS</h3>
+        <img src="qris.PNG" alt="QRIS MI Perfume" class="w-full rounded-lg mx-auto shadow-sm mb-3 border dark:border-gray-600"
             onerror="this.onerror=null; this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'300\' height=\'300\' viewBox=\'0 0 300 300\'%3E%3Crect width=\'300\' height=\'300\' fill=\'%23f3f4f6\'/%3E%3Ctext x=\'150\' y=\'140\' text-anchor=\'middle\' font-size=\'14\' fill=\'%236b7280\'%3EQRIS tidak ditemukan%3C/text%3E%3Ctext x=\'150\' y=\'165\' text-anchor=\'middle\' font-size=\'12\' fill=\'%239ca3af\'%3EHubungi admin%3C/text%3E%3C/svg%3E';">
-<p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
-<button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
+        <p class="text-xs text-gray-500 dark:text-gray-300">Silakan scan kode QR di atas menggunakan aplikasi m-Banking atau e-Wallet pilihan Anda.</p>
+        <button onclick="tutupQris()" class="mt-4 w-full bg-gray-200 dark:bg-gray-700 dark:text-white text-gray-700 font-bold py-2 rounded-lg text-sm active:scale-95">Tutup</button>
+    </div>
 </div>
-</div>
+
 </body>
 </html>
