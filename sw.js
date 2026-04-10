@@ -8,17 +8,17 @@ const RUNTIME_CACHE = ‘mi-perfume-runtime-v3’;
 
 // Aset yang di-cache saat install (pre-cache)
 const PRECACHE_ASSETS = [
-‘/’,
-‘/index.html’,
-‘/manifest.json’,
-‘/icon.PNG’,
-‘/loading.png’,
-‘/qris.PNG’,
-‘/admin/’,
-‘/admin/index.html’,
-‘/admin/manifest.json’,
-‘/dist/output.css’,
-‘/logo.jpeg’,
+‘/miperfume/’,
+‘/miperfume/index.html’,
+‘/miperfume/manifest.json’,
+‘/miperfume/icon.PNG’,
+‘/miperfume/loading.png’,
+‘/miperfume/qris.PNG’,
+‘/miperfume/admin/’,
+‘/miperfume/admin/index.html’,
+‘/miperfume/admin/manifest.json’,
+‘/miperfume/dist/output.css’,
+‘/miperfume/logo.jpeg’,
 ];
 
 // URL yang TIDAK boleh di-cache (selalu network)
@@ -121,8 +121,8 @@ return networkResponse;
 const cached = await caches.match(request);
 if (cached) return cached;
 // Fallback sesuai path — admin ke admin, customer ke index
-const isAdmin = url && url.pathname.startsWith(’/admin’);
-return caches.match(isAdmin ? ‘/admin/index.html’ : ‘/index.html’);
+const isAdmin = url && url.pathname.startsWith(’/miperfume/admin’);
+return caches.match(isAdmin ? ‘/miperfume/admin/index.html’ : ‘/miperfume/index.html’);
 }
 }
 
